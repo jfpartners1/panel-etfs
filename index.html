@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Resumen de mercado · ETFs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F3F5F8; --panel:#FFFFFF; --line:#E8ECF1; --line-2:#EEF1F5;
+    --ink:#1A2233; --ink-2:#5B6675; --mute:#8A95A5;
+    --up:#15A86B; --up-bg:#22B573; --down:#E04444; --down-bg:#EF5350;
+    --blue:#2563EB; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  .num{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+  .wrap{max-width:1440px;margin:0 auto;padding:20px 20px 56px}
+
+  .head{display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  .head h1{font-size:20px;font-weight:700;margin:0;letter-spacing:-.01em}
+  .head .meta{font-size:12px;color:var(--mute)}
+  .badge{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.14em;
+    text-transform:uppercase;border-radius:20px;padding:3px 10px;margin-left:10px}
+  .badge.demo{color:#B5862B;background:#FBF3E2;border:1px solid #F0DEB4}
+  .badge.live{color:#15803D;background:#E9F8F0;border:1px solid #BDEBD2}
+
+  .filter{display:flex;gap:5px;margin:16px 0;background:#FFF;border:1px solid var(--line);
+    border-radius:12px;padding:5px;width:max-content;max-width:100%;flex-wrap:wrap}
+  .filter button{appearance:none;border:0;background:transparent;color:var(--ink-2);
+    font-size:12.5px;font-weight:500;padding:7px 14px;border-radius:8px;cursor:pointer;transition:.15s}
+  .filter button:hover{color:var(--ink)}
+  .filter button.active{background:var(--ink);color:#fff;font-weight:600}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+  .ptitle{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:14px 16px 0}
+  .ptitle h2{font-size:14px;font-weight:600;margin:0}
+  .ptitle .sub{font-size:11.5px;color:var(--mute)}
+
+  .top{display:grid;grid-template-columns:300px 1fr 300px;gap:16px}
+  @media(max-width:1180px){.top{grid-template-columns:1fr}}
+
+  .lst{padding:8px 10px 10px}
+  .li{display:grid;grid-template-columns:30px 1fr auto;align-items:center;gap:9px;padding:7px 6px}
+  .li+.li{border-top:1px solid var(--line-2)}
+  .chip{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;
+    color:#fff;font-size:10px;font-weight:700;font-family:"IBM Plex Mono",monospace}
+  .nmwrap{min-width:0}
+  .tk{font-size:12.5px;font-weight:600;color:var(--blue)}
+  .nm{font-size:12px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tag{font-size:9px;font-weight:600;letter-spacing:.04em;padding:1px 6px;border-radius:20px;text-transform:uppercase}
+  .bdg{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:#fff;
+    padding:4px 8px;border-radius:7px;min-width:60px;text-align:center}
+  .bdg.up{background:var(--up-bg)} .bdg.down{background:var(--down-bg)}
+
+  .mid{display:flex;flex-direction:column;gap:16px}
+  .stats{display:grid;grid-template-columns:1fr 1fr 1.05fr;gap:16px}
+  @media(max-width:760px){.stats{grid-template-columns:1fr}}
+  .scard{padding:16px}
+  .row2{display:flex;gap:26px;flex-wrap:wrap}
+  .kpi .lbl{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--mute)}
+  .kpi .big{font-size:26px;font-weight:700;margin-top:4px;letter-spacing:-.01em}
+  .kpi .big.up{color:var(--up)} .kpi small{font-size:14px;font-weight:600}
+  .updown b{color:var(--up)} .updown i{color:var(--down);font-style:normal}
+  .range{height:9px;border-radius:6px;margin:10px 0 6px;background:linear-gradient(90deg,#2563EB,#15A86B,#E0A92E,#E04444)}
+  .range-lbls{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-2)}
+
+  .buck{display:grid;grid-template-columns:64px 1fr 28px;align-items:center;gap:8px;padding:3px 0;font-size:11.5px;color:var(--ink-2)}
+  .buck .tr{height:7px;background:var(--line);border-radius:5px;overflow:hidden}
+  .buck .fl{height:100%;background:var(--blue);border-radius:5px}
+  .buck .ct{text-align:right;font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--ink)}
+
+  .wf{padding:6px 12px 14px}.wf svg{width:100%;height:auto;display:block}
+
+  .bottom{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+  @media(max-width:980px){.bottom{grid-template-columns:1fr}}
+  .chart{padding:6px 14px 14px}.chart svg{width:100%;height:auto;display:block}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 14px;padding:10px 4px 2px}
+  .lg{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-2)}
+  .lg i{width:9px;height:9px;border-radius:50%;display:inline-block}
+
+  footer{margin-top:26px;color:var(--mute);font-size:11.5px;font-family:"IBM Plex Mono",monospace;
+    border-top:1px solid var(--line);padding-top:14px;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <h1>Resumen de mercado · ETFs <span class="badge demo" id="badge">Datos de muestra</span></h1>
+    <div class="meta" id="meta">Sin data.json — mostrando muestra</div>
+  </div>
+
+  <div class="filter" id="filter">
+    <button data-cat="todos" class="active">Todos</button>
+    <button data-cat="IDX">Índices</button>
+    <button data-cat="ACT">Activos</button>
+    <button data-cat="IND">Industrias</button>
+    <button data-cat="TEM">Temáticas</button>
+  </div>
+
+  <div class="top">
+    <div class="panel">
+      <div class="ptitle"><h2>Peores 10</h2><span class="sub">semana</span></div>
+      <div class="lst" id="worst"></div>
+    </div>
+    <div class="mid">
+      <div class="stats">
+        <div class="panel scard">
+          <div class="row2">
+            <div class="kpi"><div class="lbl">ETFs al alza</div><div class="big up" id="kPct">—</div></div>
+            <div class="kpi updown"><div class="lbl">Suben / Bajan</div>
+              <div class="big num"><b id="kUp">—</b> / <i id="kDn">—</i></div></div>
+          </div>
+        </div>
+        <div class="panel scard">
+          <div class="kpi"><div class="lbl">S&amp;P 500</div><div class="big num" id="kSpx">—</div></div>
+          <div class="lbl" style="margin-top:12px">Rango 52 semanas</div>
+          <div class="range"></div>
+          <div class="range-lbls num"><span id="k52lo">—</span><span id="k52hi">—</span></div>
+        </div>
+        <div class="panel scard">
+          <div class="lbl" style="margin-bottom:8px">Distribución de retornos (semana)</div>
+          <div id="buckets"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ptitle"><h2>Corrientes del mercado</h2><span class="sub" id="wfSub">var. semanal por ETF</span></div>
+        <div class="wf"><svg id="wf" viewBox="0 0 760 300" preserveAspectRatio="xMidYMid meet"></svg></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ptitle"><h2>Mejores 10</h2><span class="sub">semana</span></div>
+      <div class="lst" id="best"></div>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <div class="panel">
+      <div class="ptitle"><h2>Clases de activo YTD</h2><span class="sub">base 100</span></div>
+      <div class="chart"><svg id="chAssets" viewBox="0 0 720 320"></svg></div>
+      <div class="legend" id="lgAssets"></div>
+    </div>
+    <div class="panel">
+      <div class="ptitle"><h2>Temáticas e industrias YTD</h2><span class="sub">base 100</span></div>
+      <div class="chart"><svg id="chThemes" viewBox="0 0 720 320"></svg></div>
+      <div class="legend" id="lgThemes"></div>
+    </div>
+  </div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const CATS={IDX:{label:"Índices",color:"#2D5BD6",bg:"#ECF1FC"},
+  ACT:{label:"Activos",color:"#0E8A99",bg:"#E6F6F8"},
+  IND:{label:"Industrias",color:"#6D4FD0",bg:"#F0ECFB"},
+  TEM:{label:"Temáticas",color:"#B8741A",bg:"#FBF2E4"}};
+
+/* universo base (nombre/categoría/key). En modo muestra la "w" se genera;
+   en modo real llega ya calculada dentro de data.json */
+const BASE=[
+  ["SPY","S&P 500","IDX",1],["QQQ","Nasdaq 100","IDX",1],["IWM","Russell 2000","IDX",1],
+  ["DIA","Dow 30","IDX",0],["VTI","Total EE.UU.","IDX",0],["EFA","Desarroll. exUS","IDX",0],
+  ["EEM","Emergentes","IDX",1],["VGK","Europa","IDX",0],["EWJ","Japón","IDX",0],
+  ["FXI","China","IDX",1],["INDA","India","IDX",0],["EWZ","Brasil","IDX",0],
+  ["TLT","Treasuries 20Y","ACT",1],["IEF","Treasuries 7-10Y","ACT",0],["LQD","Crédito IG","ACT",0],
+  ["HYG","High Yield","ACT",0],["TIP","Ligados inflación","ACT",0],["GLD","Oro","ACT",1],
+  ["SLV","Plata","ACT",0],["DBC","Materias primas","ACT",1],["USO","Petróleo","ACT",1],
+  ["UNG","Gas natural","ACT",1],["DBA","Agricultura","ACT",0],["VNQ","Inmobiliario","ACT",0],
+  ["IBIT","Bitcoin","ACT",1],["DBB","Metales base","ACT",0],
+  ["XLK","Tecnología","IND",1],["XLF","Financieras","IND",0],["XLV","Salud","IND",0],
+  ["XLE","Energía","IND",1],["XLI","Industria","IND",0],["XLY","Cons. discrec.","IND",0],
+  ["XLP","Cons. básico","IND",0],["XLU","Utilities","IND",0],["XLB","Materiales","IND",0],
+  ["XLRE","Inmobiliario","IND",0],["XLC","Comunicación","IND",0],["SMH","Semiconductores","IND",1],
+  ["KRE","Bancos regionales","IND",1],["XBI","Biotech","IND",1],["XOP","Petróleo E&P","IND",0],
+  ["XHB","Construcción","IND",0],["ITA","Defensa","IND",1],
+  ["ARKK","Innovación","TEM",1],["BOTZ","Robótica / IA","TEM",1],["ICLN","Energía limpia","TEM",1],
+  ["TAN","Solar","TEM",1],["LIT","Litio","TEM",0],["CIBR","Ciberseguridad","TEM",0],
+  ["URA","Uranio","TEM",1],["SKYY","Cloud","TEM",0],["FINX","Fintech","TEM",0],
+  ["GDX","Mineras oro","TEM",1],["JETS","Aerolíneas","TEM",0],["DRIV","Coches eléctricos","TEM",0],
+  ["BLOK","Blockchain","TEM",0]
+];
+const ASSET_LBL=["S&P 500","Nasdaq 100","Small caps","Europa","Emergentes","Bonos 20Y","Oro","Materias primas","Inmobiliario","Bitcoin"];
+const THEME_LBL=["Semis","IA / Robótica","Energía limpia","Ciberseguridad","Biotech","Defensa","Uranio","Mineras oro","Fintech","Cloud","EV"];
+const ASSET_END=[112,121,103,109,106,93,124,97,101,118];
+const THEME_END=[138,122,84,116,108,127,131,119,113,111,88];
+
+/* ---------- utilidades ---------- */
+const $=s=>document.querySelector(s);
+const fmtPct=n=>(n>0?"+":"")+Number(n).toFixed(1).replace(".",",")+"%";
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const MONTHS=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+
+function genSeriesTo(seed,n,end){const r=mulberry32(seed);const o=[];
+  for(let i=0;i<n;i++){const t=i/(n-1),e=Math.sin(Math.PI*t);o.push(100+(end-100)*t+(r()-0.5)*9*e);}o[0]=100;return o;}
+function sampleDates(n){const yr=new Date().getFullYear();const d=new Date(yr,0,2);const out=[];
+  for(let i=0;i<n;i++){out.push(d.toISOString().slice(0,10));d.setDate(d.getDate()+7);}return out;}
+
+/* genera el objeto de datos de muestra con la misma forma que data.json */
+function buildSample(){
+  const r=mulberry32(99);
+  const universe=BASE.map(([tk,nm,cat,key])=>{
+    const w=Math.round(((r()-0.5)* (cat==="TEM"?14:cat==="ACT"?10:6))*10)/10;
+    return [tk,nm,cat,w,!!key];
+  });
+  const dates=sampleDates(26);
+  const mk=(lbls,ends,seed)=>({labels:lbls,dates,series:lbls.map((l,i)=>genSeriesTo(seed+i*131,26,ends[i]))});
+  return { asOf:"datos de muestra", live:false,
+    stats:{spx:"7.431,46",spxChg:"+0,6%",lo52:"5.802,82",hi52:"7.609,78"},
+    universe,
+    assets:mk(ASSET_LBL,ASSET_END,101),
+    themes:mk(THEME_LBL,THEME_END,401) };
+}
+
+/* ---------- estado ---------- */
+let DATA=buildSample(), U=[], CAT="todos";
+const filtered=()=>CAT==="todos"?U:U.filter(x=>x.cat===CAT);
+
+/* ---------- listas ---------- */
+function rowHTML(x,dir){const c=CATS[x.cat];
+  return `<div class="li"><span class="chip" style="background:${c.color}">${x.tk.slice(0,2)}</span>
+    <span class="nmwrap"><span class="tk">${x.tk}</span>
+      <span class="tag" style="color:${c.color};background:${c.bg}">${c.label}</span><br>
+      <span class="nm">${x.nm}</span></span>
+    <span class="bdg ${dir}">${fmtPct(x.w)}</span></div>`;}
+function renderLists(){const f=[...filtered()].sort((a,b)=>a.w-b.w);
+  $("#worst").innerHTML=f.slice(0,10).map(x=>rowHTML(x,"down")).join("");
+  $("#best").innerHTML=[...f].reverse().slice(0,10).map(x=>rowHTML(x,"up")).join("");}
+
+/* ---------- stats + buckets ---------- */
+function renderStats(){const s=DATA.stats,f=filtered();
+  const up=f.filter(x=>x.w>=0).length,dn=f.length-up;
+  $("#kPct").textContent=Math.round(up/f.length*100)+"%";
+  $("#kUp").textContent=up;$("#kDn").textContent=dn;
+  $("#kSpx").innerHTML=s.spx+' <small style="color:var(--up)">'+s.spxChg+'</small>';
+  $("#k52lo").textContent=s.lo52;$("#k52hi").textContent=s.hi52;
+  const edges=[[-1e9,-5,"< -5%"],[-5,-2,"-5 / -2"],[-2,0,"-2 / 0"],[0,2,"0 / +2"],[2,5,"+2 / +5"],[5,1e9,"> +5%"]];
+  const counts=edges.map(([a,b])=>f.filter(x=>x.w>=a&&x.w<b).length),mx=Math.max(...counts,1);
+  $("#buckets").innerHTML=edges.map(([a,b,l],i)=>`<div class="buck"><span>${l}</span>
+    <span class="tr"><span class="fl" style="width:${(counts[i]/mx*100).toFixed(0)}%"></span></span>
+    <span class="ct">${counts[i]}</span></div>`).join("");}
+
+/* ---------- waterfall ---------- */
+function renderWaterfall(){const W=760,H=300,padX=14,padTop=110,padBot=34,base=padTop+(H-padTop-padBot)*0.5;
+  let bars=[...filtered()].sort((a,b)=>a.w-b.w);
+  const n=bars.length,plotW=W-padX*2,bw=Math.min(plotW/n*0.7,16),gap=plotW/n;
+  const maxAbs=Math.max(...bars.map(b=>Math.abs(b.w)),1),scale=(H-padTop-padBot)*0.5/maxAbs*0.92;
+  let svg=`<line x1="${padX}" y1="${base}" x2="${W-padX}" y2="${base}" stroke="#D7DEE7"/>`;
+  bars.forEach((b,i)=>{const x=padX+gap*i+(gap-bw)/2,h=Math.abs(b.w)*scale,up=b.w>=0,y=up?base-h:base;
+    svg+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(h,.6).toFixed(1)}" rx="1.5" fill="${CATS[b.cat].color}" opacity="${b.key?.95:.5}"/>`;
+    b._cx=x+bw/2;b._top=up?y:base+h;});
+  let keys=bars.filter(b=>b.key); if(keys.length>16)keys=keys.filter((_,i)=>i%2===0);
+  keys.forEach((b,i)=>{const cx=Math.max(34,Math.min(W-34,b._cx)),rowY=(i%2===0)?34:70,up=b.w>=0;
+    svg+=`<line x1="${cx}" y1="${rowY+16}" x2="${b._cx}" y2="${b._top}" stroke="#C7D0DB"/>`;
+    svg+=`<g transform="translate(${cx},${rowY})"><rect x="-27" y="-2" width="54" height="34" rx="7" fill="#fff" stroke="#E5EAF0"/>
+      <text x="0" y="11" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" font-weight="600" fill="#1A2233">${b.tk}</text>
+      <text x="0" y="24" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" font-weight="600" fill="${up?'var(--up)':'var(--down)'}">${fmtPct(b.w)}</text></g>`;});
+  $("#wf").innerHTML=svg;
+  $("#wfSub").textContent=CAT==="todos"?"var. semanal por ETF":"var. semanal · "+CATS[CAT].label;}
+
+/* ---------- curvas base 100 (consume {labels,dates,series}) ---------- */
+const PAL=['#2563EB','#E04444','#15A86B','#0EA5C7','#E08A1E','#8B5CF6','#EC4899','#14B8A6','#F97316','#3B82F6','#A855F7'];
+function lineChart(svgId,legId,curve){
+  const labels=curve.labels,series=curve.series,dates=curve.dates||[];
+  const W=720,H=320,L=42,R=12,T=14,B=42,n=series[0].length;
+  const all=series.flat(),mn=Math.min(...all),mx=Math.max(...all);
+  const x=i=>L+(i/(n-1))*(W-L-R),y=v=>T+(1-(v-mn)/(mx-mn))*(H-T-B);
+  let svg="";
+  [mn,(mn+mx)/2,mx].forEach(g=>{svg+=`<line x1="${L}" y1="${y(g).toFixed(1)}" x2="${W-R}" y2="${y(g).toFixed(1)}" stroke="#EEF1F5"/>
+    <text x="${L-8}" y="${y(g)+3}" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#9AA5B3">${g.toFixed(0)}</text>`;});
+  svg+=`<line x1="${L}" y1="${y(100).toFixed(1)}" x2="${W-R}" y2="${y(100).toFixed(1)}" stroke="#C7D0DB" stroke-dasharray="3 3"/>`;
+  let lastM="";dates.forEach((d,i)=>{const m=d.slice(5,7);if(m!==lastM){lastM=m;
+    svg+=`<text x="${x(i).toFixed(1)}" y="${H-16}" text-anchor="middle" font-family="Inter" font-size="10" fill="#9AA5B3">${MONTHS[+m-1]} ${d.slice(2,4)}</text>`;}});
+  series.forEach((s,i)=>{const pts=s.map((v,j)=>`${x(j).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+    svg+=`<polyline points="${pts}" fill="none" stroke="${PAL[i%PAL.length]}" stroke-width="1.6" stroke-linejoin="round" opacity=".9"/>`;});
+  document.getElementById(svgId).innerHTML=svg;
+  document.getElementById(legId).innerHTML=labels.map((l,i)=>`<span class="lg"><i style="background:${PAL[i%PAL.length]}"></i>${l}</span>`).join("");}
+
+/* ---------- pintar todo ---------- */
+function renderTop(){renderLists();renderStats();renderWaterfall();}
+function renderAll(){
+  U=DATA.universe.map(([tk,nm,cat,w,key])=>({tk,nm,cat,w:Number(w),key:!!key}));
+  renderTop();
+  lineChart("chAssets","lgAssets",DATA.assets);
+  lineChart("chThemes","lgThemes",DATA.themes);
+  const live=!!DATA.live;
+  const badge=$("#badge");
+  badge.textContent=live?("Actualizado "+DATA.asOf):"Datos de muestra";
+  badge.className="badge "+(live?"live":"demo");
+  $("#meta").textContent=live?("Fuente real · "+U.length+" ETFs"):("Sin data.json — mostrando muestra · "+U.length+" ETFs");
+  $("#foot").textContent="Resumen de mercado · "+(live?DATA.asOf:"muestra")+" · "+U.length+" ETFs";
+}
+
+$("#filter").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  CAT=b.dataset.cat;[...document.querySelectorAll("#filter button")].forEach(x=>x.classList.toggle("active",x===b));renderTop();});
+
+/* intenta cargar datos reales; si no, se queda con la muestra */
+(async()=>{
+  try{const r=await fetch("data.json",{cache:"no-store"});
+    if(r.ok){const j=await r.json();if(j&&j.universe){j.live=true;DATA=j;}}}catch(e){}
+  renderAll();
+})();
+</script>
+</body>
+</html>
