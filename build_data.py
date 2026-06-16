@@ -76,7 +76,7 @@ def _get(url):
         return json.loads(r.read().decode("utf-8", "replace"))
 
 def fetch_eod(symbol, start):
-    """[(date, close_ajustado)] ascendente. Endpoint /api/eod. Cuenta 1 llamada."""
+    """[(date, close_ajustado, volumen)] ascendente. Endpoint /api/eod. Cuenta 1 llamada."""
     STATE["calls"] += 1
     url = f"{API}/eod/{symbol}?api_token={KEY}&fmt=json&period=d&from={start.isoformat()}"
     out = []
@@ -84,9 +84,10 @@ def fetch_eod(symbol, start):
         try:
             d = datetime.strptime(r["date"], "%Y-%m-%d").date()
             c = float(r.get("adjusted_close") or r.get("close"))
+            v = float(r.get("volume") or 0)
         except (KeyError, ValueError, TypeError):
             continue
-        out.append((d, c))
+        out.append((d, c, v))
     out.sort()
     return out
 
@@ -111,7 +112,8 @@ def fetch_eod_demo(symbol, start):
     rnd = random.Random(sum(ord(c) for c in symbol)); px, out, d = 100.0, [], start
     while d <= date.today():
         if d.weekday() < 5:
-            px *= 1 + rnd.uniform(-0.018, 0.019); out.append((d, round(px, 2)))
+            px *= 1 + rnd.uniform(-0.018, 0.019)
+            out.append((d, round(px, 2), rnd.randint(400000, 6000000)))
         d += timedelta(days=1)
     return out
 
@@ -126,12 +128,12 @@ def cached_eod(symbol, start, refresh):
         try:
             blob = json.load(open(path, encoding="utf-8"))
             if blob.get("fetched") == today:   # ya descargado hoy -> 0 llamadas
-                return [(date.fromisoformat(d), c) for d, c in blob["rows"]
+                return [(date.fromisoformat(d), c, v) for d, c, v in blob["rows"]
                         if date.fromisoformat(d) >= start]
         except Exception:
             pass
     rows = fetch_eod(symbol, start)            # descarga real (suma 1 llamada)
-    json.dump({"fetched": today, "rows": [[d.isoformat(), c] for d, c in rows]},
+    json.dump({"fetched": today, "rows": [[d.isoformat(), c, v] for d, c, v in rows]},
               open(path, "w", encoding="utf-8"))
     return rows
 
@@ -179,9 +181,10 @@ def build_curve(grid, series_map, hist):
 def _ret(cl, n):
     return (cl[-1] / cl[-1-n] - 1) * 100 if len(cl) > n else None
 
-def momentum_block(universe_def, hist, live):
+def momentum_block(universe_def, hist, live, volh):
     """Momentum Composite (0-100): tendencia multi-plazo, aceleración, proximidad a
-    máximos de 52s y baja volatilidad. Pesos 45/15/25/15. Percentiles dentro del universo."""
+    máximos de 52s y baja volatilidad. Pesos 45/15/25/15. Percentiles dentro del universo.
+    Añade retornos 1M/3M/6M/12M, distancia a máximos y volumen relativo (hoy vs media 20s)."""
     data = []
     for tk, nm, cat, key in universe_def:
         cl = [c for _, c in unified_closes(hist.get(eod_sym(tk), []), live.get(eod_sym(tk)))]
@@ -193,7 +196,10 @@ def momentum_block(universe_def, hist, live):
         hi = max(cl[-252:]); dist = (cl[-1]/hi - 1) * 100     # distancia a máximo 52s (<=0)
         dr = [cl[i]/cl[i-1]-1 for i in range(len(cl)-63, len(cl))]
         vol = statistics.pstdev(dr) * (252**0.5) * 100 if len(dr) > 1 else 0
-        data.append({"tk":tk,"nm":nm,"cat":cat,"trend":trend,"accel":accel,"dist":dist,"vol":vol,"r12":r252})
+        vv = [v for _, v in volh.get(eod_sym(tk), [])]        # volumen relativo
+        rvol = round(vv[-1] / (sum(vv[-21:-1])/20), 2) if len(vv) >= 21 and sum(vv[-21:-1]) > 0 else None
+        data.append({"tk":tk,"nm":nm,"cat":cat,"trend":trend,"accel":accel,"dist":dist,"vol":vol,
+                     "r1":r21,"r3":r63,"r6":r126,"r12":r252,"rvol":rvol})
     if not data: return []
     def pct(vals, v): return round(sum(1 for x in vals if x <= v) / len(vals) * 100)
     T=[d["trend"] for d in data]; A=[d["accel"] for d in data]
@@ -204,7 +210,8 @@ def momentum_block(universe_def, hist, live):
         sh, sv = pct(H, d["dist"]), 100 - pct(V, d["vol"])    # vol: menos es mejor
         score = round(0.45*st + 0.15*sa + 0.25*sh + 0.15*sv)
         out.append([d["tk"], d["nm"], d["cat"], score, st, sa, sh, sv,
-                    round(d["r12"],1), round(d["dist"],1), round(d["vol"],1)])
+                    round(d["r1"],1), round(d["r3"],1), round(d["r6"],1), round(d["r12"],1),
+                    round(d["dist"],1), d["rvol"]])
     out.sort(key=lambda r: -r[3])
     return out
 
@@ -273,13 +280,15 @@ def main():
         if args.demo: return fetch_eod_demo(sym, start)
         return cached_eod(sym, start, args.refresh)
 
-    # 1) Histórico EOD
-    hist = {}
+    # 1) Histórico EOD (cierres + volúmenes)
+    hist, volh = {}, {}
     for tk, *_ in universe_def:
         s = eod_sym(tk)
         try:
-            rows = get_eod(s)
-            if rows: hist[s] = rows
+            raw = get_eod(s)
+            if raw:
+                hist[s] = [(d, c) for d, c, _ in raw]
+                volh[s] = [(d, v) for d, _, v in raw]
             else: print(f"  · aviso: sin EOD para {s}", file=sys.stderr)
         except Exception as e:
             print(f"  · error EOD {s}: {e}", file=sys.stderr)
@@ -321,7 +330,7 @@ def main():
 
     as_of = (datetime.now().strftime("%Y-%m-%d %H:%M") if (use_live and live)
              else (spy[-1][0].isoformat() if spy else date.today().isoformat()))
-    mom = momentum_block(universe_def, hist, live)
+    mom = momentum_block(universe_def, hist, live, volh)
     momz = momentum_evolution(universe_def, hist, live, [r[0] for r in mom[:12]])
     data = {"asOf": as_of, "live": True, "stats": stats, "universe": universe,
             "assets": assets, "themes": themes, "momentum": mom, "momentumZ": momz}

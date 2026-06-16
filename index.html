@@ -104,28 +104,19 @@
   #modal .mbody{flex:1;min-height:0}
   #tv_chart{width:100%;height:100%}
 
-  /* paneles mapa de calor + momentum */
-  .hm,.mm{margin-top:16px;padding:16px}
+  /* panel momentum */
+  .mm{margin-top:16px;padding:16px}
   .phead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px}
   .phead h2{font-size:14px;font-weight:600;margin:0}
   .phead .sub{font-size:11.5px;color:var(--mute)}
-  .hgroup{margin-bottom:12px}
-  .hglabel{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);margin:0 0 6px}
-  .hcells{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px}
-  .hcell{border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;border:1px solid rgba(0,0,0,.04);transition:transform .1s}
-  .hcell:hover{transform:translateY(-2px)}
-  .hcell .ht{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;color:#16223a}
-  .hcell .hv{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;margin-top:2px;color:#16223a}
-
-  .mhdr,.mrow{display:grid;grid-template-columns:28px 1fr 52px 40px 40px 40px 40px 62px 62px;align-items:center;gap:8px}
-  .mrow .rawv{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600;text-align:center}
-  .mrow .rawv.up{color:var(--up)} .mrow .rawv.down{color:var(--down)}
-  .hmctrls{display:flex;gap:8px 10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
-  .seg.mini button{padding:5px 10px;font-size:11.5px}
-  .mhdr{padding:0 8px 8px;border-bottom:1px solid var(--line);font-size:10.5px;letter-spacing:.04em;
+  .mtable{overflow-x:auto}
+  .mhdr,.mrow{display:grid;grid-template-columns:26px minmax(150px,1fr) 48px 34px 34px 34px 34px 50px 50px 50px 50px 54px 50px;align-items:center;gap:7px;min-width:880px}
+  .mrow .rawv{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;text-align:center}
+  .mrow .rawv.up{color:var(--up)} .mrow .rawv.down{color:var(--down)} .mrow .rawv.mut{color:var(--ink-2)}
+  .mhdr{padding:0 7px 8px;border-bottom:1px solid var(--line);font-size:10px;letter-spacing:.03em;
     text-transform:uppercase;color:var(--mute)}
   .mhdr .rt{text-align:center}
-  .mrow{padding:8px;border-radius:9px;cursor:pointer;transition:background .12s}
+  .mrow{padding:8px 7px;border-radius:9px;cursor:pointer;transition:background .12s}
   .mrow:hover{background:#F6F8FB}
   .mrow .rk{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--mute);text-align:center}
   .mrow .mid2{min-width:0;display:flex;align-items:center;gap:8px}
@@ -216,14 +207,17 @@
   <section class="panel mm">
     <div class="phead"><h2>Momentum Composite</h2>
       <span class="sub">score 0–100 · tendencia 45% · aceleración 15% · máximos 25% · baja volatilidad 15%</span></div>
-    <div class="mhdr"><span>#</span><span>ETF</span><span class="rt">Score</span>
-      <span class="rt" title="Tendencia multi-plazo">Tend</span>
-      <span class="rt" title="Aceleración: momentum reciente vs largo">Acel</span>
-      <span class="rt" title="Proximidad a máximos de 52 semanas">Máx</span>
-      <span class="rt" title="Baja volatilidad">Vol</span>
-      <span class="rt" title="Rentabilidad 12 meses">12M</span>
-      <span class="rt" title="Distancia al máximo de 52 semanas">a máx</span></div>
-    <div id="mom"></div>
+    <div class="mtable">
+      <div class="mhdr"><span>#</span><span>ETF</span><span class="rt">Score</span>
+        <span class="rt" title="Tendencia multi-plazo">Tend</span>
+        <span class="rt" title="Aceleración: momentum reciente vs largo">Acel</span>
+        <span class="rt" title="Proximidad a máximos de 52 semanas">Máx</span>
+        <span class="rt" title="Baja volatilidad">Vol</span>
+        <span class="rt">1M</span><span class="rt">3M</span><span class="rt">6M</span><span class="rt">12M</span>
+        <span class="rt" title="Distancia al máximo de 52 semanas">a máx</span>
+        <span class="rt" title="Volumen vs media de 20 sesiones">RVol</span></div>
+      <div id="mom"></div>
+    </div>
   </section>
 
   <section class="panel" style="margin-top:16px">
@@ -231,24 +225,6 @@
       <span class="sub">top 12 · &gt;0 más fuerte que la media · subiendo = ganando fuerza relativa</span></div>
     <div class="chart"><svg id="chMomZ" viewBox="0 0 720 320"></svg></div>
     <div class="legend" id="lgMomZ"></div>
-  </section>
-
-  <section class="panel hm">
-    <div class="phead"><h2>Mapa de calor</h2><span class="sub" id="hmSub">rentabilidad semanal</span></div>
-    <div class="hmctrls">
-      <span class="seg-label">Plazo</span>
-      <div class="seg alt mini" id="hmPer">
-        <button data-per="d">Diaria</button><button data-per="w" class="active">Semanal</button>
-        <button data-per="m">Mensual</button><button data-per="ytd">YTD</button></div>
-      <span class="seg-label">Categorías</span>
-      <div class="seg mini" id="hmCats">
-        <button data-cat="IDX" class="active">Índices</button><button data-cat="ACT" class="active">Activos</button>
-        <button data-cat="IND" class="active">Industrias</button><button data-cat="TEM" class="active">Temáticas</button></div>
-      <span class="seg-label">Orden</span>
-      <div class="seg alt mini" id="hmSort">
-        <button data-sort="cat" class="active">Por categoría</button><button data-sort="ret">Por rentabilidad</button></div>
-    </div>
-    <div id="heat"></div>
   </section>
 
   <div id="modal" aria-hidden="true">
@@ -319,9 +295,9 @@ function buildSample(){
   const dates=bizDates(180);
   const mk=(lbls,seed)=>({labels:lbls,dates,series:lbls.map((l,i)=>rawSeries(seed+i*97,180,50+i*15))});
   const mom=BASE.map(([tk,nm,cat])=>{const s=()=>Math.round(r()*100);
-    const st=s(),sa=s(),sh=s(),sv=s();
+    const st=s(),sa=s(),sh=s(),sv=s();const rp=k=>Math.round((r()*k*2-k*0.4)*10)/10;
     return [tk,nm,cat,Math.round(0.45*st+0.15*sa+0.25*sh+0.15*sv),st,sa,sh,sv,
-      Math.round((r()*60-10)*10)/10, -Math.round(r()*14*10)/10, Math.round((10+r()*25)*10)/10];})
+      rp(8),rp(16),rp(26),rp(40), -Math.round(r()*14*10)/10, Math.round((0.5+r()*2)*100)/100];})
     .sort((a,b)=>b[3]-a[3]);
   const top=mom.slice(0,12).map(m=>m[0]);
   const zdates=bizDates(130).filter((_,i)=>i%5===0);
@@ -479,46 +455,32 @@ function momZChart(){
   CHART_INFO.momz={meta};
   document.getElementById("lgMomZ").innerHTML=labels.map((l,i)=>`<span class="lg${hidden.has(l)?" off":""}" data-label="${l}"><i style="background:${PAL[i%PAL.length]}"></i>${l}</span>`).join("");}
 
-/* ---- mapa de calor (configurable) ---- */
-let HM_PER="w", HM_CATS=new Set(["IDX","ACT","IND","TEM"]), HM_SORT="cat";
-const HEAT_CAP={d:3,w:6,m:12,ytd:25};
-function heatColor(v){const cap=HEAT_CAP[HM_PER]||6;let t=Math.max(-1,Math.min(1,v/cap));
-  return t>=0?`rgba(21,168,107,${(0.10+0.82*t).toFixed(2)})`:`rgba(224,68,68,${(0.10+0.82*(-t)).toFixed(2)})`;}
-function hcell(x){const v=x.rets[HM_PER];
-  return `<div class="hcell" data-tk="${x.tk}" data-nm="${x.nm}" style="background:${heatColor(v)}"><div class="ht">${x.tk}</div><div class="hv">${fmtPct(v)}</div></div>`;}
-function renderHeat(){
-  const arr=U.filter(x=>HM_CATS.has(x.cat)&&x.rets[HM_PER]!=null);
-  let html="";
-  if(HM_SORT==="ret"){const s=[...arr].sort((a,b)=>b.rets[HM_PER]-a.rets[HM_PER]);
-    html=`<div class="hcells">${s.map(hcell).join("")}</div>`;}
-  else ["IDX","ACT","IND","TEM"].forEach(cat=>{if(!HM_CATS.has(cat))return;
-    const g=arr.filter(x=>x.cat===cat).sort((a,b)=>b.rets[HM_PER]-a.rets[HM_PER]);if(!g.length)return;
-    html+=`<div class="hgroup"><div class="hglabel">${CATS[cat].label}</div><div class="hcells">${g.map(hcell).join("")}</div></div>`;});
-  document.getElementById("heat").innerHTML=html||'<div style="color:var(--mute);font-size:12px">Selecciona alguna categoría.</div>';
-  document.getElementById("hmSub").textContent="rentabilidad "+(HM_PER==="ytd"?"YTD":PER_LBL[HM_PER]);}
-
 /* ---- momentum composite ---- */
 function scoreColor(s){const l=93-(s/100)*53;return {bg:`hsl(150 58% ${l}%)`,fg:l<62?"#fff":"#13351f"};}
+function rvolFmt(v){return v==null?"—":(v.toFixed(1).replace(".",",")+"×");}
 function renderMom(){const m=DATA.momentum||[];
   document.getElementById("mom").innerHTML=m.map((row,i)=>{
     const tk=row[0],nm=row[1],cat=row[2],score=row[3],c=CATS[cat],sc=scoreColor(score);
-    const r12=row[8],dist=row[9];
-    const cell=v=>`<div class="sub-cell"><div class="fl" style="width:${v}%"></div><span>${v}</span></div>`;
+    const r1=row[8],r3=row[9],r6=row[10],r12=row[11],dist=row[12],rvol=row[13];
+    const bar=v=>`<div class="sub-cell"><div class="fl" style="width:${v}%"></div><span>${v}</span></div>`;
+    const ret=v=>`<span class="rawv ${v>=0?"up":"down"}">${v==null?"—":fmtPct(v)}</span>`;
+    const rv=rvol==null?"mut":(rvol>=1.3?"up":(rvol<0.8?"down":"mut"));
     return `<div class="mrow" data-tk="${tk}" data-nm="${nm}">
       <span class="rk">${i+1}</span>
       <span class="mid2"><span class="chip" style="width:22px;height:22px;background:${c.color}">${tk.slice(0,2)}</span>
         <span style="min-width:0"><span class="tk">${tk}</span> <span class="nm">${nm}</span></span></span>
       <span class="sc" style="background:${sc.bg};color:${sc.fg}">${score}</span>
-      ${cell(row[4])}${cell(row[5])}${cell(row[6])}${cell(row[7])}
-      <span class="rawv ${r12>=0?"up":"down"}">${r12==null?"—":fmtPct(r12)}</span>
-      <span class="rawv" style="color:var(--ink-2)">${dist==null?"—":fmtPct(dist)}</span></div>`;}).join("");}
+      ${bar(row[4])}${bar(row[5])}${bar(row[6])}${bar(row[7])}
+      ${ret(r1)}${ret(r3)}${ret(r6)}${ret(r12)}
+      <span class="rawv mut">${dist==null?"—":fmtPct(dist)}</span>
+      <span class="rawv ${rv}">${rvolFmt(rvol)}</span></div>`;}).join("");}
 
 /* ---- pintar ---- */
 function renderTop(){renderLists();renderWaterfall();}
 function renderBottom(){lineChart("chAssets","lgAssets",DATA.assets,"assets");lineChart("chThemes","lgThemes",DATA.themes,"themes");}
 function renderAll(){
   U=DATA.universe.map(([tk,nm,cat,rets,key])=>({tk,nm,cat,rets,key:!!key}));
-  renderTop();renderBottom();renderMom();momZChart();renderHeat();
+  renderTop();renderBottom();renderMom();momZChart();
   const live=!!DATA.live,badge=$("#badge");
   badge.textContent=live?("Actualizado "+DATA.asOf):"Datos de muestra";
   badge.className="badge "+(live?"live":"demo");
@@ -533,11 +495,6 @@ bindSeg("#window","win",v=>{WIN=v;renderBottom();});
 bindChart("chAssets","lgAssets","assets",renderBottom);
 bindChart("chThemes","lgThemes","themes",renderBottom);
 bindChart("chMomZ","lgMomZ","momz",momZChart);
-bindSeg("#hmPer","per",v=>{HM_PER=v;renderHeat();});
-bindSeg("#hmSort","sort",v=>{HM_SORT=v;renderHeat();});
-document.getElementById("hmCats").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
-  const c=b.dataset.cat; HM_CATS.has(c)?HM_CATS.delete(c):HM_CATS.add(c);
-  b.classList.toggle("active",HM_CATS.has(c)); renderHeat();});
 
 /* ---- modal con gráfico de velas de TradingView ---- */
 function loadTV(){return new Promise((res,rej)=>{
@@ -566,7 +523,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeChart();});
   const li=e.target.closest(".li");if(li)openChart(li.dataset.tk,li.dataset.nm);}));
 document.querySelector(".wf").addEventListener("click",e=>{const t=e.target;
   if(t.classList&&t.classList.contains("hit")){const b=WF_BARS[+t.getAttribute("data-i")];if(b)openChart(b.tk,b.nm);}});
-["#heat","#mom"].forEach(sel=>document.querySelector(sel).addEventListener("click",e=>{
+["#mom"].forEach(sel=>document.querySelector(sel).addEventListener("click",e=>{
   const el=e.target.closest("[data-tk]");if(el)openChart(el.dataset.tk,el.dataset.nm);}));
 
 (async()=>{
