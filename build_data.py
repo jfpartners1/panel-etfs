@@ -19,7 +19,7 @@ PLAN GRATUITO de EODHD: 20 llamadas/día · solo cierre (EOD) · ~1 año de hist
      ejecutándolo otra vez el mismo día = 0 llamadas. Itera el panel sin tocar la cuota.
 """
 
-import argparse, bisect, json, os, random, sys, time, urllib.parse, urllib.request
+import argparse, bisect, json, os, random, statistics, sys, time, urllib.parse, urllib.request
 from datetime import date, datetime, timedelta
 
 API = "https://eodhd.com/api"
@@ -56,11 +56,13 @@ UNIVERSE = [
 DEV_TICKERS = {"SPY","QQQ","EEM","VGK","TLT","GLD","USO","XLK","XLE","SMH","ARKK","URA"}
 
 ASSETS_MAP = [("S&P 500","SPY"),("Nasdaq 100","QQQ"),("Small caps","IWM"),("Europa","VGK"),
-              ("Emergentes","EEM"),("Bonos 20Y","TLT"),("Oro","GLD"),("Materias primas","DBC"),
-              ("Inmobiliario","VNQ"),("Bitcoin","IBIT")]
-THEMES_MAP = [("Semis","SMH"),("IA / Robótica","BOTZ"),("Energía limpia","ICLN"),("Ciberseguridad","CIBR"),
-              ("Biotech","XBI"),("Defensa","ITA"),("Uranio","URA"),("Mineras oro","GDX"),
-              ("Fintech","FINX"),("Cloud","SKYY"),("EV","DRIV")]
+              ("Emergentes","EEM"),("Japón","EWJ"),("China","FXI"),("Bonos 20Y","TLT"),
+              ("Crédito IG","LQD"),("High Yield","HYG"),("Oro","GLD"),("Plata","SLV"),
+              ("Materias primas","DBC"),("Petróleo","USO"),("Inmobiliario","VNQ"),("Bitcoin","IBIT")]
+THEMES_MAP = [("Semis","SMH"),("IA / Robótica","BOTZ"),("Tecnología","XLK"),("Cloud","SKYY"),
+              ("Ciberseguridad","CIBR"),("Fintech","FINX"),("Blockchain","BLOK"),("Innovación","ARKK"),
+              ("Biotech","XBI"),("Salud","XLV"),("Energía","XLE"),("Energía limpia","ICLN"),
+              ("Solar","TAN"),("Uranio","URA"),("Mineras oro","GDX"),("Defensa","ITA")]
 SPX_CANDIDATES = ["GSPC.INDX", "SPX.INDX"]   # índice S&P 500 en EODHD (plan de pago)
 
 def eod_sym(tk): return tk + ".US"
@@ -144,26 +146,101 @@ def unified_closes(hist, live_price):
         else: closes.append((today, live_price))
     return closes
 
-def weekly_return(closes):
-    if len(closes) < 6: return None
-    return round((closes[-1][1] / closes[-6][1] - 1) * 100, 1)
+def returns(closes, rows):
+    """Retornos D/S/M/YTD en % desde los cierres (precio en vivo ya incluido)."""
+    def chg(n):
+        return round((closes[-1][1] / closes[-1-n][1] - 1) * 100, 1) if len(closes) > n else None
+    out = {"d": chg(1), "w": chg(5), "m": chg(21)}
+    jan1 = date(date.today().year, 1, 1)
+    didx = [r[0] for r in rows]
+    i = bisect.bisect_left(didx, jan1) - 1
+    base = rows[i][1] if i >= 0 else (rows[0][1] if rows else None)
+    out["ytd"] = round((closes[-1][1] / base - 1) * 100, 1) if base else None
+    return out
 
 def asof_close(rows, target, didx):
     i = bisect.bisect_right(didx, target) - 1
     return rows[i][1] if i >= 0 else None
 
 def build_curve(grid, series_map, hist):
+    """Series de cierre BRUTO (sin rebasar) alineadas a `grid`. El navegador recorta
+    el periodo y rebasa a 100 -> un solo download sirve para 1M / 3M / YTD / 1A."""
     labels, series = [], []
     for label, tk in series_map:
         rows = hist.get(eod_sym(tk), [])
         if not rows: continue
         didx = [r[0] for r in rows]
         vals = [asof_close(rows, d, didx) for d in grid]
-        base = next((v for v in vals if v), None)
-        if not base: continue
-        labels.append(label)
-        series.append([round((v / base) * 100, 2) if v else 100.0 for v in vals])
+        vals = [round(v, 4) if v else None for v in vals]
+        if all(v is None for v in vals): continue
+        labels.append(label); series.append(vals)
     return {"labels": labels, "dates": [d.isoformat() for d in grid], "series": series}
+
+def _ret(cl, n):
+    return (cl[-1] / cl[-1-n] - 1) * 100 if len(cl) > n else None
+
+def momentum_block(universe_def, hist, live):
+    """Momentum Composite (0-100): tendencia multi-plazo, aceleración, proximidad a
+    máximos de 52s y baja volatilidad. Pesos 45/15/25/15. Percentiles dentro del universo."""
+    data = []
+    for tk, nm, cat, key in universe_def:
+        cl = [c for _, c in unified_closes(hist.get(eod_sym(tk), []), live.get(eod_sym(tk)))]
+        if len(cl) < 253: continue                    # necesita ~1 año de histórico
+        r21, r63, r126, r252 = _ret(cl,21), _ret(cl,63), _ret(cl,126), _ret(cl,252)
+        if None in (r21, r63, r126, r252): continue
+        trend = 0.10*r21 + 0.25*r63 + 0.30*r126 + 0.35*r252   # multi-plazo, peso al largo
+        accel = r63 - r252/4                                  # trimestre reciente vs ritmo anual
+        hi = max(cl[-252:]); dist = (cl[-1]/hi - 1) * 100     # distancia a máximo 52s (<=0)
+        dr = [cl[i]/cl[i-1]-1 for i in range(len(cl)-63, len(cl))]
+        vol = statistics.pstdev(dr) * (252**0.5) * 100 if len(dr) > 1 else 0
+        data.append({"tk":tk,"nm":nm,"cat":cat,"trend":trend,"accel":accel,"dist":dist,"vol":vol,"r12":r252})
+    if not data: return []
+    def pct(vals, v): return round(sum(1 for x in vals if x <= v) / len(vals) * 100)
+    T=[d["trend"] for d in data]; A=[d["accel"] for d in data]
+    H=[d["dist"] for d in data];  V=[d["vol"] for d in data]
+    out = []
+    for d in data:
+        st, sa = pct(T, d["trend"]), pct(A, d["accel"])
+        sh, sv = pct(H, d["dist"]), 100 - pct(V, d["vol"])    # vol: menos es mejor
+        score = round(0.45*st + 0.15*sa + 0.25*sh + 0.15*sv)
+        out.append([d["tk"], d["nm"], d["cat"], score, st, sa, sh, sv,
+                    round(d["r12"],1), round(d["dist"],1), round(d["vol"],1)])
+    out.sort(key=lambda r: -r[3])
+    return out
+
+def momentum_evolution(universe_def, hist, live, top, weeks=26, step=5):
+    """Evolución semanal del Z-score de fuerza (momentum multi-plazo) frente al universo.
+    Z = (tendencia del ETF − media del universo) / desviación típica, en cada fecha."""
+    spy = hist.get("SPY.US", [])
+    if len(spy) < weeks*step: return {}
+    sdates = [spy[i][0] for i in range(len(spy)-1, -1, -step)][:weeks][::-1]
+    rowsmap = {}
+    for tk, *_ in universe_def:
+        r = hist.get(eod_sym(tk))
+        if r: rowsmap[tk] = (r, [x[0] for x in r])
+    def trend_at(tk, ds):
+        r, didx = rowsmap.get(tk, (None, None))
+        if not r: return None
+        base = asof_close(r, ds, didx)
+        if base is None: return None
+        def R(days):
+            p = asof_close(r, ds - timedelta(days=days), didx)
+            return (base/p - 1) * 100 if p else None
+        a, b, c, e = R(30), R(91), R(182), R(365)
+        if None in (a, b, c, e): return None
+        return 0.10*a + 0.25*b + 0.30*c + 0.35*e
+    Z = {tk: [] for tk in top}
+    for ds in sdates:
+        vals = {tk: trend_at(tk, ds) for tk in rowsmap}
+        arr = [v for v in vals.values() if v is not None]
+        if len(arr) < 5:
+            for tk in top: Z[tk].append(None)
+            continue
+        mu = statistics.fmean(arr); sd = statistics.pstdev(arr) or 1
+        for tk in top:
+            v = vals.get(tk)
+            Z[tk].append(round((v-mu)/sd, 2) if v is not None else None)
+    return {"dates": [d.isoformat() for d in sdates], "labels": top, "series": [Z[tk] for tk in top]}
 
 def es_num(x, dec=2):
     s = f"{x:,.{dec}f}"
@@ -190,7 +267,7 @@ def main():
 
     universe_def = [u for u in UNIVERSE if u[0] in DEV_TICKERS] if args.dev else UNIVERSE
     use_live = (not args.demo) and (not args.no_live) and (not args.dev)
-    start = date.today() - timedelta(days=420)
+    start = date.today() - timedelta(days=600)
 
     def get_eod(sym):
         if args.demo: return fetch_eod_demo(sym, start)
@@ -213,19 +290,19 @@ def main():
         try: live = fetch_live(list(hist.keys()))
         except Exception as e: print(f"  · real-time no disponible ({e})", file=sys.stderr)
 
-    # 3) Universo con variación semanal
+    # 3) Universo con retornos D/S/M/YTD por ETF
     universe = []
     for tk, nm, cat, key in universe_def:
         s = eod_sym(tk); rows = hist.get(s)
         if not rows: continue
-        w = weekly_return(unified_closes(rows, live.get(s)))
-        if w is not None: universe.append([tk, nm, cat, w, key])
+        rets = returns(unified_closes(rows, live.get(s)), rows)
+        if rets["w"] is None and rets["d"] is None: continue
+        universe.append([tk, nm, cat, rets, key])
 
-    # 4) Curvas base 100 (rejilla semanal YTD desde SPY)
+    # 4) Curvas: rejilla DIARIA (último ~año) desde SPY. Cierre bruto + fechas; el
+    #    navegador elige 1M/3M/YTD/1A y rebasa. Una descarga, muchas vistas.
     spy = hist.get("SPY.US", [])
-    ytd = [r for r in spy if r[0] >= date(date.today().year, 1, 1)]
-    grid = [ytd[i][0] for i in range(0, len(ytd), 5)]
-    if ytd and (not grid or grid[-1] != ytd[-1][0]): grid.append(ytd[-1][0])
+    grid = [d for d, _ in spy][-260:]
     assets = build_curve(grid, ASSETS_MAP, hist)
     themes = build_curve(grid, THEMES_MAP, hist)
 
@@ -244,8 +321,10 @@ def main():
 
     as_of = (datetime.now().strftime("%Y-%m-%d %H:%M") if (use_live and live)
              else (spy[-1][0].isoformat() if spy else date.today().isoformat()))
-    data = {"asOf": as_of, "live": True, "stats": stats,
-            "universe": universe, "assets": assets, "themes": themes}
+    mom = momentum_block(universe_def, hist, live)
+    momz = momentum_evolution(universe_def, hist, live, [r[0] for r in mom[:12]])
+    data = {"asOf": as_of, "live": True, "stats": stats, "universe": universe,
+            "assets": assets, "themes": themes, "momentum": mom, "momentumZ": momz}
     json.dump(data, open(args.out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
     mode = "DEMO" if args.demo else ("DEV" if args.dev else
