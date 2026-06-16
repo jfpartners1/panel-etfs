@@ -1,9 +1,9 @@
 {
- "asOf": "2026-06-16 12:27",
+ "asOf": "2026-06-16 18:38",
  "live": true,
  "stats": {
-  "spx": "7.554,29",
-  "spxChg": "+1,7%",
+  "spx": "7.532,17",
+  "spxChg": "-0,3%",
   "lo52": "5.967,84",
   "hi52": "7.609,78"
  },
@@ -12,105 +12,105 @@
    "SPY",
    "S&P 500",
    "IDX",
-   2.4,
+   2.0,
    true
   ],
   [
    "QQQ",
    "Nasdaq 100",
    "IDX",
-   5.1,
+   3.6,
    true
   ],
   [
    "IWM",
    "Russell 2000",
    "IDX",
-   3.6,
+   3.2,
    true
   ],
   [
    "DIA",
    "Dow 30",
    "IDX",
-   1.8,
+   2.6,
    false
   ],
   [
    "VTI",
    "Total EE.UU.",
    "IDX",
-   2.4,
+   2.1,
    false
   ],
   [
    "EFA",
    "Desarroll. exUS",
    "IDX",
-   2.7,
+   3.2,
    false
   ],
   [
    "EEM",
    "Emergentes",
    "IDX",
-   6.5,
+   5.2,
    true
   ],
   [
    "VGK",
    "Europa",
    "IDX",
-   2.3,
+   2.7,
    false
   ],
   [
    "EWJ",
    "Japón",
    "IDX",
-   3.4,
+   3.7,
    false
   ],
   [
    "FXI",
    "China",
    "IDX",
-   2.0,
+   0.3,
    true
   ],
   [
    "INDA",
    "India",
    "IDX",
-   3.6,
+   4.0,
    false
   ],
   [
    "EWZ",
    "Brasil",
    "IDX",
-   3.1,
+   2.5,
    false
   ],
   [
    "TLT",
    "Treasuries 20Y",
    "ACT",
-   0.7,
+   1.4,
    true
   ],
   [
    "IEF",
    "Treasuries 7-10Y",
    "ACT",
-   0.5,
+   0.8,
    false
   ],
   [
    "LQD",
    "Crédito IG",
    "ACT",
-   0.5,
+   0.8,
    false
   ],
   [
@@ -131,196 +131,196 @@
    "GLD",
    "Oro",
    "ACT",
-   1.5,
+   1.9,
    true
   ],
   [
    "SLV",
    "Plata",
    "ACT",
-   7.6,
+   7.7,
    false
   ],
   [
    "DBC",
    "Materias primas",
    "ACT",
-   -2.9,
+   -4.3,
    true
   ],
   [
    "USO",
    "Petróleo",
    "ACT",
-   -7.7,
+   -13.2,
    true
   ],
   [
    "UNG",
    "Gas natural",
    "ACT",
-   0.4,
+   3.2,
    true
   ],
   [
    "DBA",
    "Agricultura",
    "ACT",
-   0.4,
+   1.5,
    false
   ],
   [
    "VNQ",
    "Inmobiliario",
    "ACT",
-   0.2,
+   0.3,
    false
   ],
   [
    "IBIT",
    "Bitcoin",
    "ACT",
-   7.4,
+   6.3,
    true
   ],
   [
    "DBB",
    "Metales base",
    "ACT",
-   0.0,
+   0.3,
    false
   ],
   [
    "XLK",
    "Tecnología",
    "IND",
-   6.1,
+   4.0,
    true
   ],
   [
    "XLF",
    "Financieras",
    "IND",
-   2.1,
+   3.5,
    false
   ],
   [
    "XLV",
    "Salud",
    "IND",
-   -1.1,
+   -1.0,
    false
   ],
   [
    "XLE",
    "Energía",
    "IND",
-   -3.2,
+   -3.6,
    true
   ],
   [
    "XLI",
    "Industria",
    "IND",
-   1.8,
+   2.9,
    false
   ],
   [
    "XLY",
    "Cons. discrec.",
    "IND",
-   2.3,
+   2.5,
    false
   ],
   [
    "XLP",
    "Cons. básico",
    "IND",
-   1.6,
+   1.7,
    false
   ],
   [
    "XLU",
    "Utilities",
    "IND",
-   1.7,
+   2.6,
    false
   ],
   [
    "XLB",
    "Materiales",
    "IND",
-   3.4,
+   4.0,
    false
   ],
   [
    "XLRE",
    "Inmobiliario",
    "IND",
-   0.0,
+   0.2,
    false
   ],
   [
    "XLC",
    "Comunicación",
    "IND",
-   0.6,
+   0.5,
    false
   ],
   [
    "SMH",
    "Semiconductores",
    "IND",
-   9.5,
+   6.1,
    true
   ],
   [
    "KRE",
    "Bancos regionales",
    "IND",
-   1.4,
+   1.6,
    true
   ],
   [
    "XBI",
    "Biotech",
    "IND",
-   3.8,
+   3.7,
    true
   ],
   [
    "XOP",
    "Petróleo E&P",
    "IND",
-   -3.5,
+   -3.9,
    false
   ],
   [
    "XHB",
    "Construcción",
    "IND",
-   1.2,
+   3.0,
    false
   ],
   [
    "ITA",
    "Defensa",
    "IND",
-   3.1,
+   4.2,
    true
   ],
   [
    "ARKK",
    "Innovación",
    "TEM",
-   6.2,
+   6.7,
    true
   ],
   [
    "BOTZ",
    "Robótica / IA",
    "TEM",
-   1.7,
+   1.2,
    true
   ],
   [
@@ -334,70 +334,70 @@
    "TAN",
    "Solar",
    "TEM",
-   1.4,
+   -0.6,
    true
   ],
   [
    "LIT",
    "Litio",
    "TEM",
-   7.0,
+   6.8,
    false
   ],
   [
    "CIBR",
    "Ciberseguridad",
    "TEM",
-   2.3,
+   0.8,
    false
   ],
   [
    "URA",
    "Uranio",
    "TEM",
-   8.9,
+   9.3,
    true
   ],
   [
    "SKYY",
    "Cloud",
    "TEM",
-   0.3,
+   -0.5,
    false
   ],
   [
    "FINX",
    "Fintech",
    "TEM",
-   4.1,
+   5.4,
    false
   ],
   [
    "GDX",
    "Mineras oro",
    "TEM",
-   9.9,
+   12.6,
    true
   ],
   [
    "JETS",
    "Aerolíneas",
    "TEM",
-   6.7,
+   7.9,
    false
   ],
   [
    "DRIV",
    "Coches eléctricos",
    "TEM",
-   5.2,
+   3.5,
    false
   ],
   [
    "BLOK",
    "Blockchain",
    "TEM",
-   7.0,
+   7.5,
    false
   ]
  ],
