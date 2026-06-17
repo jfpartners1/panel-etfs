@@ -357,25 +357,28 @@ def factor_block(hist, live):
     return out
 
 def breadth_block(universe_def, hist, live):
-    """Amplitud del mercado sobre el universo: % sobre media 50/200, nuevos máx/mín, % en positivo."""
-    n = ma50 = ma200 = d200 = hi = lo = upd = 0
+    """Amplitud del mercado: % sobre media 50/200, nuevos máx/mín, % en positivo, con la lista de ETFs de cada grupo."""
+    n = d200 = 0
+    L = {"ma50": [], "ma200": [], "hi": [], "lo": [], "up": [], "down": []}
     for tk, nm, cat, key in universe_def:
         rows = hist.get(eod_sym(tk))
         if not rows: continue
         cl = [c for _, c in unified_closes(rows, live.get(eod_sym(tk)))]
         if len(cl) < 2: continue
         n += 1
-        if len(cl) >= 50 and cl[-1] > sum(cl[-50:])/50: ma50 += 1
+        if len(cl) >= 50 and cl[-1] > sum(cl[-50:])/50: L["ma50"].append(tk)
         if len(cl) >= 200:
             d200 += 1
-            if cl[-1] > sum(cl[-200:])/200: ma200 += 1
+            if cl[-1] > sum(cl[-200:])/200: L["ma200"].append(tk)
         win = cl[-252:] if len(cl) >= 252 else cl
-        if cl[-1] >= max(win): hi += 1
-        if cl[-1] <= min(win): lo += 1
-        if cl[-1]/cl[-2] - 1 >= 0: upd += 1
+        if cl[-1] >= max(win): L["hi"].append(tk)
+        if cl[-1] <= min(win): L["lo"].append(tk)
+        if cl[-1]/cl[-2] - 1 >= 0: L["up"].append(tk)
+        else: L["down"].append(tk)
     pct = lambda a, b: round(a/b*100) if b else None
-    return {"n": n, "ma50": pct(ma50, n), "ma200": pct(ma200, d200),
-            "hi": hi, "lo": lo, "up": upd, "down": n-upd, "upPct": pct(upd, n)}
+    return {"n": n, "ma50": pct(len(L["ma50"]), n), "ma200": pct(len(L["ma200"]), d200),
+            "hi": len(L["hi"]), "lo": len(L["lo"]), "up": len(L["up"]), "down": len(L["down"]),
+            "upPct": pct(len(L["up"]), n), "lists": L}
 
 def market_pulse(hist, volh, window=25):
     """Pulso de mercado estilo IBD. Día de distribución = índice cae >=0,2% con volumen

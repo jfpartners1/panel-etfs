@@ -54,9 +54,13 @@
   .wfpanel{flex:1}
   .col-list .lst{flex:1}
 
+  .breadth{position:relative}
   .breadth .ptitle{padding:14px 16px 4px}
   .brd{padding:8px 14px 14px;display:flex;flex-direction:column;justify-content:space-between;gap:12px;flex:1}
-  .brow{display:flex;flex-direction:column;gap:5px}
+  .brow{display:flex;flex-direction:column;gap:5px;border-radius:7px;padding:3px 4px;margin:-3px -4px}
+  .brow[data-bkey],.bcell[data-bkey]{cursor:pointer;transition:background .12s}
+  .brow[data-bkey]:hover{background:#F2F5F9}
+  .bcell[data-bkey]:hover{border-color:var(--blue)}
   .brlbl{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;color:var(--mute)}
   .brlbl b{font-size:15px;color:var(--ink);font-variant-numeric:tabular-nums}
   .brbar{height:6px;border-radius:4px;background:#ECEFF3;overflow:hidden}
@@ -65,6 +69,14 @@
   .bcell{flex:1;background:#F6F8FB;border:1px solid var(--line-2);border-radius:8px;padding:8px 10px;text-align:center}
   .bcell .bn{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
   .bcell .bk{font-size:10px;color:var(--mute);text-transform:uppercase;letter-spacing:.03em;margin-top:3px}
+  .brdpop{position:absolute;inset:8px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(20,30,50,.16);padding:12px 14px;display:flex;flex-direction:column;z-index:6}
+  .bphdr{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:600;color:var(--ink);margin-bottom:10px}
+  .bpx{border:none;background:none;font-size:20px;line-height:1;cursor:pointer;color:var(--mute);padding:0 2px}
+  .bpx:hover{color:var(--ink)}
+  .bpchips{display:flex;flex-wrap:wrap;gap:6px;overflow-y:auto;align-content:flex-start}
+  .bchip{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;border:1px solid var(--line-2);background:#F6F8FB;color:#1A2233;cursor:pointer}
+  .bchip:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .bnone{color:var(--mute);font-size:12px}
 
   .fmapwrap .ptitle{padding:14px 16px 4px}
   .fmap{padding:8px 14px 14px;display:grid;grid-template-columns:auto 1fr 1fr 1fr;grid-template-rows:auto 1fr 1fr 1fr;gap:5px;flex:1}
@@ -266,8 +278,9 @@
       <div class="lst" id="best"></div>
     </div>
     <div class="panel breadth">
-      <div class="ptitle"><h2>Amplitud del mercado</h2><span class="sub">universo · 56 ETFs</span></div>
+      <div class="ptitle"><h2>Amplitud del mercado</h2><span class="sub">clic en una métrica para ver los ETFs</span></div>
       <div class="brd" id="breadth"></div>
+      <div class="brdpop" id="brdPop" hidden></div>
     </div>
     <div class="panel news">
       <div class="ptitle"><h2>Noticias e impacto</h2><span class="sub">lo más relevante del mercado</span></div>
@@ -445,7 +458,14 @@ function buildSample(){
     ["IWD","L","V",fr(0.1,-0.6,4.3,22.3)],["IWB","L","C",fr(-0.6,-1.2,3.1,18.4)],["IWF","L","G",fr(-1.1,-2.0,1.8,14.2)],
     ["IWS","M","V",fr(-0.1,-0.9,2.6,12.1)],["IWR","M","C",fr(-0.3,-1.4,1.2,9.8)],["IWP","M","G",fr(-0.4,-1.8,-0.6,6.3)],
     ["IWN","S","V",fr(-0.5,-1.1,0.4,3.2)],["IWM","S","C",fr(-0.9,-1.9,-1.2,-0.8)],["IWO","S","G",fr(-1.2,-2.6,-2.8,-4.1)]];
-  const breadth={n:56,ma50:77,ma200:70,hi:7,lo:4,up:37,down:19,upPct:66};
+  const breadth={n:56,ma50:77,ma200:70,hi:7,lo:4,up:37,down:19,upPct:66,
+    lists:{
+      ma50:["SPY","QQQ","SMH","XLK","BOTZ","FINX","URA","USO","VNQ","XLC","LQD","HYG","ITA","XBI","TLT","IWF","IWB","BLOK","SKYY","CIBR"],
+      ma200:["SPY","QQQ","SMH","XLK","URA","USO","VNQ","XLC","ITA","TLT","IWF","FINX","BLOK","HYG"],
+      hi:["USO","URA","BLOK","TLT","FINX","VNQ","XLC"],
+      lo:["GDX","IEF","SLV","JETS"],
+      up:["USO","URA","BLOK","TLT","FINX","VNQ","XLC","SMH","HYG","LQD","ITA"],
+      down:["SKYY","GDX","IEF","EWJ","SPY","JETS","XBI","TAN","IWM","SLV"]}};
   return {asOf:"datos de muestra",live:false,
     stats:{spx:"7.431,46",spxChg:"+0,6%",lo52:"5.802,82",hi52:"7.609,78"},
     universe, assets:mk(ASSET_LBL,11), themes:mk(THEME_LBL,53), momentum:mom, momentumZ:momz, pulse, breakouts, squeeze, news, factors, breadth};
@@ -706,15 +726,30 @@ function renderBreadth(){const el=document.getElementById("breadth");if(!el)retu
   const col=p=>p==null?"#9AA5B3":(p>=60?"#15A86B":p>=40?"#E0A52E":"#E04444");
   const pc=p=>p==null?"—":p+"%";
   el.innerHTML=
-    `<div class="brow"><div class="brlbl">ETFs sobre su media de 50 <b>${pc(b.ma50)}</b></div>${bbar(b.ma50,col(b.ma50))}</div>
-     <div class="brow"><div class="brlbl">ETFs sobre su media de 200 <b>${pc(b.ma200)}</b></div>${bbar(b.ma200,col(b.ma200))}</div>
-     <div class="brow"><div class="brlbl">En positivo hoy <b>${pc(b.upPct)}</b></div>${bbar(b.upPct,col(b.upPct))}</div>
+    `<div class="brow" data-bkey="ma50"><div class="brlbl">ETFs sobre su media de 50 <b>${pc(b.ma50)}</b></div>${bbar(b.ma50,col(b.ma50))}</div>
+     <div class="brow" data-bkey="ma200"><div class="brlbl">ETFs sobre su media de 200 <b>${pc(b.ma200)}</b></div>${bbar(b.ma200,col(b.ma200))}</div>
+     <div class="brow" data-bkey="up"><div class="brlbl">En positivo hoy <b>${pc(b.upPct)}</b></div>${bbar(b.upPct,col(b.upPct))}</div>
      <div class="bsplit">
-       <div class="bcell"><div class="bn" style="color:#15A86B">${b.hi}</div><div class="bk">Nuevos máx.</div></div>
-       <div class="bcell"><div class="bn" style="color:#E04444">${b.lo}</div><div class="bk">Nuevos mín.</div></div>
-       <div class="bcell"><div class="bn">${b.up}/${b.down}</div><div class="bk">Suben/Bajan</div></div>
+       <div class="bcell" data-bkey="hi"><div class="bn" style="color:#15A86B">${b.hi}</div><div class="bk">Nuevos máx.</div></div>
+       <div class="bcell" data-bkey="lo"><div class="bn" style="color:#E04444">${b.lo}</div><div class="bk">Nuevos mín.</div></div>
+       <div class="bcell" data-bkey="down"><div class="bn">${b.up}/${b.down}</div><div class="bk">Suben/Bajan</div></div>
      </div>`;
 }
+const BKEY_LBL={ma50:"sobre su media de 50",ma200:"sobre su media de 200",up:"en positivo hoy",
+  hi:"en nuevos máximos (52s)",lo:"en nuevos mínimos (52s)",down:"en negativo hoy"};
+function nmOf(tk){const u=U.find(x=>x.tk===tk);return u?u.nm:tk;}
+function openBreadthPop(key){const pop=document.getElementById("brdPop"),b=DATA.breadth;
+  if(!pop||!b||!b.lists)return;
+  const tks=b.lists[key]||[];
+  const chips=tks.length
+    ? tks.map(tk=>`<button class="bchip" data-tk="${tk}" data-nm="${esc(nmOf(tk))}">${tk}</button>`).join("")
+    : '<span class="bnone">Ninguno ahora mismo.</span>';
+  pop.innerHTML=`<div class="bphdr"><span>${tks.length} ETFs ${BKEY_LBL[key]||""}</span><button class="bpx" id="bpClose">×</button></div>
+    <div class="bpchips">${chips}</div>`;
+  pop.hidden=false;
+}
+
+/* ---- factor map (estilo x tamaño) ---- */
 
 /* ---- factor map (estilo x tamaño) ---- */
 const FNM={L:"Grande",M:"Media",S:"Pequeña",V:"Value",C:"Core",G:"Growth"};
@@ -792,6 +827,11 @@ document.querySelector(".wf").addEventListener("click",e=>{const t=e.target;
   if(t.classList&&t.classList.contains("hit")){const b=WF_BARS[+t.getAttribute("data-i")];if(b)openChart(b.tk,b.nm);}});
 ["#mom","#breakouts","#squeeze","#factors"].forEach(sel=>document.querySelector(sel).addEventListener("click",e=>{
   const el=e.target.closest("[data-tk]");if(el)openChart(el.dataset.tk,el.dataset.nm);}));
+document.getElementById("breadth").addEventListener("click",e=>{
+  const r=e.target.closest("[data-bkey]");if(r)openBreadthPop(r.dataset.bkey);});
+document.getElementById("brdPop").addEventListener("click",e=>{
+  if(e.target.id==="bpClose"){e.currentTarget.hidden=true;return;}
+  const c=e.target.closest(".bchip");if(c)openChart(c.dataset.tk,c.dataset.nm);});
 
 (async()=>{
   try{const r=await fetch("data.json",{cache:"no-store"});
