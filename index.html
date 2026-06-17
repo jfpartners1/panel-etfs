@@ -18,6 +18,15 @@
     font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
   .num{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
   .wrap{max-width:1440px;margin:0 auto;padding:20px 20px 56px}
+
+  .topbar{border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:40}
+  .tbinner{max-width:1440px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .logo{width:26px;height:26px;border-radius:7px;background:var(--ink);color:#fff;
+    font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:11.5px;display:grid;place-items:center;flex:none}
+  .bname{font-weight:700;font-size:15px;letter-spacing:-.01em;color:var(--ink)}
+  .bsub{font-size:12px;color:var(--mute);border-left:1px solid var(--line);padding-left:11px;white-space:nowrap}
+  @media(max-width:560px){.bsub{display:none}}
   .head{display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap}
   .head h1{font-size:20px;font-weight:700;margin:0;letter-spacing:-.01em}
   .head .meta{font-size:12px;color:var(--mute)}
@@ -158,12 +167,17 @@
 </style>
 </head>
 <body>
-<div class="wrap">
-
-  <div class="head">
-    <h1>Resumen de mercado · ETFs <span class="badge demo" id="badge">Datos de muestra</span></h1>
-    <div class="meta" id="meta">cargando…</div>
+<header class="topbar">
+  <div class="tbinner">
+    <div class="brand">
+      <span class="logo">JF</span>
+      <span class="bname">JFPartners</span>
+      <span class="bsub">Panel de mercado</span>
+    </div>
+    <span class="badge demo" id="badge">Datos de muestra</span>
   </div>
+</header>
+<div class="wrap">
 
   <div class="controls">
     <div class="seg" id="filter">
@@ -536,7 +550,6 @@ function renderAll(){
   const live=!!DATA.live,badge=$("#badge");
   badge.textContent=live?("Actualizado "+DATA.asOf):"Datos de muestra";
   badge.className="badge "+(live?"live":"demo");
-  $("#meta").textContent=live?("Fuente real · "+U.length+" ETFs"):("Sin data.json — muestra · "+U.length+" ETFs");
   $("#foot").textContent="Resumen de mercado · "+(live?DATA.asOf:"muestra")+" · "+U.length+" ETFs";
 }
 function bindSeg(id,attr,setter){$(id).addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
