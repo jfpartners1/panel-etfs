@@ -282,22 +282,25 @@ def breakout_block(universe_def, hist, live, volh, near=-3.0):
     out.sort(key=lambda r: (grp[r[6]], -(r[4] or 0) if grp[r[6]] < 2 else -r[3]))
     return out
 
-def squeeze_block(universe_def, hist, live, volh, near=-8.0):
-    """Bases apretadas (contracción de volatilidad / VCP). Cerca de máximos (>= -8%) y con el
-    rango reciente (10s) más estrecho que el de fondo (50s). ratio bajo = base más comprimida."""
+def squeeze_block(universe_def, hist, live, volh):
+    """Bases apretadas pegadas a máximos: precio entre -5% y -0,5% del máximo de 52s, POR ENCIMA
+    de la media de 50 (tendencia de fondo) y con la amplitud de precio de las últimas ~2 semanas
+    más estrecha que la de las 2 anteriores. 'aprieto' = amplitud reciente / previa (bajo = más comprimida)."""
     out = []
     for tk, nm, cat, key in universe_def:
         s = eod_sym(tk)
         cl = [c for _, c in unified_closes(hist.get(s, []), live.get(s))]
-        if len(cl) < 55: continue
+        if len(cl) < 60: continue
         hi = max(cl[-252:]) if len(cl) >= 252 else max(cl)
         dist = (cl[-1]/hi - 1) * 100
-        if dist < near: continue
-        dr = [cl[i]/cl[i-1] - 1 for i in range(len(cl)-50, len(cl))]
-        vs = statistics.pstdev(dr[-10:]); vl = statistics.pstdev(dr)
-        if vl <= 0: continue
+        if not (-5.0 <= dist <= -0.5): continue            # pegado a máximos, en zona de base
+        if cl[-1] < sum(cl[-50:]) / 50: continue           # tendencia de fondo alcista
+        rec, prev = cl[-10:], cl[-20:-10]
+        amp_rec = (max(rec) - min(rec)) / cl[-1]
+        amp_prev = (max(prev) - min(prev)) / cl[-1]
+        if amp_prev <= 0: continue
         rvol = _rvol([v for _, v in volh.get(s, [])])
-        out.append([tk, nm, cat, round(dist, 1), round(vs/vl, 2), rvol])
+        out.append([tk, nm, cat, round(dist, 1), round(amp_rec/amp_prev, 2), rvol])
     out.sort(key=lambda r: r[4])      # más apretado arriba
     return out[:18]
 
