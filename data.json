@@ -1,5 +1,5 @@
 {
- "asOf": "2026-06-17 10:01",
+ "asOf": "2026-06-17 10:31",
  "live": true,
  "stats": {
   "spx": "7.511,35",
@@ -11310,5 +11310,226 @@
    1.57,
    0.76
   ]
- ]
+ ],
+ "news": [
+  [
+   "As Capital Rotates From Crypto to AI, Zoomex Traders Already Have Access to Both",
+   "https://www.globenewswire.com/news-release/2026/06/17/3313201/0/en/As-Capital-Rotates-From-Crypto-to-AI-Zoomex-Traders-Already-Have-Access-to-Both.html",
+   "globenewswire.com",
+   "2026-06-17T07:42:00+00:00",
+   "Mercado",
+   "IDX",
+   "pos"
+  ],
+  [
+   "Asian equities mixed ahead of Fed decision; tech pullback weighs on sentiment",
+   "https://seekingalpha.com/news/4604181-asian-equities-mixed-ahead-of-fed-decision-tech-pullback-weighs-on-sentiment?utm_source=feed_news_all&amp;utm_medium=referral&amp;feed_item_type=news",
+   "seekingalpha.com",
+   "2026-06-17T05:14:04+00:00",
+   "Japón",
+   "IDX",
+   "pos"
+  ],
+  [
+   "Stocks Indexes Finish Mostly Lower as Chipmakers Retreat",
+   "https://www.nasdaq.com/articles/stocks-indexes-finish-mostly-lower-chipmakers-retreat",
+   "nasdaq.com",
+   "2026-06-16T22:50:19+00:00",
+   "Mercado",
+   "IDX",
+   "neg"
+  ],
+  [
+   "SA analyst says falling oil prices could boost Fed rate-cut odds",
+   "https://seekingalpha.com/news/4604140-sa-analyst-says-falling-oil-prices-could-boost-fed-rate-cut-odds?utm_source=feed_news_all&amp;utm_medium=referral&amp;feed_item_type=news",
+   "seekingalpha.com",
+   "2026-06-16T20:34:32+00:00",
+   "Mercado",
+   "IDX",
+   "pos"
+  ],
+  [
+   "Darling Ingredients is Now Oversold (DAR)",
+   "https://www.nasdaq.com/articles/darling-ingredients-now-oversold-dar",
+   "nasdaq.com",
+   "2026-06-16T20:30:00+00:00",
+   "Mercado",
+   "IDX",
+   "pos"
+  ],
+  [
+   "Wells Fargo Raises S&amp;P 500 Target to 7,950 on AI Boom",
+   "https://finance.yahoo.com/markets/stocks/articles/wells-fargo-raises-p-500-192054502.html",
+   "finance.yahoo.com",
+   "2026-06-16T19:20:54+00:00",
+   "Mercado",
+   "IDX",
+   "pos"
+  ],
+  [
+   "Cyclical Stocks Eye Catchup as AI Trade Shows Fatigue",
+   "https://finance.yahoo.com/markets/stocks/articles/cyclical-stocks-eye-catchup-ai-191958319.html",
+   "finance.yahoo.com",
+   "2026-06-16T19:19:58+00:00",
+   "Mercado",
+   "IDX",
+   "pos"
+  ],
+  [
+   "Move over, dot-com: Tech now devours 60% of U.S. market cap",
+   "https://seekingalpha.com/news/4604112-move-over-dot-com-tech-now-devours-60-of-us-market-cap?utm_source=feed_news_all&amp;utm_medium=referral&amp;feed_item_type=news",
+   "seekingalpha.com",
+   "2026-06-16T18:01:57+00:00",
+   "Industria",
+   "IND",
+   "neu"
+  ],
+  [
+   "Exchange-Traded Funds Fall, US Equities Mixed After Midday",
+   "https://finance.yahoo.com/markets/articles/exchange-traded-funds-fall-us-172703049.html",
+   "finance.yahoo.com",
+   "2026-06-16T17:27:03+00:00",
+   "Mercado",
+   "IDX",
+   "pos"
+  ],
+  [
+   "Broader Market Weakens as Energy and Software Stocks Fall",
+   "https://www.nasdaq.com/articles/broader-market-weakens-energy-and-software-stocks-fall",
+   "nasdaq.com",
+   "2026-06-16T17:16:54+00:00",
+   "Dow 30",
+   "IDX",
+   "neg"
+  ],
+  [
+   "Oppenheimer doubles down on stock market outlook for 2026",
+   "https://finance.yahoo.com/markets/stocks/articles/oppenheimer-doubles-down-stock-market-170700425.html",
+   "finance.yahoo.com",
+   "2026-06-16T17:07:00+00:00",
+   "Industria",
+   "IND",
+   "pos"
+  ],
+  [
+   "Stocks Supported by Lower Crude Oil Prices and Bond Yields",
+   "https://www.nasdaq.com/articles/stocks-supported-lower-crude-oil-prices-and-bond-yields",
+   "nasdaq.com",
+   "2026-06-16T15:58:28+00:00",
+   "Dow 30",
+   "IDX",
+   "pos"
+  ]
+ ],
+ "factors": [
+  [
+   "IWD",
+   "L",
+   "V",
+   {
+    "d": -0.3,
+    "w": 2.3,
+    "m": 5.0,
+    "ytd": 16.3
+   }
+  ],
+  [
+   "IWB",
+   "L",
+   "C",
+   {
+    "d": -0.6,
+    "w": 1.7,
+    "m": 1.9,
+    "ytd": 10.1
+   }
+  ],
+  [
+   "IWF",
+   "L",
+   "G",
+   {
+    "d": -0.8,
+    "w": 1.2,
+    "m": -0.7,
+    "ytd": 4.4
+   }
+  ],
+  [
+   "IWS",
+   "M",
+   "V",
+   {
+    "d": -0.4,
+    "w": 2.3,
+    "m": 5.7,
+    "ytd": 16.8
+   }
+  ],
+  [
+   "IWR",
+   "M",
+   "C",
+   {
+    "d": 0.0,
+    "w": 3.7,
+    "m": 5.4,
+    "ytd": 13.8
+   }
+  ],
+  [
+   "IWP",
+   "M",
+   "G",
+   {
+    "d": -0.6,
+    "w": 1.8,
+    "m": 4.5,
+    "ytd": 3.9
+   }
+  ],
+  [
+   "IWN",
+   "S",
+   "V",
+   {
+    "d": -0.5,
+    "w": 2.3,
+    "m": 5.3,
+    "ytd": 20.1
+   }
+  ],
+  [
+   "IWM",
+   "S",
+   "C",
+   {
+    "d": -0.9,
+    "w": 2.7,
+    "m": 5.5,
+    "ytd": 19.1
+   }
+  ],
+  [
+   "IWO",
+   "S",
+   "G",
+   {
+    "d": -1.2,
+    "w": 3.0,
+    "m": 5.4,
+    "ytd": 18.3
+   }
+  ]
+ ],
+ "breadth": {
+  "n": 56,
+  "ma50": 66,
+  "ma200": 82,
+  "hi": 3,
+  "lo": 0,
+  "up": 29,
+  "down": 27,
+  "upPct": 52
+ }
 }
