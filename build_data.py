@@ -256,6 +256,51 @@ def momentum_evolution(universe_def, hist, live, top, weeks=26, step=5):
             Z[tk].append(round((v-mu)/sd, 2) if v is not None else None)
     return {"dates": [d.isoformat() for d in sdates], "labels": top, "series": [Z[tk] for tk in top]}
 
+def _rvol(vv):
+    return round(vv[-1] / (sum(vv[-21:-1])/20), 2) if len(vv) >= 21 and sum(vv[-21:-1]) > 0 else None
+
+def breakout_block(universe_def, hist, live, volh, near=-3.0):
+    """Rupturas y proximidad a máximos de 52s. Estado:
+    break = nuevo máximo con RVol>=1,3 · breaknovol = nuevo máximo sin volumen · near = entre 0 y -3%."""
+    out = []
+    for tk, nm, cat, key in universe_def:
+        s = eod_sym(tk)
+        cl = [c for _, c in unified_closes(hist.get(s, []), live.get(s))]
+        if len(cl) < 40: continue
+        hi = max(cl[-252:]) if len(cl) >= 252 else max(cl)
+        dist = (cl[-1]/hi - 1) * 100
+        if dist < near: continue
+        rvol = _rvol([v for _, v in volh.get(s, [])])
+        r1m = _ret(cl, 21)
+        if dist >= -0.1:
+            estado = "break" if (rvol is not None and rvol >= 1.3) else "breaknovol"
+        else:
+            estado = "near"
+        out.append([tk, nm, cat, round(dist, 1), rvol,
+                    round(r1m, 1) if r1m is not None else None, estado])
+    grp = {"break": 0, "breaknovol": 1, "near": 2}
+    out.sort(key=lambda r: (grp[r[6]], -(r[4] or 0) if grp[r[6]] < 2 else -r[3]))
+    return out
+
+def squeeze_block(universe_def, hist, live, volh, near=-8.0):
+    """Bases apretadas (contracción de volatilidad / VCP). Cerca de máximos (>= -8%) y con el
+    rango reciente (10s) más estrecho que el de fondo (50s). ratio bajo = base más comprimida."""
+    out = []
+    for tk, nm, cat, key in universe_def:
+        s = eod_sym(tk)
+        cl = [c for _, c in unified_closes(hist.get(s, []), live.get(s))]
+        if len(cl) < 55: continue
+        hi = max(cl[-252:]) if len(cl) >= 252 else max(cl)
+        dist = (cl[-1]/hi - 1) * 100
+        if dist < near: continue
+        dr = [cl[i]/cl[i-1] - 1 for i in range(len(cl)-50, len(cl))]
+        vs = statistics.pstdev(dr[-10:]); vl = statistics.pstdev(dr)
+        if vl <= 0: continue
+        rvol = _rvol([v for _, v in volh.get(s, [])])
+        out.append([tk, nm, cat, round(dist, 1), round(vs/vl, 2), rvol])
+    out.sort(key=lambda r: r[4])      # más apretado arriba
+    return out[:18]
+
 def market_pulse(hist, volh, window=25):
     """Pulso de mercado estilo IBD. Día de distribución = índice cae >=0,2% con volumen
     mayor que el anterior; acumulación = sube >=0,2% con más volumen. Ventana 25 sesiones.
@@ -369,7 +414,9 @@ def main():
     momz = momentum_evolution(universe_def, hist, live, [r[0] for r in mom[:12]])
     data = {"asOf": as_of, "live": True, "stats": stats, "universe": universe,
             "assets": assets, "themes": themes, "momentum": mom, "momentumZ": momz,
-            "pulse": market_pulse(hist, volh)}
+            "pulse": market_pulse(hist, volh),
+            "breakouts": breakout_block(universe_def, hist, live, volh),
+            "squeeze": squeeze_block(universe_def, hist, live, volh)}
     json.dump(data, open(args.out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
     mode = "DEMO" if args.demo else ("DEV" if args.dev else
