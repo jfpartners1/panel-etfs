@@ -156,6 +156,17 @@
   #modal .x:hover{background:#E6EBF1;color:var(--ink)}
   #modal .mbody{flex:1;min-height:0}
   #tv_chart{width:100%;height:100%}
+  #modal .ucits{border-top:1px solid var(--line);padding:12px 16px;background:#FAFBFD}
+  #modal .ucits[hidden]{display:none}
+  .uchd{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);margin-bottom:6px}
+  .unm{font-size:13.5px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .utk{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;color:#fff;background:var(--blue);padding:2px 7px;border-radius:5px}
+  .umeta{display:flex;align-items:center;gap:7px;margin-top:5px;font-size:11.5px;color:var(--mute)}
+  .uisin{font-family:"IBM Plex Mono",monospace;cursor:pointer;border-bottom:1px dotted var(--mute)}
+  .uisin:hover{color:var(--blue);border-color:var(--blue)}
+  .udot{opacity:.5}
+  .unota{font-size:11px;color:var(--mute);margin-top:5px;font-style:italic}
+  .unone{font-size:12.5px;color:var(--mute)}
 
   /* panel momentum */
   .mm{margin-top:16px;padding:16px}
@@ -368,6 +379,7 @@
         <button class="x" id="mClose" title="Cerrar (Esc)">✕</button>
       </div>
       <div class="mbody"><div id="tv_chart"></div></div>
+      <div id="ucitsBox" class="ucits"></div>
     </div>
   </div>
 
@@ -467,9 +479,16 @@ function buildSample(){
       lo:["GDX","IEF","SLV","JETS"],
       up:["USO","URA","BLOK","TLT","FINX","VNQ","XLC","SMH","HYG","LQD","ITA"],
       down:["SKYY","GDX","IEF","EWJ","SPY","JETS","XBI","TAN","IWM","SLV"]}};
+  const ucits={
+    IWM:{nombre:"SPDR Russell 2000 US Small Cap UCITS ETF",isin:"IE00BJ38QD84",tickerEur:"ZPRR",ter:"0,30%",accDis:"ACC",nota:""},
+    SPY:{nombre:"SPDR S&P 500 UCITS ETF (Acc)",isin:"IE000XZSV718",tickerEur:"SPYL",ter:"0,03%",accDis:"ACC",nota:""},
+    XLE:{nombre:"SPDR S&P US Energy Select Sector UCITS ETF",isin:"IE00BWBXM492",tickerEur:"SXLE",ter:"0,15%",accDis:"ACC",nota:""},
+    GDX:{nombre:"VanEck Gold Miners UCITS ETF",isin:"IE00BQQP9F84",tickerEur:"G2X",ter:"0,53%",accDis:"ACC",nota:""},
+    SMH:{nombre:"VanEck Semiconductor UCITS ETF",isin:"IE00BMC38736",tickerEur:"VVSM / SMH",ter:"0,35%",accDis:"ACC",nota:""},
+    KRE:{nombre:"",isin:"",tickerEur:"",ter:"",accDis:"",nota:"Sin equivalente UCITS (bancos regionales USA)"}};
   return {asOf:"datos de muestra",live:false,
     stats:{spx:"7.431,46",spxChg:"+0,6%",lo52:"5.802,82",hi52:"7.609,78"},
-    universe, assets:mk(ASSET_LBL,11), themes:mk(THEME_LBL,53), momentum:mom, momentumZ:momz, pulse, breakouts, squeeze, news, factors, breadth};
+    universe, assets:mk(ASSET_LBL,11), themes:mk(THEME_LBL,53), momentum:mom, momentumZ:momz, pulse, breakouts, squeeze, news, factors, breadth, ucits};
 }
 
 /* ---- estado ---- */
@@ -799,6 +818,21 @@ bindChart("chAssets","lgAssets","assets",renderBottom);
 bindChart("chThemes","lgThemes","themes",renderBottom);
 bindChart("chMomZ","lgMomZ","momz",momZChart);
 
+function renderUcits(tk){const box=document.getElementById("ucitsBox");if(!box)return;
+  const u=(DATA.ucits||{})[tk];
+  if(!u){box.innerHTML="";box.hidden=true;return;}
+  box.hidden=false;
+  if(!u.nombre){
+    box.innerHTML=`<div class="uchd">Para operar en Europa (UCITS)</div>
+      <div class="unone">${esc(u.nota||"Sin equivalente UCITS líquido directo.")}</div>`;
+    return;}
+  const chip=(u.tickerEur?`<span class="utk">${esc(u.tickerEur)}</span>`:"");
+  const meta=[u.ter?"TER "+esc(u.ter):"",u.accDis?esc(u.accDis):""].filter(Boolean).join(" · ");
+  box.innerHTML=`<div class="uchd">Para operar en Europa (UCITS)</div>
+    <div class="urow"><div class="unm">${esc(u.nombre)} ${chip}</div></div>
+    <div class="umeta"><span class="uisin" title="Copiar ISIN" data-isin="${esc(u.isin)}">${esc(u.isin)}</span>${meta?'<span class="udot">·</span>'+meta:""}</div>
+    ${u.nota?`<div class="unota">${esc(u.nota)}</div>`:""}`;
+}
 /* ---- modal con gráfico de velas de TradingView ---- */
 function loadTV(){return new Promise((res,rej)=>{
   if(window.TradingView)return res();
@@ -809,6 +843,7 @@ async function openChart(tk,nm){
   const m=document.getElementById("modal");
   document.getElementById("mTk").textContent=tk;
   document.getElementById("mNm").textContent=nm||"";
+  renderUcits(tk);
   m.classList.add("open");m.setAttribute("aria-hidden","false");
   const cont=document.getElementById("tv_chart");cont.innerHTML="";
   try{await loadTV();}catch(e){
@@ -820,6 +855,11 @@ async function openChart(tk,nm){
 function closeChart(){const m=document.getElementById("modal");m.classList.remove("open");
   m.setAttribute("aria-hidden","true");document.getElementById("tv_chart").innerHTML="";}
 document.getElementById("mClose").addEventListener("click",closeChart);
+document.getElementById("ucitsBox").addEventListener("click",e=>{
+  const el=e.target.closest("[data-isin]");if(!el)return;
+  const isin=el.dataset.isin;if(!isin)return;
+  navigator.clipboard&&navigator.clipboard.writeText(isin);
+  const prev=el.textContent;el.textContent="¡copiado!";setTimeout(()=>{el.textContent=prev;},1100);});
 document.getElementById("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeChart();});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeChart();});
 ["#worst","#best"].forEach(sel=>document.querySelector(sel).addEventListener("click",e=>{

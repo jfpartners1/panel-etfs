@@ -1,0 +1,57 @@
+ticker_usa;nombre;isin;ticker_eur;ter;acc_dis;nota
+SPY;SPDR S&P 500 UCITS ETF (Acc);IE000XZSV718;SPYL;0,03%;ACC;
+QQQ;iShares Nasdaq 100 UCITS ETF (Acc);IE00B53SZB19;CNDX / SXRV;0,33%;ACC;
+IWM;SPDR Russell 2000 US Small Cap UCITS ETF;IE00BJ38QD84;ZPRR;0,30%;ACC;
+DIA;iShares Dow Jones Industrial Average UCITS ETF (Acc);IE00B53L4350;SXRU / CIND;0,33%;ACC;
+VTI;iShares Core S&P 500 UCITS ETF (Acc);IE00B5BMR087;CSPX / SXR8;0,07%;ACC;Proxy: no hay un total-market USA idéntico líquido; S&P 500 cubre el ~85%
+EFA;Xtrackers MSCI World ex USA UCITS ETF 1C;IE0006WW1TQ4;EXUS;0,15%;ACC;Aprox.: World ex USA (EFA es MSCI EAFE)
+EEM;iShares Core MSCI EM IMI UCITS ETF (Acc);IE00BKM4GZ66;EIMI / EMIM;0,18%;ACC;
+VGK;Amundi Stoxx Europe 600 UCITS ETF Acc;LU0908500753;MEUD / LYP6;0,07%;ACC;Aprox.: Stoxx Europe 600
+EWJ;iShares Core MSCI Japan IMI UCITS ETF (Acc);IE00B4L5YX21;SJPA / IJPA;0,15%;ACC;Incluye small caps (IMI)
+FXI;iShares MSCI China UCITS ETF;IE00BJ5JPG56;ICGA / ICHN;0,28%;ACC;Aprox.: MSCI China (FXI es FTSE China 50)
+INDA;iShares MSCI India UCITS ETF USD (Acc);IE00BZCQB185;NDIA;0,65%;ACC;
+EWZ;iShares MSCI Brazil UCITS ETF USD (Dist);IE00B0M63516;IBZL;0,74%;DIS;Solo existe en distribución
+TLT;iShares USD Treasury Bond 20+yr UCITS ETF (Acc);IE00BFM6TC58;DTLA;0,07%;ACC;Versión Dist: IDTL / IS04
+IEF;iShares USD Treasury Bond 7-10yr UCITS ETF (Acc);IE00B3VWN518;CBU0 / SXRM;0,07%;ACC;Versión Dist: IDTM / BTMA
+LQD;iShares $ Corp Bond UCITS ETF (Acc);IE00BYXYYJ35;LQDA;0,20%;ACC;Crédito IG USD. Versión Dist: LQDE
+HYG;iShares USD High Yield Corp Bond UCITS ETF (Acc);IE00BYXYYL56;IS00;0,50%;ACC;High yield USD. Versión Dist: IHYU
+TIP;iShares $ TIPS UCITS ETF (Acc);IE00B1FZSC47;IUST / ITPS;0,10%;ACC;Bonos USA ligados a inflación
+GLD;Invesco Physical Gold A;IE00B579F325;SGLD;0,12%;ACC;
+SLV;iShares Physical Silver ETC;IE00B4NCWG09;PPFD;0,20%;ACC;
+DBC;Invesco Bloomberg Commodity UCITS ETF Acc;IE00BD6FTQ80;CMOD;0,19%;ACC;
+USO;WisdomTree WTI Crude Oil;GB00B15KXV33;CRUD;0,49%;ACC;ETC (deuda colateralizada), no ETF
+UNG;WisdomTree Natural Gas;JE00BN7KB334;NGAS;0,49%;ACC;ETC (deuda colateralizada), no ETF
+DBA;WisdomTree Agriculture;GB00B15KYH63;AIGA;0,49%;ACC;ETC (maíz, trigo, soja, café, azúcar, algodón)
+VNQ;iShares US Property Yield UCITS ETF (Dist);IE00B1FZSF77;IUSP;0,40%;DIS;REITs USA · solo existe en distribución
+IBIT;CoinShares Physical Bitcoin (ETN);GB00BLD4ZL17;BITC;0,35%;ACC;Es un ETN, no un ETF
+DBB;WisdomTree Industrial Metals;GB00B15KYG56;AIGI;0,49%;ACC;Metales industriales (cobre, aluminio, zinc, níquel)
+XLK;SPDR S&P US Technology Select Sector UCITS ETF;IE00BWBXM948;SXLK;0,15%;ACC;
+XLF;SPDR S&P US Financials Select Sector UCITS ETF;IE00BWBXM500;SXLF;0,15%;ACC;
+XLV;SPDR S&P US Health Care Select Sector UCITS ETF;IE00BWBXM617;SXLV;0,15%;ACC;
+XLE;SPDR S&P US Energy Select Sector UCITS ETF;IE00BWBXM492;SXLE;0,15%;ACC;
+XLI;SPDR S&P US Industrials Select Sector UCITS ETF;IE00BWBXM724;SXLI;0,15%;ACC;
+XLY;SPDR S&P US Consumer Discretionary Select Sector UCITS ETF;IE00BWBXM278;SXLY;0,15%;ACC;
+XLP;SPDR S&P US Consumer Staples Select Sector UCITS ETF;IE00BWBXM385;SXLP;0,15%;ACC;
+XLU;SPDR S&P US Utilities Select Sector UCITS ETF;IE00BWBXMB69;SXLU;0,15%;ACC;
+XLB;SPDR S&P US Materials Select Sector UCITS ETF;IE00BWBXM831;SXLB;0,15%;ACC;
+XLRE;iShares US Property Yield UCITS ETF (Dist);IE00B1FZSF77;IUSP;0,40%;DIS;REITs USA · solo en distribución (sin sector real estate puro)
+XLC;SPDR S&P U.S. Communication Sector UCITS ETF;IE00BFWFPX50;SXLC;0,15%;ACC;
+SMH;VanEck Semiconductor UCITS ETF;IE00BMC38736;VVSM / SMH;0,35%;ACC;
+KRE;;;;;;Sin equivalente UCITS (bancos regionales USA)
+XBI;iShares Nasdaq US Biotechnology UCITS ETF;IE00BYXG2H39;BTEC;0,35%;ACC;Aprox.: cap-weight (XBI es equal-weight)
+XOP;iShares Oil & Gas Exploration & Production UCITS ETF;IE00B6R51Z18;SPOG / IOGP;0,55%;ACC;Aprox.: E&P global (no solo USA)
+XHB;;;;;;Sin equivalente UCITS (construcción USA)
+ITA;VanEck Defense UCITS ETF A;IE000YYE6WK5;DFEN;0,55%;ACC;Aprox.: defensa global (no solo USA). Alt: Future of Defence (NATO)
+ARKK;;;;;;Sin equivalente UCITS líquido claro (innovación)
+BOTZ;;;;;;Sin equivalente directo (alt. parcial: L&G ROBO / iShares Automation & Robotics)
+ICLN;iShares Global Clean Energy Transition UCITS ETF (Acc);IE000U58J0M1;INRA;0,65%;ACC;Versión Dist: INRG
+TAN;Invesco Solar Energy UCITS ETF Acc;IE00BM8QRZ79;S0LR;0,69%;ACC;
+LIT;Global X Lithium & Battery Tech UCITS ETF (Acc);IE00BLCHJN13;LI7U / LITU;0,60%;ACC;
+CIBR;L&G Cyber Security UCITS ETF;IE00BYPLS672;ISPY / USPY;0,69%;ACC;
+URA;Global X Uranium UCITS ETF USD Accumulating;IE000NDWFGA5;URNU;0,65%;ACC;
+SKYY;WisdomTree Cloud Computing UCITS ETF (Acc);IE00BJGWQN72;WCLD;0,40%;ACC;
+FINX;;;;;;Sin equivalente UCITS líquido claro (fintech)
+GDX;VanEck Gold Miners UCITS ETF;IE00BQQP9F84;G2X;0,53%;ACC;
+JETS;;;;;;Sin equivalente UCITS (aerolíneas)
+DRIV;iShares Electric Vehicles and Driving Technology UCITS ETF (Acc);IE00BGL86Z12;ECAR;0,40%;ACC;Coches eléctricos y conducción
+BLOK;Invesco CoinShares Global Blockchain UCITS ETF (Acc);IE00BGBN6P67;BCHN / BNXG;0,65%;ACC;
