@@ -398,6 +398,47 @@ def load_ucits():
         print("  · aviso: ucits.csv no encontrado", file=sys.stderr)
     return out
 
+def radar_block(universe_def, hist, live):
+    """Radar de fuerza para decisión rápida:
+    - strong/weak: fuerza relativa pura (retorno multiplazo ponderado, percentil del universo).
+    - gaining: señales de mejora -> 'máximos' (rompe/pegado a máx 52s), 'media 50' (recupera MA50), 'acelera' (momentum reciente > trimestral).
+    - losing: señales de deterioro -> 'pierde 50' (cae bajo MA50), 'frena' (momentum reciente flojea), 'lejos de máx' (a >12% o en mínimos)."""
+    data = []
+    for tk, nm, cat, key in universe_def:
+        cl = [c for _, c in unified_closes(hist.get(eod_sym(tk), []), live.get(eod_sym(tk)))]
+        if len(cl) < 60: continue
+        r21, r63, r126 = _ret(cl, 21), _ret(cl, 63), _ret(cl, 126)
+        r252 = _ret(cl, 252) if len(cl) >= 253 else None
+        wr = [(w, v) for w, v in ((0.10, r21), (0.25, r63), (0.30, r126), (0.35, r252)) if v is not None]
+        if not wr: continue
+        trend = sum(w*v for w, v in wr) / sum(w for w, _ in wr)   # fuerza relativa multiplazo
+        hi = max(cl[-252:]) if len(cl) >= 252 else max(cl)
+        lo = min(cl[-252:]) if len(cl) >= 252 else min(cl)
+        dist = (cl[-1]/hi - 1) * 100
+        ma50 = sum(cl[-50:]) / 50
+        ma50_prev = sum(cl[-60:-10]) / 50 if len(cl) >= 60 else ma50
+        price_then = cl[-11] if len(cl) >= 11 else cl[0]
+        gain, lose = [], []
+        if dist >= -0.5: gain.append("máximos")                       # rompiendo / pegado a máximos
+        if cl[-1] > ma50 and price_then <= ma50_prev: gain.append("media 50")   # recupera la MA50
+        if r21 is not None and r63 is not None and r21 > r63/3 and r21 > 0: gain.append("acelera")
+        if cl[-1] < ma50 and price_then >= ma50_prev: lose.append("pierde 50")  # cae bajo la MA50
+        if r21 is not None and r63 is not None and r21 < r63/3: lose.append("frena")
+        if dist <= -12 or cl[-1] <= lo*1.005: lose.append("lejos de máx")
+        data.append({"tk": tk, "nm": nm, "cat": cat, "trend": trend, "gain": gain, "lose": lose})
+    if not data: return {}
+    T = sorted(d["trend"] for d in data)
+    for d in data:
+        d["rs"] = round(bisect.bisect_right(T, d["trend"]) / len(T) * 100)
+    by_rs = sorted(data, key=lambda d: -d["rs"])
+    strong = [[d["tk"], d["nm"], d["cat"], d["rs"]] for d in by_rs[:5]]
+    weak = [[d["tk"], d["nm"], d["cat"], d["rs"]] for d in by_rs[-5:][::-1]]
+    gains = sorted((d for d in data if d["gain"]), key=lambda d: (-len(d["gain"]), -d["rs"]))
+    loses = sorted((d for d in data if d["lose"]), key=lambda d: (-len(d["lose"]), d["rs"]))
+    gaining = [[d["tk"], d["nm"], d["cat"], d["gain"]] for d in gains[:5]]
+    losing = [[d["tk"], d["nm"], d["cat"], d["lose"]] for d in loses[:5]]
+    return {"strong": strong, "weak": weak, "gaining": gaining, "losing": losing}
+
 def market_pulse(hist, volh, window=25):
     """Pulso de mercado estilo IBD. Día de distribución = índice cae >=0,2% con volumen
     mayor que el anterior; acumulación = sube >=0,2% con más volumen. Ventana 25 sesiones.
@@ -528,6 +569,7 @@ def main():
             "pulse": market_pulse(hist, volh),
             "breakouts": bo, "squeeze": sq,
             "factors": factor_block(hist, live), "breadth": breadth_block(universe_def, hist, live),
+            "radar": radar_block(universe_def, hist, live),
             "ucits": load_ucits()}
     json.dump(data, open(args.out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 

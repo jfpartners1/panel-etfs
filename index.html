@@ -236,10 +236,14 @@
   .rbhd{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;color:var(--ink)}
   .rdot{width:9px;height:9px;border-radius:50%;flex:none}
   .rchips{display:flex;flex-wrap:wrap;gap:6px}
-  .rchip{display:inline-flex;align-items:center;gap:5px;font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;border:1px solid var(--line-2);background:#F6F8FB;cursor:pointer;transition:border-color .12s}
-  .rchip:hover{border-color:var(--blue)}
-  .rchip .rval{font-size:9.5px;opacity:.65;color:var(--ink-2)}
-  .rnone{color:var(--mute);font-size:12px}
+  .rlist{display:flex;flex-direction:column;gap:5px}
+  .rrow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 8px;border-radius:7px;border:1px solid var(--line-2);background:#F6F8FB;cursor:pointer;transition:border-color .12s}
+  .rrow:hover{border-color:var(--blue)}
+  .rtk{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:700;flex:none}
+  .rrs{font-size:10.5px;color:var(--ink-2);font-variant-numeric:tabular-nums;font-weight:600}
+  .rtags{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+  .rtag{font-size:8.5px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;padding:1px 6px;border-radius:20px;background:#EAEEF3;color:#5B6675;white-space:nowrap}
+  .rnone{color:var(--mute);font-size:11px}
 
   footer{margin-top:26px;color:var(--mute);font-size:11.5px;font-family:"IBM Plex Mono",monospace;border-top:1px solid var(--line);padding-top:14px}
 </style>
@@ -460,12 +464,6 @@ function buildSample(){
   const squeeze=BASE.map(([tk,nm,cat])=>{const dist=Math.round((-0.5-r()*4.5)*10)/10;
     return [tk,nm,cat,dist,Math.round((0.45+r()*0.95)*100)/100,Math.round((0.4+r()*1.6)*100)/100];})
     .filter(x=>x[3]>=-5&&x[3]<=-0.5).sort((a,b)=>a[4]-b[4]).slice(0,18);
-  const hAgo=h=>new Date(Date.now()-h*3600000).toISOString();
-  const news=[
-    ["La Fed mantiene los tipos y los índices reaccionan al alza","https://example.com","reuters.com",hAgo(2),"Mercado","IDX","pos"],
-    ["Wall Street cierra mixto a la espera de datos de inflación","https://example.com","bloomberg.com",hAgo(6),"Mercado","IDX","neu"],
-    ["Datos de empleo en EE.UU. por debajo de lo esperado","https://example.com","wsj.com",hAgo(10),"Mercado","IDX","neg"],
-    ["El S&P 500 marca nuevo máximo histórico impulsado por la IA","https://example.com","cnbc.com",hAgo(14),"Mercado","IDX","pos"]];
   const fr=(d,w,m,ytd)=>({d,w,m,ytd});
   const factors=[
     ["IWD","L","V",fr(0.1,-0.6,4.3,22.3)],["IWB","L","C",fr(-0.6,-1.2,3.1,18.4)],["IWF","L","G",fr(-1.1,-2.0,1.8,14.2)],
@@ -486,9 +484,14 @@ function buildSample(){
     GDX:{nombre:"VanEck Gold Miners UCITS ETF",isin:"IE00BQQP9F84",tickerEur:"G2X",ter:"0,53%",accDis:"ACC",nota:""},
     SMH:{nombre:"VanEck Semiconductor UCITS ETF",isin:"IE00BMC38736",tickerEur:"VVSM / SMH",ter:"0,35%",accDis:"ACC",nota:""},
     KRE:{nombre:"",isin:"",tickerEur:"",ter:"",accDis:"",nota:"Sin equivalente UCITS (bancos regionales USA)"}};
+  const radar={
+    strong:[["SMH","Semiconductores","IND",98],["XLK","Tecnología","TEM",96],["URA","Uranio","TEM",93],["BLOK","Blockchain","TEM",91],["GDX","Mineras oro","TEM",88]],
+    weak:[["JETS","Aerolíneas","TEM",4],["SKYY","Cloud","TEM",9],["IEF","Treasuries 7-10y","ACT",13],["SLV","Plata","ACT",16],["EWJ","Japón","IDX",19]],
+    gaining:[["URA","Uranio","TEM",["máximos","acelera"]],["BLOK","Blockchain","TEM",["máximos"]],["XLF","Financieras","IND",["media 50","acelera"]],["FINX","Fintech","TEM",["media 50"]],["VNQ","Inmobiliario","ACT",["acelera"]]],
+    losing:[["SKYY","Cloud","TEM",["pierde 50","frena"]],["JETS","Aerolíneas","TEM",["lejos de máx"]],["XBI","Biotech","IND",["frena"]],["SLV","Plata","ACT",["pierde 50"]],["TAN","Solar","TEM",["frena"]]]};
   return {asOf:"datos de muestra",live:false,
     stats:{spx:"7.431,46",spxChg:"+0,6%",lo52:"5.802,82",hi52:"7.609,78"},
-    universe, assets:mk(ASSET_LBL,11), themes:mk(THEME_LBL,53), momentum:mom, momentumZ:momz, pulse, breakouts, squeeze, news, factors, breadth, ucits};
+    universe, assets:mk(ASSET_LBL,11), themes:mk(THEME_LBL,53), momentum:mom, momentumZ:momz, pulse, breakouts, squeeze, factors, breadth, radar, ucits};
 }
 
 /* ---- estado ---- */
@@ -719,29 +722,23 @@ function renderPulse(){
 
 /* ---- radar de fuerza (según momentum) ---- */
 function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
-function rAcc(r){return (r[9]||0)-(r[11]||0)/4;}   // aceleración = r3M − r12M/4
-function buildRadar(){const m=DATA.momentum||[];if(!m.length)return null;
-  const byScore=m.slice().sort((a,b)=>b[3]-a[3]);
-  const byAcc=m.slice().sort((a,b)=>rAcc(b)-rAcc(a));
-  const N=5;
-  return {strong:byScore.slice(0,N), weak:byScore.slice().reverse().slice(0,N),
-          gaining:byAcc.filter(r=>rAcc(r)>0).slice(0,N),
-          losing:byAcc.filter(r=>rAcc(r)<0).slice().reverse().slice(0,N)};
-}
 function renderRadar(){const el=document.getElementById("radar");if(!el)return;
-  const R=buildRadar();
-  if(!R){el.innerHTML='<div class="rnone" style="padding:10px">Sin datos de momentum todavía.</div>';return;}
+  const R=DATA.radar;
+  if(!R||!R.strong){el.innerHTML='<div class="rnone" style="padding:10px">Sin datos suficientes todavía.</div>';return;}
   const blocks=[
-    ["Los más fuertes","#15A86B",R.strong,r=>"fuerza "+r[3]],
-    ["Ganando fuerza","#15A86B",R.gaining,r=>{const v=Math.round(rAcc(r));return (v>0?"+":"")+v;}],
-    ["Los más débiles","#E04444",R.weak,r=>"fuerza "+r[3]],
-    ["Perdiendo fuerza","#E04444",R.losing,r=>{const v=Math.round(rAcc(r));return (v>0?"+":"")+v;}]];
-  el.innerHTML=blocks.map(([lbl,col,rows,valf])=>{
-    const chips=rows.length?rows.map(r=>
-      `<span class="rchip" data-tk="${r[0]}" data-nm="${esc(r[1])}" title="${esc(r[1])}"><b style="color:${col}">${r[0]}</b><span class="rval">${valf(r)}</span></span>`).join("")
-      :'<span class="rnone">—</span>';
+    ["Los más fuertes","#15A86B",R.strong,"rs"],
+    ["Ganando fuerza","#15A86B",R.gaining,"tags"],
+    ["Los más débiles","#E04444",R.weak,"rs"],
+    ["Perdiendo fuerza","#E04444",R.losing,"tags"]];
+  el.innerHTML=blocks.map(([lbl,col,rows,kind])=>{
+    const body=(rows&&rows.length)?rows.map(r=>{
+      const right=kind==="rs"
+        ? `<span class="rrs">RS ${r[3]}</span>`
+        : `<span class="rtags">${(r[3]||[]).map(t=>`<span class="rtag">${esc(t)}</span>`).join("")}</span>`;
+      return `<div class="rrow" data-tk="${r[0]}" data-nm="${esc(r[1])}" title="${esc(r[1])}"><span class="rtk" style="color:${col}">${r[0]}</span>${right}</div>`;
+    }).join(""):'<div class="rnone">— sin candidatos ahora —</div>';
     return `<div class="rblock"><div class="rbhd"><span class="rdot" style="background:${col}"></span>${lbl}</div>
-      <div class="rchips">${chips}</div></div>`;}).join("");
+      <div class="rlist">${body}</div></div>`;}).join("");
 }
 
 /* ---- amplitud del mercado ---- */
