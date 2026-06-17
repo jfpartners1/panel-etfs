@@ -19,7 +19,7 @@ PLAN GRATUITO de EODHD: 20 llamadas/día · solo cierre (EOD) · ~1 año de hist
      ejecutándolo otra vez el mismo día = 0 llamadas. Itera el panel sin tocar la cuota.
 """
 
-import argparse, bisect, json, os, random, statistics, sys, time, urllib.parse, urllib.request
+import argparse, bisect, csv, json, os, random, statistics, sys, time, urllib.parse, urllib.request
 from datetime import date, datetime, timedelta
 
 API = "https://eodhd.com/api"
@@ -380,6 +380,25 @@ def breadth_block(universe_def, hist, live):
             "hi": len(L["hi"]), "lo": len(L["lo"]), "up": len(L["up"]), "down": len(L["down"]),
             "upPct": pct(len(L["up"]), n), "lists": L}
 
+def load_ucits():
+    """Lee ucits.csv (equivalencias ETF USA → UCITS europeo). Estático, no gasta API."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ucits.csv")
+    out = {}
+    try:
+        with open(path, encoding="utf-8") as f:
+            for r in csv.DictReader(f, delimiter=";"):
+                tk = (r.get("ticker_usa") or "").strip()
+                if not tk: continue
+                out[tk] = {"nombre": (r.get("nombre") or "").strip(),
+                           "isin": (r.get("isin") or "").strip(),
+                           "tickerEur": (r.get("ticker_eur") or "").strip(),
+                           "ter": (r.get("ter") or "").strip(),
+                           "accDis": (r.get("acc_dis") or "").strip(),
+                           "nota": (r.get("nota") or "").strip()}
+    except FileNotFoundError:
+        print("  · aviso: ucits.csv no encontrado", file=sys.stderr)
+    return out
+
 def market_pulse(hist, volh, window=25):
     """Pulso de mercado estilo IBD. Día de distribución = índice cae >=0,2% con volumen
     mayor que el anterior; acumulación = sube >=0,2% con más volumen. Ventana 25 sesiones.
@@ -510,7 +529,8 @@ def main():
             "assets": assets, "themes": themes, "momentum": mom, "momentumZ": momz,
             "pulse": market_pulse(hist, volh),
             "breakouts": bo, "squeeze": sq, "news": news,
-            "factors": factor_block(hist, live), "breadth": breadth_block(universe_def, hist, live)}
+            "factors": factor_block(hist, live), "breadth": breadth_block(universe_def, hist, live),
+            "ucits": load_ucits()}
     json.dump(data, open(args.out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
     mode = "DEMO" if args.demo else ("DEV" if args.dev else
