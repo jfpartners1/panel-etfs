@@ -141,11 +141,18 @@ def cached_eod(symbol, start, refresh):
 # CÁLCULOS
 # ----------------------------------------------------------------------
 def unified_closes(hist, live_price):
+    """Mezcla el histórico EOD con el precio en vivo SOLO si es un precio intradía real.
+    Si el mercado está cerrado, EODHD en tiempo real devuelve el último cierre: en ese caso
+    no se añade nada, para que el cambio diario sea el de la última sesión y no 0%."""
     closes = list(hist)
-    if live_price is not None:
+    if live_price is not None and closes:
         today = date.today()
-        if closes and closes[-1][0] == today: closes[-1] = (today, live_price)
-        else: closes.append((today, live_price))
+        last_d, last_c = closes[-1]
+        if last_d >= today:
+            closes[-1] = (today, live_price)                 # hoy ya en EOD -> refresca con el vivo
+        elif abs(live_price - last_c) > last_c * 1e-5:
+            closes.append((today, live_price))               # precio intradía nuevo -> añade hoy
+        # si el vivo == último cierre (mercado cerrado), no se añade: cambio diario = última sesión
     return closes
 
 def returns(closes, rows):
