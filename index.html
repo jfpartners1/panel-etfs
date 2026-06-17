@@ -49,6 +49,9 @@
   .nm{font-size:12px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .tag{font-size:9px;font-weight:600;letter-spacing:.04em;padding:1px 6px;border-radius:20px;text-transform:uppercase}
   .bdg{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:#fff;padding:4px 8px;border-radius:7px;min-width:60px;text-align:center}
+  .rcol{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+  .rvv{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;letter-spacing:.02em}
+  .rvv.up{color:var(--up)} .rvv.down{color:var(--down)} .rvv.mut{color:var(--mute)}
   .bdg.up{background:var(--up-bg)} .bdg.down{background:var(--down-bg)}
 
   .mid{display:flex;flex-direction:column;gap:16px}
@@ -69,10 +72,13 @@
   .li{border-radius:9px;transition:background .14s;cursor:pointer}
   .li:hover{background:#F6F8FB}
   .li:hover .nm{color:var(--ink)}
-  .lg{cursor:pointer;user-select:none;transition:opacity .14s}
-  .lg:hover{opacity:.7}
-  .lg.off{opacity:.34;text-decoration:line-through}
-  .lg.off i{filter:grayscale(1)}
+  .lg{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink);cursor:pointer;
+    user-select:none;border:1px solid var(--line);border-radius:999px;padding:4px 11px;background:#fff;
+    box-shadow:0 1px 2px rgba(26,34,51,.05);transition:transform .12s,border-color .12s,opacity .12s}
+  .lg:hover{transform:translateY(-1px)}
+  .lg i{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .lg.off{border-style:dashed;border-color:#D5DCE5;color:var(--mute);background:transparent;box-shadow:none}
+  .lg.off::before{content:"+";font-weight:700;margin-right:1px;color:var(--mute)}
   .chart svg polyline.hit{cursor:pointer}
   .chart svg.dim polyline.line{opacity:.15}
   .chart svg.dim polyline.line.on{opacity:1;stroke-width:2.6}
@@ -129,12 +135,24 @@
 
   .wf{padding:6px 12px 14px}.wf svg{width:100%;height:auto;display:block}
 
+  .pulse{display:grid;grid-template-columns:repeat(auto-fit,minmax(126px,1fr));gap:10px}
+  .pbox{border:1px solid var(--line);border-radius:12px;padding:11px 13px;background:#fff}
+  .pbox .plbl{font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--mute);display:flex;align-items:center}
+  .pbox .pbig{font-family:"IBM Plex Mono",monospace;font-size:25px;font-weight:700;margin-top:2px;line-height:1}
+  .pbox .psm{font-size:10px;color:var(--mute);margin-top:3px}
+  .pbox .pstate{font-size:14.5px;font-weight:700;margin-top:5px}
+  .pbox .ptr{font-size:12px;color:var(--ink-2);margin-top:4px}
+  .pbox .ptr b{font-family:"IBM Plex Mono",monospace}
+  .pbox .ptr b.up{color:var(--up)} .pbox .ptr b.down{color:var(--down)}
+  .pdot{width:10px;height:10px;border-radius:50%;margin-right:6px;display:inline-block}
+  .pbox.green{background:#EBF8F1;border-color:#BFE8D2} .pstate.green{color:#15803D}
+  .pbox.yellow{background:#FBF5E5;border-color:#F0E0B4} .pstate.yellow{color:#B5862B}
+  .pbox.red{background:#FCEDED;border-color:#F3C9C9} .pstate.red{color:#C0322F}
+
   .bottom{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
   @media(max-width:980px){.bottom{grid-template-columns:1fr}}
   .chart{padding:6px 14px 14px}.chart svg{width:100%;height:auto;display:block}
-  .legend{display:flex;flex-wrap:wrap;gap:8px 14px;padding:10px 4px 2px}
-  .lg{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-2)}
-  .lg i{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .legend{display:flex;flex-wrap:wrap;gap:7px;padding:12px 4px 2px}
 
   footer{margin-top:26px;color:var(--mute);font-size:11.5px;font-family:"IBM Plex Mono",monospace;border-top:1px solid var(--line);padding-top:14px}
 </style>
@@ -169,6 +187,7 @@
       <div class="lst" id="worst"></div>
     </div>
     <div class="mid">
+      <div class="pulse" id="pulse"></div>
       <div class="panel">
         <div class="ptitle"><h2>Corrientes del mercado</h2><span class="sub" id="wfSub">var. semanal por ETF</span></div>
         <div class="wf"><svg id="wf" viewBox="0 0 760 480" preserveAspectRatio="xMidYMid meet"></svg></div>
@@ -193,12 +212,12 @@
 
   <div class="bottom">
     <div class="panel">
-      <div class="ptitle"><h2>Clases de activo</h2><span class="sub">base 100</span></div>
+      <div class="ptitle"><h2>Clases de activo</h2><span class="sub">base 100 · pincha para añadir o quitar</span></div>
       <div class="chart"><svg id="chAssets" viewBox="0 0 720 320"></svg></div>
       <div class="legend" id="lgAssets"></div>
     </div>
     <div class="panel">
-      <div class="ptitle"><h2>Temáticas e industrias</h2><span class="sub">base 100</span></div>
+      <div class="ptitle"><h2>Temáticas e industrias</h2><span class="sub">base 100 · pincha para añadir o quitar</span></div>
       <div class="chart"><svg id="chThemes" viewBox="0 0 720 320"></svg></div>
       <div class="legend" id="lgThemes"></div>
     </div>
@@ -290,7 +309,7 @@ function buildSample(){
   const universe=BASE.map(([tk,nm,cat,key])=>{
     const s=cat==="TEM"?1.5:cat==="ACT"?1.1:0.8;
     const mk=k=>Math.round((r()-0.5)*k*s*10)/10;
-    return [tk,nm,cat,{d:mk(2),w:mk(6),m:mk(12),ytd:mk(20)},!!key];
+    return [tk,nm,cat,{d:mk(2),w:mk(6),m:mk(12),ytd:mk(20)},!!key,Math.round((0.4+r()*2.2)*100)/100];
   });
   const dates=bizDates(180);
   const mk=(lbls,seed)=>({labels:lbls,dates,series:lbls.map((l,i)=>rawSeries(seed+i*97,180,50+i*15))});
@@ -303,9 +322,12 @@ function buildSample(){
   const zdates=bizDates(130).filter((_,i)=>i%5===0);
   const momz={dates:zdates,labels:top,series:top.map(()=>{let z=(r()-0.5)*2;
     return zdates.map(()=>{z+=(r()-0.5)*0.5;return Math.round(z*100)/100;});})};
+  const mkIdx=()=>({dist:Math.floor(r()*10),acc:Math.floor(r()*8),above50:r()>0.4});
+  const psx=mkIdx(),pnx=mkIdx(),pw=Math.max(psx.dist,pnx.dist);
+  const pulse={spx:psx,ndx:pnx,worst:pw,light:pw<4?"green":(pw<=7?"yellow":"red")};
   return {asOf:"datos de muestra",live:false,
     stats:{spx:"7.431,46",spxChg:"+0,6%",lo52:"5.802,82",hi52:"7.609,78"},
-    universe, assets:mk(ASSET_LBL,11), themes:mk(THEME_LBL,53), momentum:mom, momentumZ:momz};
+    universe, assets:mk(ASSET_LBL,11), themes:mk(THEME_LBL,53), momentum:mom, momentumZ:momz, pulse};
 }
 
 /* ---- estado ---- */
@@ -315,11 +337,13 @@ const filtered=()=>U.filter(x=>(CAT==="todos"||x.cat===CAT)&&getR(x)!=null);
 
 /* ---- listas ---- */
 function rowHTML(x,dir){const c=CATS[x.cat];
+  const rv=x.rvol==null?"mut":(x.rvol>=1.3?"up":(x.rvol<0.8?"down":"mut"));
   return `<div class="li" data-tk="${x.tk}" data-nm="${x.nm}"><span class="chip" style="background:${c.color}">${x.tk.slice(0,2)}</span>
     <span class="nmwrap"><span class="tk">${x.tk}</span>
       <span class="tag" style="color:${c.color};background:${c.bg}">${c.label}</span><br>
       <span class="nm">${x.nm}</span></span>
-    <span class="bdg ${dir}">${fmtPct(getR(x))}</span></div>`;}
+    <span class="rcol"><span class="bdg ${dir}">${fmtPct(getR(x))}</span>
+      <span class="rvv ${rv}" title="Volumen relativo (vs media de 20 sesiones)">vol ${rvolFmt(x.rvol)}</span></span></div>`;}
 function renderLists(){const f=[...filtered()].sort((a,b)=>getR(a)-getR(b));
   $("#worst").innerHTML=f.slice(0,10).map(x=>rowHTML(x,"down")).join("");
   $("#best").innerHTML=[...f].reverse().slice(0,10).map(x=>rowHTML(x,"up")).join("");
@@ -371,6 +395,14 @@ function renderWaterfall(){const W=760,H=480,padX=14,padTop=110,padBot=34,base=p
 const PAL=['#2563EB','#E04444','#15A86B','#0EA5C7','#E08A1E','#8B5CF6','#EC4899','#14B8A6',
   '#F97316','#3B82F6','#A855F7','#CA8A04','#0D9488','#DB2777','#65A30D','#0891B2','#9333EA','#DC2626'];
 const HIDDEN={assets:new Set(),themes:new Set(),momz:new Set()}, CHART_INFO={};
+const CORE={assets:new Set(["S&P 500","Nasdaq 100","Bonos 20Y","Oro","Bitcoin"]),
+            themes:new Set(["Semis","IA / Robótica","Tecnología","Ciberseguridad","Energía"])};
+let hiddenInit=false;
+function initHidden(){
+  if(hiddenInit)return;
+  ["assets","themes"].forEach(k=>{const lbls=(DATA[k]&&DATA[k].labels)||[];
+    if(lbls.length){HIDDEN[k]=new Set(lbls.filter(l=>!CORE[k].has(l)));}});
+  hiddenInit=true;}
 function sliceRebase(curve){
   const dates=curve.dates,n=dates.length;let start=0;
   if(WIN==="1d")start=Math.max(0,n-2);
@@ -403,8 +435,8 @@ function lineChart(svgId,legId,curve,key){
     svg+=`<polyline class="hit" data-mi="${mi}" points="${pts}" fill="none" stroke="transparent" stroke-width="11" stroke-linejoin="round"/>`;});
   document.getElementById(svgId).innerHTML=svg;
   CHART_INFO[key]={meta};
-  document.getElementById(legId).innerHTML=c.labels.map((l,i)=>
-    `<span class="lg${hidden.has(l)?" off":""}" data-label="${l}"><i style="background:${PAL[i%PAL.length]}"></i>${l}</span>`).join("");}
+  document.getElementById(legId).innerHTML=c.labels.map((l,i)=>{const col=PAL[i%PAL.length],off=hidden.has(l);
+    return `<span class="lg${off?" off":""}" data-label="${l}"${off?"":` style="border-color:${col}"`}><i style="background:${off?"#C2CAD6":col}"></i>${l}</span>`;}).join("");}
 
 /* tooltip + resaltado + toggle de leyenda (se enlaza una vez por gráfico) */
 function bindChart(svgId,legId,key,rerender){
@@ -453,7 +485,8 @@ function momZChart(){
     svg+=`<polyline class="hit" data-mi="${mi}" points="${pts}" fill="none" stroke="transparent" stroke-width="11" stroke-linejoin="round"/>`;});
   document.getElementById("chMomZ").innerHTML=svg;
   CHART_INFO.momz={meta};
-  document.getElementById("lgMomZ").innerHTML=labels.map((l,i)=>`<span class="lg${hidden.has(l)?" off":""}" data-label="${l}"><i style="background:${PAL[i%PAL.length]}"></i>${l}</span>`).join("");}
+  document.getElementById("lgMomZ").innerHTML=labels.map((l,i)=>{const col=PAL[i%PAL.length],off=hidden.has(l);
+    return `<span class="lg${off?" off":""}" data-label="${l}"${off?"":` style="border-color:${col}"`}><i style="background:${off?"#C2CAD6":col}"></i>${l}</span>`;}).join("");}
 
 /* ---- momentum composite ---- */
 function scoreColor(s){const l=93-(s/100)*53;return {bg:`hsl(150 58% ${l}%)`,fg:l<62?"#fff":"#13351f"};}
@@ -475,11 +508,30 @@ function renderMom(){const m=DATA.momentum||[];
       <span class="rawv mut">${dist==null?"—":fmtPct(dist)}</span>
       <span class="rawv ${rv}">${rvolFmt(rvol)}</span></div>`;}).join("");}
 
+/* ---- pulso de mercado (estilo IBD) ---- */
+const PULSE_LBL={green:"Tendencia confirmada",yellow:"Tendencia bajo presión",red:"Mercado en corrección"};
+const PULSE_COL={green:"#15A86B",yellow:"#E0A92E",red:"#E04444"};
+function renderPulse(){
+  const p=DATA.pulse,el=document.getElementById("pulse");
+  if(!p||!p.light||p.light==="na"){if(el)el.innerHTML="";return;}
+  const tr=o=>o?`<b class="${o.above50?"up":"down"}">${o.above50?"▲ sobre":"▼ bajo"}</b>`:"—";
+  const box=(o,nm)=>`<div class="pbox"><div class="plbl">${nm}</div><div class="pbig">${o?o.dist:"—"}</div>
+    <div class="psm">días distribución · ${o?o.acc:"—"} acum.</div></div>`;
+  el.innerHTML=
+    `<div class="pbox ${p.light}"><div class="plbl"><span class="pdot" style="background:${PULSE_COL[p.light]}"></span>Pulso de mercado</div>
+      <div class="pstate ${p.light}">${PULSE_LBL[p.light]}</div>
+      <div class="psm">según días de distribución (25s)</div></div>`+
+    box(p.spx,"S&P 500")+box(p.ndx,"Nasdaq")+
+    `<div class="pbox"><div class="plbl">Tendencia · media 50s</div>
+      <div class="ptr">S&P 500 ${tr(p.spx)}</div><div class="ptr">Nasdaq ${tr(p.ndx)}</div></div>`;
+}
+
 /* ---- pintar ---- */
-function renderTop(){renderLists();renderWaterfall();}
+function renderTop(){renderLists();renderWaterfall();renderPulse();}
 function renderBottom(){lineChart("chAssets","lgAssets",DATA.assets,"assets");lineChart("chThemes","lgThemes",DATA.themes,"themes");}
 function renderAll(){
-  U=DATA.universe.map(([tk,nm,cat,rets,key])=>({tk,nm,cat,rets,key:!!key}));
+  U=DATA.universe.map(([tk,nm,cat,rets,key,rvol])=>({tk,nm,cat,rets,key:!!key,rvol:rvol==null?null:rvol}));
+  initHidden();
   renderTop();renderBottom();renderMom();momZChart();
   const live=!!DATA.live,badge=$("#badge");
   badge.textContent=live?("Actualizado "+DATA.asOf):"Datos de muestra";
