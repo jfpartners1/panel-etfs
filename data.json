@@ -1,5 +1,5 @@
 {
- "asOf": "2026-06-17 09:12",
+ "asOf": "2026-06-17 10:01",
  "live": true,
  "stats": {
   "spx": "7.511,35",
@@ -11167,148 +11167,148 @@
  ],
  "squeeze": [
   [
-   "DBA",
-   "Agricultura",
-   "ACT",
-   -7.2,
-   0.76,
-   0.6
-  ],
-  [
-   "XLU",
-   "Utilities",
-   "IND",
-   -4.9,
-   0.76,
-   0.72
-  ],
-  [
-   "XLP",
-   "Cons. básico",
-   "IND",
-   -4.4,
-   0.84,
-   0.68
-  ],
-  [
-   "XLC",
-   "Comunicación",
-   "IND",
-   -6.2,
-   0.96,
-   1.26
-  ],
-  [
    "TLT",
    "Treasuries 20Y",
    "ACT",
    -3.7,
-   1.05,
+   0.53,
    1.0
-  ],
-  [
-   "VGK",
-   "Europa",
-   "IDX",
-   -0.1,
-   1.06,
-   0.52
   ],
   [
    "IEF",
    "Treasuries 7-10Y",
    "ACT",
    -2.3,
-   1.06,
+   0.65,
    0.55
   ],
   [
-   "LQD",
-   "Crédito IG",
-   "ACT",
-   -0.8,
-   1.07,
-   0.9
-  ],
-  [
-   "HYG",
-   "High Yield",
-   "ACT",
-   -0.0,
-   1.07,
-   0.69
-  ],
-  [
-   "DBB",
-   "Metales base",
-   "ACT",
-   -4.3,
-   1.07,
-   0.37
-  ],
-  [
-   "XLV",
-   "Salud",
-   "IND",
-   -4.1,
-   1.11,
-   0.76
-  ],
-  [
-   "KRE",
-   "Bancos regionales",
-   "IND",
-   -1.3,
-   1.11,
-   0.92
+   "IWM",
+   "Russell 2000",
+   "IDX",
+   -0.9,
+   0.72,
+   0.82
   ],
   [
    "XLY",
    "Cons. discrec.",
    "IND",
    -4.7,
-   1.12,
+   0.72,
    0.75
-  ],
-  [
-   "XBI",
-   "Biotech",
-   "IND",
-   -2.4,
-   1.12,
-   0.81
-  ],
-  [
-   "TIP",
-   "Ligados inflación",
-   "ACT",
-   -0.3,
-   1.13,
-   0.5
-  ],
-  [
-   "VNQ",
-   "Inmobiliario",
-   "ACT",
-   -0.5,
-   1.14,
-   0.86
   ],
   [
    "JETS",
    "Aerolíneas",
    "TEM",
    -1.7,
-   1.14,
+   0.75,
    0.85
   ],
   [
-   "EFA",
-   "Desarroll. exUS",
+   "LQD",
+   "Crédito IG",
+   "ACT",
+   -0.8,
+   0.76,
+   0.9
+  ],
+  [
+   "XBI",
+   "Biotech",
+   "IND",
+   -2.4,
+   0.81,
+   0.81
+  ],
+  [
+   "EEM",
+   "Emergentes",
    "IDX",
-   0.0,
-   1.15,
-   0.8
+   -2.5,
+   0.84,
+   0.94
+  ],
+  [
+   "ITA",
+   "Defensa",
+   "IND",
+   -4.3,
+   0.86,
+   0.72
+  ],
+  [
+   "SMH",
+   "Semiconductores",
+   "IND",
+   -4.8,
+   0.88,
+   0.98
+  ],
+  [
+   "XLP",
+   "Cons. básico",
+   "IND",
+   -4.4,
+   0.89,
+   0.68
+  ],
+  [
+   "DBB",
+   "Metales base",
+   "ACT",
+   -4.3,
+   0.95,
+   0.37
+  ],
+  [
+   "VTI",
+   "Total EE.UU.",
+   "IDX",
+   -1.1,
+   1.07,
+   0.76
+  ],
+  [
+   "QQQ",
+   "Nasdaq 100",
+   "IDX",
+   -2.2,
+   1.13,
+   0.93
+  ],
+  [
+   "SPY",
+   "S&P 500",
+   "IDX",
+   -1.2,
+   1.23,
+   1.13
+  ],
+  [
+   "XLB",
+   "Materiales",
+   "IND",
+   -1.2,
+   1.26,
+   0.62
+  ],
+  [
+   "XLRE",
+   "Inmobiliario",
+   "IND",
+   -0.6,
+   1.28,
+   0.78
+  ],
+  [
+   "XLV",
+   "Salud",
+   "IND",
+   -4.1,
+   1.57,
+   0.76
   ]
  ]
 }
