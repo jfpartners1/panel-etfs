@@ -249,6 +249,32 @@ def momentum_evolution(universe_def, hist, live, top, weeks=26, step=5):
             Z[tk].append(round((v-mu)/sd, 2) if v is not None else None)
     return {"dates": [d.isoformat() for d in sdates], "labels": top, "series": [Z[tk] for tk in top]}
 
+def market_pulse(hist, volh, window=25):
+    """Pulso de mercado estilo IBD. Día de distribución = índice cae >=0,2% con volumen
+    mayor que el anterior; acumulación = sube >=0,2% con más volumen. Ventana 25 sesiones.
+    Semáforo por el PEOR de SPY/QQQ: <4 verde · 4-7 amarillo · >7 rojo."""
+    res = {}
+    for key, sym in (("spx", "SPY"), ("ndx", "QQQ")):
+        s = eod_sym(sym)
+        cl = [c for _, c in hist.get(s, [])]
+        vl = [v for _, v in volh.get(s, [])]
+        if len(cl) < window + 1 or len(vl) < len(cl):
+            res[key] = None; continue
+        dist = acc = 0
+        for i in range(len(cl) - window, len(cl)):
+            if i < 1: continue
+            ch = cl[i] / cl[i-1] - 1
+            if vl[i] > vl[i-1]:
+                if ch <= -0.002: dist += 1
+                elif ch >= 0.002: acc += 1
+        ma = sum(cl[-50:]) / min(len(cl), 50)
+        res[key] = {"dist": dist, "acc": acc, "above50": cl[-1] >= ma}
+    dvals = [res[k]["dist"] for k in ("spx", "ndx") if res.get(k)]
+    worst = max(dvals) if dvals else None
+    res["worst"] = worst
+    res["light"] = ("green" if worst < 4 else "yellow" if worst <= 7 else "red") if worst is not None else "na"
+    return res
+
 def es_num(x, dec=2):
     s = f"{x:,.{dec}f}"
     return s.replace(",", "§").replace(".", ",").replace("§", ".")
@@ -299,14 +325,16 @@ def main():
         try: live = fetch_live(list(hist.keys()))
         except Exception as e: print(f"  · real-time no disponible ({e})", file=sys.stderr)
 
-    # 3) Universo con retornos D/S/M/YTD por ETF
+    # 3) Universo con retornos D/S/M/YTD + volumen relativo por ETF
     universe = []
     for tk, nm, cat, key in universe_def:
         s = eod_sym(tk); rows = hist.get(s)
         if not rows: continue
         rets = returns(unified_closes(rows, live.get(s)), rows)
         if rets["w"] is None and rets["d"] is None: continue
-        universe.append([tk, nm, cat, rets, key])
+        vv = [v for _, v in volh.get(s, [])]
+        rvol = round(vv[-1] / (sum(vv[-21:-1])/20), 2) if len(vv) >= 21 and sum(vv[-21:-1]) > 0 else None
+        universe.append([tk, nm, cat, rets, key, rvol])
 
     # 4) Curvas: rejilla DIARIA (último ~año) desde SPY. Cierre bruto + fechas; el
     #    navegador elige 1M/3M/YTD/1A y rebasa. Una descarga, muchas vistas.
@@ -333,7 +361,8 @@ def main():
     mom = momentum_block(universe_def, hist, live, volh)
     momz = momentum_evolution(universe_def, hist, live, [r[0] for r in mom[:12]])
     data = {"asOf": as_of, "live": True, "stats": stats, "universe": universe,
-            "assets": assets, "themes": themes, "momentum": mom, "momentumZ": momz}
+            "assets": assets, "themes": themes, "momentum": mom, "momentumZ": momz,
+            "pulse": market_pulse(hist, volh)}
     json.dump(data, open(args.out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
     mode = "DEMO" if args.demo else ("DEV" if args.dev else
