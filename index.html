@@ -47,8 +47,33 @@
   .ptitle h2{font-size:14px;font-weight:600;margin:0}
   .ptitle .sub{font-size:11.5px;color:var(--mute)}
 
-  .top{display:grid;grid-template-columns:300px 1fr 300px;gap:16px}
+  .top{display:grid;grid-template-columns:300px 1fr 300px;gap:16px;align-items:stretch}
   @media(max-width:1180px){.top{grid-template-columns:1fr}}
+  .midtop{display:flex;flex-direction:column;gap:16px}
+  .col-list,.breadth,.news,.fmapwrap,.wfpanel{display:flex;flex-direction:column}
+  .wfpanel{flex:1}
+  .col-list .lst{flex:1}
+
+  .breadth .ptitle{padding:14px 16px 4px}
+  .brd{padding:8px 14px 14px;display:flex;flex-direction:column;justify-content:space-between;gap:12px;flex:1}
+  .brow{display:flex;flex-direction:column;gap:5px}
+  .brlbl{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;color:var(--mute)}
+  .brlbl b{font-size:15px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .brbar{height:6px;border-radius:4px;background:#ECEFF3;overflow:hidden}
+  .brbar i{display:block;height:100%;border-radius:4px}
+  .bsplit{display:flex;gap:8px}
+  .bcell{flex:1;background:#F6F8FB;border:1px solid var(--line-2);border-radius:8px;padding:8px 10px;text-align:center}
+  .bcell .bn{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
+  .bcell .bk{font-size:10px;color:var(--mute);text-transform:uppercase;letter-spacing:.03em;margin-top:3px}
+
+  .fmapwrap .ptitle{padding:14px 16px 4px}
+  .fmap{padding:8px 14px 14px;display:grid;grid-template-columns:auto 1fr 1fr 1fr;grid-template-rows:auto 1fr 1fr 1fr;gap:5px;flex:1}
+  .fmap .fh{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--mute);text-align:center;padding:2px 0;align-self:center}
+  .fmap .frl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--mute);align-self:center;padding-right:4px}
+  .fcell{border-radius:7px;padding:9px 4px;text-align:center;cursor:pointer;transition:transform .1s,box-shadow .1s;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .fcell:hover{transform:translateY(-1px);box-shadow:0 3px 8px rgba(20,30,50,.12)}
+  .fcell .fpct{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
+  .fcell .ftk{font-size:9px;opacity:.7;margin-top:2px}
   .lst{padding:8px 10px 10px}
   .li{display:grid;grid-template-columns:30px 1fr auto;align-items:center;gap:9px;padding:7px 6px}
   .li+.li{border-top:1px solid var(--line-2)}
@@ -177,6 +202,21 @@
   .chart{padding:6px 14px 14px}.chart svg{width:100%;height:auto;display:block}
   .legend{display:flex;flex-wrap:wrap;gap:7px;padding:12px 4px 2px}
 
+  .news .ptitle{padding:14px 16px 6px}
+  .newslist{padding:2px 10px 10px;flex:1;overflow-y:auto}
+  .nrow{display:flex;gap:9px;padding:9px 6px;text-decoration:none;color:inherit;border-radius:8px;transition:background .12s}
+  .nrow+.nrow{border-top:1px solid var(--line-2)}
+  .nrow:hover{background:#F6F8FB}
+  .ndot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex:none}
+  .nbody{min-width:0}
+  .ntitle{font-size:12.5px;color:var(--ink);line-height:1.35;display:block}
+  .nrow:hover .ntitle{color:var(--blue)}
+  .nmeta{display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap}
+  .ntag{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;padding:1px 7px;border-radius:20px;white-space:nowrap}
+  .ntag.mkt{color:#5B6675;background:#EAEEF3}
+  .nsrc{font-size:10.5px;color:var(--mute)}
+  .nempty{color:var(--mute);font-size:12px;padding:12px 6px}
+
   footer{margin-top:26px;color:var(--mute);font-size:11.5px;font-family:"IBM Plex Mono",monospace;border-top:1px solid var(--line);padding-top:14px}
 </style>
 </head>
@@ -210,20 +250,32 @@
   </div>
 
   <div class="top">
-    <div class="panel">
+    <div class="panel col-list">
       <div class="ptitle"><h2>Peores 10</h2><span class="sub" id="subWorst">semana</span></div>
       <div class="lst" id="worst"></div>
     </div>
-    <div class="mid">
+    <div class="midtop">
       <div class="pulse" id="pulse"></div>
-      <div class="panel">
+      <div class="panel wfpanel">
         <div class="ptitle"><h2>Corrientes del mercado</h2><span class="sub" id="wfSub">var. semanal por ETF</span></div>
-        <div class="wf"><svg id="wf" viewBox="0 0 760 480" preserveAspectRatio="xMidYMid meet"></svg></div>
+        <div class="wf"><svg id="wf" viewBox="0 0 760 430" preserveAspectRatio="xMidYMid meet"></svg></div>
       </div>
     </div>
-    <div class="panel">
+    <div class="panel col-list">
       <div class="ptitle"><h2>Mejores 10</h2><span class="sub" id="subBest">semana</span></div>
       <div class="lst" id="best"></div>
+    </div>
+    <div class="panel breadth">
+      <div class="ptitle"><h2>Amplitud del mercado</h2><span class="sub">universo · 56 ETFs</span></div>
+      <div class="brd" id="breadth"></div>
+    </div>
+    <div class="panel news">
+      <div class="ptitle"><h2>Noticias e impacto</h2><span class="sub">mercado + ETFs en movimiento</span></div>
+      <div class="newslist" id="news"></div>
+    </div>
+    <div class="panel fmapwrap">
+      <div class="ptitle"><h2>Factor map</h2><span class="sub" id="fmapSub">estilo × tamaño · semanal</span></div>
+      <div class="fmap" id="factors"></div>
     </div>
   </div>
 
@@ -382,9 +434,23 @@ function buildSample(){
   const squeeze=BASE.map(([tk,nm,cat])=>{const dist=Math.round((-0.5-r()*4.5)*10)/10;
     return [tk,nm,cat,dist,Math.round((0.45+r()*0.95)*100)/100,Math.round((0.4+r()*1.6)*100)/100];})
     .filter(x=>x[3]>=-5&&x[3]<=-0.5).sort((a,b)=>a[4]-b[4]).slice(0,18);
+  const hAgo=h=>new Date(Date.now()-h*3600000).toISOString();
+  const news=[
+    ["La Fed mantiene los tipos y los índices reaccionan al alza","https://example.com","reuters.com",hAgo(1),"Mercado","IDX","pos"],
+    ["Los semiconductores lideran ante la fuerte demanda de IA","https://example.com","bloomberg.com",hAgo(3),"Semis","IND","pos"],
+    ["El petróleo cae por temores sobre la demanda global","https://example.com","cnbc.com",hAgo(5),"Energía","IND","neg"],
+    ["El oro marca máximos como refugio ante la incertidumbre","https://example.com","ft.com",hAgo(7),"Oro","ACT","pos"],
+    ["Datos de empleo en EE.UU. por debajo de lo esperado","https://example.com","wsj.com",hAgo(9),"Mercado","IDX","neg"],
+    ["Rotación hacia defensivos mientras el Nasdaq consolida","https://example.com","marketwatch.com",hAgo(12),"Nasdaq 100","IDX","neu"]];
+  const fr=(d,w,m,ytd)=>({d,w,m,ytd});
+  const factors=[
+    ["IWD","L","V",fr(0.1,-0.6,4.3,22.3)],["IWB","L","C",fr(-0.6,-1.2,3.1,18.4)],["IWF","L","G",fr(-1.1,-2.0,1.8,14.2)],
+    ["IWS","M","V",fr(-0.1,-0.9,2.6,12.1)],["IWR","M","C",fr(-0.3,-1.4,1.2,9.8)],["IWP","M","G",fr(-0.4,-1.8,-0.6,6.3)],
+    ["IWN","S","V",fr(-0.5,-1.1,0.4,3.2)],["IWM","S","C",fr(-0.9,-1.9,-1.2,-0.8)],["IWO","S","G",fr(-1.2,-2.6,-2.8,-4.1)]];
+  const breadth={n:56,ma50:77,ma200:70,hi:7,lo:4,up:37,down:19,upPct:66};
   return {asOf:"datos de muestra",live:false,
     stats:{spx:"7.431,46",spxChg:"+0,6%",lo52:"5.802,82",hi52:"7.609,78"},
-    universe, assets:mk(ASSET_LBL,11), themes:mk(THEME_LBL,53), momentum:mom, momentumZ:momz, pulse, breakouts, squeeze};
+    universe, assets:mk(ASSET_LBL,11), themes:mk(THEME_LBL,53), momentum:mom, momentumZ:momz, pulse, breakouts, squeeze, news, factors, breadth};
 }
 
 /* ---- estado ---- */
@@ -408,7 +474,7 @@ function renderLists(){const f=[...filtered()].sort((a,b)=>getR(a)-getR(b));
 
 /* ---- corrientes (waterfall) ---- */
 let WF_BARS=[];
-function renderWaterfall(){const W=760,H=480,padX=14,padTop=110,padBot=34,base=padTop+(H-padTop-padBot)*0.5;
+function renderWaterfall(){const W=760,H=430,padX=14,padTop=104,padBot=30,base=padTop+(H-padTop-padBot)*0.5;
   let bars=[...filtered()].sort((a,b)=>getR(a)-getR(b)); WF_BARS=bars;
   const n=bars.length||1,plotW=W-padX*2,bw=Math.min(plotW/n*0.7,16),gap=plotW/n;
   const maxAbs=Math.max(...bars.map(b=>Math.abs(getR(b))),1),scale=(H-padTop-padBot)*0.5/maxAbs*0.92;
@@ -612,8 +678,74 @@ function renderPulse(){
       <div class="ptr">S&P 500 ${tr(p.spx)}</div><div class="ptr">Nasdaq ${tr(p.ndx)}</div></div>`;
 }
 
+/* ---- noticias e impacto ---- */
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function ago(iso){const d=new Date((iso||"").replace(" ","T"));if(isNaN(d))return"";
+  const m=Math.round((Date.now()-d.getTime())/60000);
+  if(m<60)return"hace "+Math.max(1,m)+" min";
+  const h=Math.round(m/60);if(h<24)return"hace "+h+" h";
+  return"hace "+Math.round(h/24)+" d";}
+const NEWS_COL={pos:"#15A86B",neg:"#E04444",neu:"#9AA5B3"};
+function renderNews(){const el=document.getElementById("news");if(!el)return;
+  const n=DATA.news||[];
+  if(!n.length){el.innerHTML='<div class="nempty">Sin noticias recientes ahora mismo.</div>';return;}
+  el.innerHTML=n.map(row=>{
+    const title=row[0],link=row[1],src=row[2],date=row[3],label=row[4],cat=row[5],sent=row[6],c=CATS[cat];
+    const tag=label==="Mercado"
+      ?'<span class="ntag mkt">Mercado</span>'
+      :`<span class="ntag" style="color:${(c||{}).color||"#5B6675"};background:${(c||{}).bg||"#EEF1F5"}">${esc(label)}</span>`;
+    const meta=[src?esc(src):"",date?ago(date):""].filter(Boolean).join(" · ");
+    return `<a class="nrow" href="${esc(link)}" target="_blank" rel="noopener noreferrer">
+      <span class="ndot" style="background:${NEWS_COL[sent]||NEWS_COL.neu}"></span>
+      <span class="nbody"><span class="ntitle">${esc(title)}</span>
+        <span class="nmeta">${tag}<span class="nsrc">${meta}</span></span></span></a>`;}).join("");
+}
+
+/* ---- amplitud del mercado ---- */
+function bbar(pct,col){return `<div class="brbar"><i style="width:${pct==null?0:pct}%;background:${col}"></i></div>`;}
+function renderBreadth(){const el=document.getElementById("breadth");if(!el)return;
+  const b=DATA.breadth;if(!b){el.innerHTML="";return;}
+  const col=p=>p==null?"#9AA5B3":(p>=60?"#15A86B":p>=40?"#E0A52E":"#E04444");
+  const pc=p=>p==null?"—":p+"%";
+  el.innerHTML=
+    `<div class="brow"><div class="brlbl">ETFs sobre su media de 50 <b>${pc(b.ma50)}</b></div>${bbar(b.ma50,col(b.ma50))}</div>
+     <div class="brow"><div class="brlbl">ETFs sobre su media de 200 <b>${pc(b.ma200)}</b></div>${bbar(b.ma200,col(b.ma200))}</div>
+     <div class="brow"><div class="brlbl">En positivo hoy <b>${pc(b.upPct)}</b></div>${bbar(b.upPct,col(b.upPct))}</div>
+     <div class="bsplit">
+       <div class="bcell"><div class="bn" style="color:#15A86B">${b.hi}</div><div class="bk">Nuevos máx.</div></div>
+       <div class="bcell"><div class="bn" style="color:#E04444">${b.lo}</div><div class="bk">Nuevos mín.</div></div>
+       <div class="bcell"><div class="bn">${b.up}/${b.down}</div><div class="bk">Suben/Bajan</div></div>
+     </div>`;
+}
+
+/* ---- factor map (estilo x tamaño) ---- */
+const FNM={L:"Grande",M:"Media",S:"Pequeña",V:"Value",C:"Core",G:"Growth"};
+function factorColor(v){
+  if(v==null)return{bg:"#F1F3F6",fg:"#9AA5B3"};
+  const cap={d:3,w:6,m:12}[PER]||6, t=Math.max(-1,Math.min(1,v/cap));
+  if(t>=0){const a=0.10+0.45*t;return{bg:`rgba(21,168,107,${a.toFixed(3)})`,fg:t>0.5?"#0B6E45":"#157A52"};}
+  const a=0.10+0.45*(-t);return{bg:`rgba(224,68,68,${a.toFixed(3)})`,fg:-t>0.5?"#A52121":"#B83232"};
+}
+function renderFactors(){const el=document.getElementById("factors");if(!el)return;
+  const f=DATA.factors||[];const sub=document.getElementById("fmapSub");
+  if(sub)sub.textContent="estilo × tamaño · "+PER_LBL[PER];
+  const at=(r,c)=>f.find(x=>x[1]===r&&x[2]===c);
+  let h='<div></div><div class="fh">Value</div><div class="fh">Core</div><div class="fh">Growth</div>';
+  for(const r of ["L","M","S"]){
+    h+=`<div class="frl">${FNM[r]}</div>`;
+    for(const c of ["V","C","G"]){
+      const cell=at(r,c);
+      if(!cell){h+='<div class="fcell" style="background:#F1F3F6"></div>';continue;}
+      const v=cell[3][PER],col=factorColor(v),nm=FNM[r]+" "+FNM[c];
+      h+=`<div class="fcell" style="background:${col.bg};color:${col.fg}" data-tk="${cell[0]}" data-nm="${nm} (${cell[0]})">
+        <div class="fpct">${v==null?"—":fmtPct(v)}</div><div class="ftk">${cell[0]}</div></div>`;
+    }
+  }
+  el.innerHTML=h;
+}
+
 /* ---- pintar ---- */
-function renderTop(){renderLists();renderWaterfall();renderPulse();}
+function renderTop(){renderLists();renderWaterfall();renderPulse();renderNews();renderBreadth();renderFactors();}
 function renderBottom(){lineChart("chAssets","lgAssets",DATA.assets,"assets");lineChart("chThemes","lgThemes",DATA.themes,"themes");}
 function renderAll(){
   U=DATA.universe.map(([tk,nm,cat,rets,key,rvol])=>({tk,nm,cat,rets,key:!!key,rvol:rvol==null?null:rvol}));
@@ -660,7 +792,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeChart();});
   const li=e.target.closest(".li");if(li)openChart(li.dataset.tk,li.dataset.nm);}));
 document.querySelector(".wf").addEventListener("click",e=>{const t=e.target;
   if(t.classList&&t.classList.contains("hit")){const b=WF_BARS[+t.getAttribute("data-i")];if(b)openChart(b.tk,b.nm);}});
-["#mom","#breakouts","#squeeze"].forEach(sel=>document.querySelector(sel).addEventListener("click",e=>{
+["#mom","#breakouts","#squeeze","#factors"].forEach(sel=>document.querySelector(sel).addEventListener("click",e=>{
   const el=e.target.closest("[data-tk]");if(el)openChart(el.dataset.tk,el.dataset.nm);}));
 
 (async()=>{

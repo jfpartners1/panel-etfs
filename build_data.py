@@ -65,6 +65,12 @@ THEMES_MAP = [("Semis","SMH"),("IA / Robótica","BOTZ"),("Tecnología","XLK"),("
               ("Solar","TAN"),("Uranio","URA"),("Mineras oro","GDX"),("Defensa","ITA")]
 SPX_CANDIDATES = ["GSPC.INDX", "SPX.INDX"]   # índice S&P 500 en EODHD (plan de pago)
 
+# Factor map 3x3: estilo (Value/Core/Growth) x tamaño (Large/Mid/Small). ETFs iShares Russell.
+FACTORS = [("IWD","L","V"),("IWB","L","C"),("IWF","L","G"),
+           ("IWS","M","V"),("IWR","M","C"),("IWP","M","G"),
+           ("IWN","S","V"),("IWM","S","C"),("IWO","S","G")]
+FACTOR_NM = {"L":"Grande","M":"Media","S":"Pequeña","V":"Value","C":"Core","G":"Growth"}
+
 def eod_sym(tk): return tk + ".US"
 
 # ----------------------------------------------------------------------
@@ -304,6 +310,85 @@ def squeeze_block(universe_def, hist, live, volh):
     out.sort(key=lambda r: r[4])      # más apretado arriba
     return out[:18]
 
+def fetch_news(symbol, limit=6):
+    """Últimas noticias de un símbolo vía /api/news (incluye sentimiento). ~5 llamadas."""
+    STATE["calls"] += 5
+    url = f"{API}/news?api_token={KEY}&fmt=json&s={symbol}&limit={limit}&offset=0"
+    try:
+        data = _get(url)
+    except Exception:
+        return []
+    return data if isinstance(data, list) else []
+
+def _news_item(a, label, cat):
+    title = (a.get("title") or "").strip()
+    if not title: return None
+    sent = a.get("sentiment") or {}
+    pol = sent.get("polarity")
+    s = "neu"
+    if isinstance(pol, (int, float)):
+        s = "pos" if pol > 0.12 else ("neg" if pol < -0.12 else "neu")
+    link = a.get("link") or ""
+    src = ""
+    try:
+        src = urllib.parse.urlparse(link).netloc.replace("www.", "")
+    except Exception:
+        pass
+    return [title[:180], link, src, a.get("date") or "", label, cat, s]
+
+def news_block(universe_def, mom, breakouts, per_symbol=5, total=12):
+    """Titulares de mercado (SPY/QQQ) + los ETFs en movimiento del día (rupturas y líderes
+    de momentum). Dedup por título, orden por fecha desc. Nivel 1: titular + sentimiento + activo."""
+    nm_cat = {tk: (nm, cat) for tk, nm, cat, key in universe_def}
+    targets = [("SPY", "Mercado", "IDX"), ("QQQ", "Mercado", "IDX")]
+    seen = {"SPY", "QQQ"}
+    for r in (breakouts or []):
+        tk = r[0]
+        if tk not in seen and len(targets) < 6:
+            targets.append((tk, nm_cat.get(tk, (tk, ""))[0], nm_cat.get(tk, (tk, "IDX"))[1])); seen.add(tk)
+    for r in (mom or []):
+        tk = r[0]
+        if tk not in seen and len(targets) < 6:
+            targets.append((tk, r[1], r[2])); seen.add(tk)
+    items, uniq = [], {}
+    for tk, label, cat in targets:
+        for a in fetch_news(eod_sym(tk), per_symbol):
+            it = _news_item(a, label, cat)
+            if it and it[0] not in uniq:
+                uniq[it[0]] = it
+    return sorted(uniq.values(), key=lambda x: x[3], reverse=True)[:total]
+
+def factor_block(hist, live):
+    """Rejilla de factores estilo x tamaño con retornos D/S/M/YTD por celda."""
+    out = []
+    for tk, row, col in FACTORS:
+        rows = hist.get(eod_sym(tk))
+        if not rows: continue
+        rets = returns(unified_closes(rows, live.get(eod_sym(tk))), rows)
+        out.append([tk, row, col, rets])
+    return out
+
+def breadth_block(universe_def, hist, live):
+    """Amplitud del mercado sobre el universo: % sobre media 50/200, nuevos máx/mín, % en positivo."""
+    n = ma50 = ma200 = d200 = hi = lo = upd = 0
+    for tk, nm, cat, key in universe_def:
+        rows = hist.get(eod_sym(tk))
+        if not rows: continue
+        cl = [c for _, c in unified_closes(rows, live.get(eod_sym(tk)))]
+        if len(cl) < 2: continue
+        n += 1
+        if len(cl) >= 50 and cl[-1] > sum(cl[-50:])/50: ma50 += 1
+        if len(cl) >= 200:
+            d200 += 1
+            if cl[-1] > sum(cl[-200:])/200: ma200 += 1
+        win = cl[-252:] if len(cl) >= 252 else cl
+        if cl[-1] >= max(win): hi += 1
+        if cl[-1] <= min(win): lo += 1
+        if cl[-1]/cl[-2] - 1 >= 0: upd += 1
+    pct = lambda a, b: round(a/b*100) if b else None
+    return {"n": n, "ma50": pct(ma50, n), "ma200": pct(ma200, d200),
+            "hi": hi, "lo": lo, "up": upd, "down": n-upd, "upPct": pct(upd, n)}
+
 def market_pulse(hist, volh, window=25):
     """Pulso de mercado estilo IBD. Día de distribución = índice cae >=0,2% con volumen
     mayor que el anterior; acumulación = sube >=0,2% con más volumen. Ventana 25 sesiones.
@@ -374,6 +459,18 @@ def main():
         except Exception as e:
             print(f"  · error EOD {s}: {e}", file=sys.stderr)
 
+    # 1b) ETFs de factores (estilo x tamaño) para el factor map
+    for tk, _, _ in FACTORS:
+        s = eod_sym(tk)
+        if s in hist: continue
+        try:
+            raw = get_eod(s)
+            if raw:
+                hist[s] = [(d, c) for d, c, _ in raw]
+                volh[s] = [(d, v) for d, _, v in raw]
+        except Exception as e:
+            print(f"  · error EOD factor {s}: {e}", file=sys.stderr)
+
     # 2) Precios en vivo (solo plan de pago)
     live = {}
     if use_live:
@@ -415,11 +512,14 @@ def main():
              else (spy[-1][0].isoformat() if spy else date.today().isoformat()))
     mom = momentum_block(universe_def, hist, live, volh)
     momz = momentum_evolution(universe_def, hist, live, [r[0] for r in mom[:12]])
+    bo = breakout_block(universe_def, hist, live, volh)
+    sq = squeeze_block(universe_def, hist, live, volh)
+    news = [] if args.demo else news_block(universe_def, mom, bo)
     data = {"asOf": as_of, "live": True, "stats": stats, "universe": universe,
             "assets": assets, "themes": themes, "momentum": mom, "momentumZ": momz,
             "pulse": market_pulse(hist, volh),
-            "breakouts": breakout_block(universe_def, hist, live, volh),
-            "squeeze": squeeze_block(universe_def, hist, live, volh)}
+            "breakouts": bo, "squeeze": sq, "news": news,
+            "factors": factor_block(hist, live), "breadth": breadth_block(universe_def, hist, live)}
     json.dump(data, open(args.out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
     mode = "DEMO" if args.demo else ("DEV" if args.dev else
