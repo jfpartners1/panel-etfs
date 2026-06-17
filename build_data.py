@@ -266,8 +266,9 @@ def _rvol(vv):
     return round(vv[-1] / (sum(vv[-21:-1])/20), 2) if len(vv) >= 21 and sum(vv[-21:-1]) > 0 else None
 
 def breakout_block(universe_def, hist, live, volh, near=-3.0):
-    """Rupturas y proximidad a máximos de 52s. Estado:
-    break = nuevo máximo con RVol>=1,3 · breaknovol = nuevo máximo sin volumen · near = entre 0 y -3%."""
+    """Rupturas y proximidad a máximos de 52s. Estado SOLO de precio:
+    max = nuevo máximo de 52s (dist>=-0,1%) · near = a punto (entre -0,1% y -3%).
+    El volumen (RVol) va aparte y lo interpreta el frontend (alto/normal/bajo)."""
     out = []
     for tk, nm, cat, key in universe_def:
         s = eod_sym(tk)
@@ -278,14 +279,12 @@ def breakout_block(universe_def, hist, live, volh, near=-3.0):
         if dist < near: continue
         rvol = _rvol([v for _, v in volh.get(s, [])])
         r1m = _ret(cl, 21)
-        if dist >= -0.1:
-            estado = "break" if (rvol is not None and rvol >= 1.3) else "breaknovol"
-        else:
-            estado = "near"
+        estado = "max" if dist >= -0.1 else "near"
         out.append([tk, nm, cat, round(dist, 1), rvol,
                     round(r1m, 1) if r1m is not None else None, estado])
-    grp = {"break": 0, "breaknovol": 1, "near": 2}
-    out.sort(key=lambda r: (grp[r[6]], -(r[4] or 0) if grp[r[6]] < 2 else -r[3]))
+    # nuevos máximos primero; dentro, los de más volumen arriba (rupturas con fuerza); luego "a punto" por cercanía
+    grp = {"max": 0, "near": 1}
+    out.sort(key=lambda r: (grp[r[6]], -(r[4] or 0) if r[6] == "max" else -r[3]))
     return out
 
 def squeeze_block(universe_def, hist, live, volh):
@@ -524,11 +523,10 @@ def main():
     momz = momentum_evolution(universe_def, hist, live, [r[0] for r in mom[:12]])
     bo = breakout_block(universe_def, hist, live, volh)
     sq = squeeze_block(universe_def, hist, live, volh)
-    news = [] if args.demo else news_block()
     data = {"asOf": as_of, "live": True, "stats": stats, "universe": universe,
             "assets": assets, "themes": themes, "momentum": mom, "momentumZ": momz,
             "pulse": market_pulse(hist, volh),
-            "breakouts": bo, "squeeze": sq, "news": news,
+            "breakouts": bo, "squeeze": sq,
             "factors": factor_block(hist, live), "breadth": breadth_block(universe_def, hist, live),
             "ucits": load_ucits()}
     json.dump(data, open(args.out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
