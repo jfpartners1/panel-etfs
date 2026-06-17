@@ -270,7 +270,7 @@
       <div class="brd" id="breadth"></div>
     </div>
     <div class="panel news">
-      <div class="ptitle"><h2>Noticias e impacto</h2><span class="sub">mercado + ETFs en movimiento</span></div>
+      <div class="ptitle"><h2>Noticias e impacto</h2><span class="sub">lo más relevante del mercado</span></div>
       <div class="newslist" id="news"></div>
     </div>
     <div class="panel fmapwrap">
@@ -436,12 +436,10 @@ function buildSample(){
     .filter(x=>x[3]>=-5&&x[3]<=-0.5).sort((a,b)=>a[4]-b[4]).slice(0,18);
   const hAgo=h=>new Date(Date.now()-h*3600000).toISOString();
   const news=[
-    ["La Fed mantiene los tipos y los índices reaccionan al alza","https://example.com","reuters.com",hAgo(1),"Mercado","IDX","pos"],
-    ["Los semiconductores lideran ante la fuerte demanda de IA","https://example.com","bloomberg.com",hAgo(3),"Semis","IND","pos"],
-    ["El petróleo cae por temores sobre la demanda global","https://example.com","cnbc.com",hAgo(5),"Energía","IND","neg"],
-    ["El oro marca máximos como refugio ante la incertidumbre","https://example.com","ft.com",hAgo(7),"Oro","ACT","pos"],
-    ["Datos de empleo en EE.UU. por debajo de lo esperado","https://example.com","wsj.com",hAgo(9),"Mercado","IDX","neg"],
-    ["Rotación hacia defensivos mientras el Nasdaq consolida","https://example.com","marketwatch.com",hAgo(12),"Nasdaq 100","IDX","neu"]];
+    ["La Fed mantiene los tipos y los índices reaccionan al alza","https://example.com","reuters.com",hAgo(2),"Mercado","IDX","pos"],
+    ["Wall Street cierra mixto a la espera de datos de inflación","https://example.com","bloomberg.com",hAgo(6),"Mercado","IDX","neu"],
+    ["Datos de empleo en EE.UU. por debajo de lo esperado","https://example.com","wsj.com",hAgo(10),"Mercado","IDX","neg"],
+    ["El S&P 500 marca nuevo máximo histórico impulsado por la IA","https://example.com","cnbc.com",hAgo(14),"Mercado","IDX","pos"]];
   const fr=(d,w,m,ytd)=>({d,w,m,ytd});
   const factors=[
     ["IWD","L","V",fr(0.1,-0.6,4.3,22.3)],["IWB","L","C",fr(-0.6,-1.2,3.1,18.4)],["IWF","L","G",fr(-1.1,-2.0,1.8,14.2)],

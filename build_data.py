@@ -336,24 +336,12 @@ def _news_item(a, label, cat):
         pass
     return [title[:180], link, src, a.get("date") or "", label, cat, s]
 
-def news_block(universe_def, mom, breakouts, per_symbol=5, total=12):
-    """Titulares de mercado (SPY/QQQ) + los ETFs en movimiento del día (rupturas y líderes
-    de momentum). Dedup por título, orden por fecha desc. Nivel 1: titular + sentimiento + activo."""
-    nm_cat = {tk: (nm, cat) for tk, nm, cat, key in universe_def}
-    targets = [("SPY", "Mercado", "IDX"), ("QQQ", "Mercado", "IDX")]
-    seen = {"SPY", "QQQ"}
-    for r in (breakouts or []):
-        tk = r[0]
-        if tk not in seen and len(targets) < 6:
-            targets.append((tk, nm_cat.get(tk, (tk, ""))[0], nm_cat.get(tk, (tk, "IDX"))[1])); seen.add(tk)
-    for r in (mom or []):
-        tk = r[0]
-        if tk not in seen and len(targets) < 6:
-            targets.append((tk, r[1], r[2])); seen.add(tk)
-    items, uniq = [], {}
-    for tk, label, cat in targets:
+def news_block(total=4, per_symbol=8):
+    """Solo titulares de mercado general (SPY/QQQ), los más recientes. Nivel 1: titular + sentimiento."""
+    uniq = {}
+    for tk in ("SPY", "QQQ"):
         for a in fetch_news(eod_sym(tk), per_symbol):
-            it = _news_item(a, label, cat)
+            it = _news_item(a, "Mercado", "IDX")
             if it and it[0] not in uniq:
                 uniq[it[0]] = it
     return sorted(uniq.values(), key=lambda x: x[3], reverse=True)[:total]
@@ -514,7 +502,7 @@ def main():
     momz = momentum_evolution(universe_def, hist, live, [r[0] for r in mom[:12]])
     bo = breakout_block(universe_def, hist, live, volh)
     sq = squeeze_block(universe_def, hist, live, volh)
-    news = [] if args.demo else news_block(universe_def, mom, bo)
+    news = [] if args.demo else news_block()
     data = {"asOf": as_of, "live": True, "stats": stats, "universe": universe,
             "assets": assets, "themes": themes, "momentum": mom, "momentumZ": momz,
             "pulse": market_pulse(hist, volh),
