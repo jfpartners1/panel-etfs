@@ -1,5 +1,5 @@
 {
- "asOf": "2026-06-17 11:42",
+ "asOf": "2026-06-17 11:45",
  "live": true,
  "stats": {
   "spx": "7.511,35",
@@ -11613,6 +11613,456 @@
     "SKYY",
     "DRIV"
    ]
+  }
+ },
+ "ucits": {
+  "SPY": {
+   "nombre": "SPDR S&P 500 UCITS ETF (Acc)",
+   "isin": "IE000XZSV718",
+   "tickerEur": "SPYL",
+   "ter": "0,03%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "QQQ": {
+   "nombre": "iShares Nasdaq 100 UCITS ETF (Acc)",
+   "isin": "IE00B53SZB19",
+   "tickerEur": "CNDX / SXRV",
+   "ter": "0,33%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "IWM": {
+   "nombre": "SPDR Russell 2000 US Small Cap UCITS ETF",
+   "isin": "IE00BJ38QD84",
+   "tickerEur": "ZPRR",
+   "ter": "0,30%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "DIA": {
+   "nombre": "iShares Dow Jones Industrial Average UCITS ETF (Acc)",
+   "isin": "IE00B53L4350",
+   "tickerEur": "SXRU / CIND",
+   "ter": "0,33%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "VTI": {
+   "nombre": "iShares Core S&P 500 UCITS ETF (Acc)",
+   "isin": "IE00B5BMR087",
+   "tickerEur": "CSPX / SXR8",
+   "ter": "0,07%",
+   "accDis": "ACC",
+   "nota": "Proxy: no hay un total-market USA idéntico líquido"
+  },
+  "EFA": {
+   "nombre": "Xtrackers MSCI World ex USA UCITS ETF 1C",
+   "isin": "IE0006WW1TQ4",
+   "tickerEur": "EXUS",
+   "ter": "0,15%",
+   "accDis": "ACC",
+   "nota": "Aprox.: World ex USA (EFA es MSCI EAFE)"
+  },
+  "EEM": {
+   "nombre": "iShares Core MSCI EM IMI UCITS ETF (Acc)",
+   "isin": "IE00BKM4GZ66",
+   "tickerEur": "EIMI / EMIM",
+   "ter": "0,18%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "VGK": {
+   "nombre": "Amundi Stoxx Europe 600 UCITS ETF Acc",
+   "isin": "LU0908500753",
+   "tickerEur": "MEUD / LYP6",
+   "ter": "0,07%",
+   "accDis": "ACC",
+   "nota": "Aprox.: Stoxx Europe 600"
+  },
+  "EWJ": {
+   "nombre": "iShares Core MSCI Japan IMI UCITS ETF (Acc)",
+   "isin": "IE00B4L5YX21",
+   "tickerEur": "SJPA / IJPA",
+   "ter": "0,15%",
+   "accDis": "ACC",
+   "nota": "Incluye small caps (IMI)"
+  },
+  "FXI": {
+   "nombre": "iShares MSCI China UCITS ETF",
+   "isin": "IE00BJ5JPG56",
+   "tickerEur": "ICGA / ICHN",
+   "ter": "0,28%",
+   "accDis": "ACC",
+   "nota": "Aprox.: MSCI China (FXI es FTSE China 50)"
+  },
+  "INDA": {
+   "nombre": "iShares MSCI India UCITS ETF USD (Acc)",
+   "isin": "IE00BZCQB185",
+   "tickerEur": "NDIA",
+   "ter": "0,65%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "EWZ": {
+   "nombre": "iShares MSCI Brazil UCITS ETF USD (Dist)",
+   "isin": "IE00B0M63516",
+   "tickerEur": "IBZL",
+   "ter": "0,74%",
+   "accDis": "DIS",
+   "nota": "Solo existe en distribución"
+  },
+  "TLT": {
+   "nombre": "iShares USD Treasury Bond 20+yr UCITS ETF (Acc)",
+   "isin": "IE00BFM6TC58",
+   "tickerEur": "DTLA",
+   "ter": "0,07%",
+   "accDis": "ACC",
+   "nota": "Versión Dist: IDTL / IS04"
+  },
+  "IEF": {
+   "nombre": "iShares USD Treasury Bond 7-10yr UCITS ETF (Acc)",
+   "isin": "IE00B3VWN518",
+   "tickerEur": "CBU0 / SXRM",
+   "ter": "0,07%",
+   "accDis": "ACC",
+   "nota": "Versión Dist: IDTM / BTMA"
+  },
+  "LQD": {
+   "nombre": "iShares $ Corp Bond UCITS ETF (Acc)",
+   "isin": "IE00BYXYYJ35",
+   "tickerEur": "LQDA",
+   "ter": "0,20%",
+   "accDis": "ACC",
+   "nota": "Crédito IG USD. Versión Dist: LQDE"
+  },
+  "HYG": {
+   "nombre": "iShares USD High Yield Corp Bond UCITS ETF (Acc)",
+   "isin": "IE00BYXYYL56",
+   "tickerEur": "IS00",
+   "ter": "0,50%",
+   "accDis": "ACC",
+   "nota": "High yield USD. Versión Dist: IHYU"
+  },
+  "TIP": {
+   "nombre": "iShares $ TIPS UCITS ETF (Acc)",
+   "isin": "IE00B1FZSC47",
+   "tickerEur": "IUST / ITPS",
+   "ter": "0,10%",
+   "accDis": "ACC",
+   "nota": "Bonos USA ligados a inflación"
+  },
+  "GLD": {
+   "nombre": "Invesco Physical Gold A",
+   "isin": "IE00B579F325",
+   "tickerEur": "SGLD",
+   "ter": "0,12%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "SLV": {
+   "nombre": "iShares Physical Silver ETC",
+   "isin": "IE00B4NCWG09",
+   "tickerEur": "PPFD",
+   "ter": "0,20%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "DBC": {
+   "nombre": "Invesco Bloomberg Commodity UCITS ETF Acc",
+   "isin": "IE00BD6FTQ80",
+   "tickerEur": "CMOD",
+   "ter": "0,19%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "USO": {
+   "nombre": "WisdomTree WTI Crude Oil",
+   "isin": "GB00B15KXV33",
+   "tickerEur": "CRUD",
+   "ter": "0,49%",
+   "accDis": "ACC",
+   "nota": "ETC (deuda colateralizada), no ETF"
+  },
+  "UNG": {
+   "nombre": "WisdomTree Natural Gas",
+   "isin": "JE00BN7KB334",
+   "tickerEur": "NGAS",
+   "ter": "0,49%",
+   "accDis": "ACC",
+   "nota": "ETC (deuda colateralizada), no ETF"
+  },
+  "DBA": {
+   "nombre": "WisdomTree Agriculture",
+   "isin": "GB00B15KYH63",
+   "tickerEur": "AIGA",
+   "ter": "0,49%",
+   "accDis": "ACC",
+   "nota": "ETC (maíz, trigo, soja, café, azúcar, algodón)"
+  },
+  "VNQ": {
+   "nombre": "iShares US Property Yield UCITS ETF (Dist)",
+   "isin": "IE00B1FZSF77",
+   "tickerEur": "IUSP",
+   "ter": "0,40%",
+   "accDis": "DIS",
+   "nota": "REITs USA · solo existe en distribución"
+  },
+  "IBIT": {
+   "nombre": "CoinShares Physical Bitcoin (ETN)",
+   "isin": "GB00BLD4ZL17",
+   "tickerEur": "BITC",
+   "ter": "0,35%",
+   "accDis": "ACC",
+   "nota": "Es un ETN, no un ETF"
+  },
+  "DBB": {
+   "nombre": "WisdomTree Industrial Metals",
+   "isin": "GB00B15KYG56",
+   "tickerEur": "AIGI",
+   "ter": "0,49%",
+   "accDis": "ACC",
+   "nota": "Metales industriales (cobre, aluminio, zinc, níquel)"
+  },
+  "XLK": {
+   "nombre": "SPDR S&P US Technology Select Sector UCITS ETF",
+   "isin": "IE00BWBXM948",
+   "tickerEur": "SXLK",
+   "ter": "0,15%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "XLF": {
+   "nombre": "SPDR S&P US Financials Select Sector UCITS ETF",
+   "isin": "IE00BWBXM500",
+   "tickerEur": "SXLF",
+   "ter": "0,15%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "XLV": {
+   "nombre": "SPDR S&P US Health Care Select Sector UCITS ETF",
+   "isin": "IE00BWBXM617",
+   "tickerEur": "SXLV",
+   "ter": "0,15%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "XLE": {
+   "nombre": "SPDR S&P US Energy Select Sector UCITS ETF",
+   "isin": "IE00BWBXM492",
+   "tickerEur": "SXLE",
+   "ter": "0,15%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "XLI": {
+   "nombre": "SPDR S&P US Industrials Select Sector UCITS ETF",
+   "isin": "IE00BWBXM724",
+   "tickerEur": "SXLI",
+   "ter": "0,15%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "XLY": {
+   "nombre": "SPDR S&P US Consumer Discretionary Select Sector UCITS ETF",
+   "isin": "IE00BWBXM278",
+   "tickerEur": "SXLY",
+   "ter": "0,15%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "XLP": {
+   "nombre": "SPDR S&P US Consumer Staples Select Sector UCITS ETF",
+   "isin": "IE00BWBXM385",
+   "tickerEur": "SXLP",
+   "ter": "0,15%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "XLU": {
+   "nombre": "SPDR S&P US Utilities Select Sector UCITS ETF",
+   "isin": "IE00BWBXMB69",
+   "tickerEur": "SXLU",
+   "ter": "0,15%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "XLB": {
+   "nombre": "SPDR S&P US Materials Select Sector UCITS ETF",
+   "isin": "IE00BWBXM831",
+   "tickerEur": "SXLB",
+   "ter": "0,15%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "XLRE": {
+   "nombre": "iShares US Property Yield UCITS ETF (Dist)",
+   "isin": "IE00B1FZSF77",
+   "tickerEur": "IUSP",
+   "ter": "0,40%",
+   "accDis": "DIS",
+   "nota": "REITs USA · solo en distribución (sin sector real estate puro)"
+  },
+  "XLC": {
+   "nombre": "SPDR S&P U.S. Communication Sector UCITS ETF",
+   "isin": "IE00BFWFPX50",
+   "tickerEur": "SXLC",
+   "ter": "0,15%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "SMH": {
+   "nombre": "VanEck Semiconductor UCITS ETF",
+   "isin": "IE00BMC38736",
+   "tickerEur": "VVSM / SMH",
+   "ter": "0,35%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "KRE": {
+   "nombre": "",
+   "isin": "",
+   "tickerEur": "",
+   "ter": "",
+   "accDis": "",
+   "nota": "Sin equivalente UCITS (bancos regionales USA)"
+  },
+  "XBI": {
+   "nombre": "iShares Nasdaq US Biotechnology UCITS ETF",
+   "isin": "IE00BYXG2H39",
+   "tickerEur": "BTEC",
+   "ter": "0,35%",
+   "accDis": "ACC",
+   "nota": "Aprox.: cap-weight (XBI es equal-weight)"
+  },
+  "XOP": {
+   "nombre": "iShares Oil & Gas Exploration & Production UCITS ETF",
+   "isin": "IE00B6R51Z18",
+   "tickerEur": "SPOG / IOGP",
+   "ter": "0,55%",
+   "accDis": "ACC",
+   "nota": "Aprox.: E&P global (no solo USA)"
+  },
+  "XHB": {
+   "nombre": "",
+   "isin": "",
+   "tickerEur": "",
+   "ter": "",
+   "accDis": "",
+   "nota": "Sin equivalente UCITS (construcción USA)"
+  },
+  "ITA": {
+   "nombre": "VanEck Defense UCITS ETF A",
+   "isin": "IE000YYE6WK5",
+   "tickerEur": "DFEN",
+   "ter": "0,55%",
+   "accDis": "ACC",
+   "nota": "Aprox.: defensa global (no solo USA). Alt: Future of Defence (NATO)"
+  },
+  "ARKK": {
+   "nombre": "",
+   "isin": "",
+   "tickerEur": "",
+   "ter": "",
+   "accDis": "",
+   "nota": "Sin equivalente UCITS líquido claro (innovación)"
+  },
+  "BOTZ": {
+   "nombre": "",
+   "isin": "",
+   "tickerEur": "",
+   "ter": "",
+   "accDis": "",
+   "nota": "Sin equivalente directo (alt. parcial: L&G ROBO / iShares Automation & Robotics)"
+  },
+  "ICLN": {
+   "nombre": "iShares Global Clean Energy Transition UCITS ETF (Acc)",
+   "isin": "IE000U58J0M1",
+   "tickerEur": "INRA",
+   "ter": "0,65%",
+   "accDis": "ACC",
+   "nota": "Versión Dist: INRG"
+  },
+  "TAN": {
+   "nombre": "Invesco Solar Energy UCITS ETF Acc",
+   "isin": "IE00BM8QRZ79",
+   "tickerEur": "S0LR",
+   "ter": "0,69%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "LIT": {
+   "nombre": "Global X Lithium & Battery Tech UCITS ETF (Acc)",
+   "isin": "IE00BLCHJN13",
+   "tickerEur": "LI7U / LITU",
+   "ter": "0,60%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "CIBR": {
+   "nombre": "L&G Cyber Security UCITS ETF",
+   "isin": "IE00BYPLS672",
+   "tickerEur": "ISPY / USPY",
+   "ter": "0,69%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "URA": {
+   "nombre": "Global X Uranium UCITS ETF USD Accumulating",
+   "isin": "IE000NDWFGA5",
+   "tickerEur": "URNU",
+   "ter": "0,65%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "SKYY": {
+   "nombre": "WisdomTree Cloud Computing UCITS ETF (Acc)",
+   "isin": "IE00BJGWQN72",
+   "tickerEur": "WCLD",
+   "ter": "0,40%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "FINX": {
+   "nombre": "",
+   "isin": "",
+   "tickerEur": "",
+   "ter": "",
+   "accDis": "",
+   "nota": "Sin equivalente UCITS líquido claro (fintech)"
+  },
+  "GDX": {
+   "nombre": "VanEck Gold Miners UCITS ETF",
+   "isin": "IE00BQQP9F84",
+   "tickerEur": "G2X",
+   "ter": "0,53%",
+   "accDis": "ACC",
+   "nota": ""
+  },
+  "JETS": {
+   "nombre": "",
+   "isin": "",
+   "tickerEur": "",
+   "ter": "",
+   "accDis": "",
+   "nota": "Sin equivalente UCITS (aerolíneas)"
+  },
+  "DRIV": {
+   "nombre": "iShares Electric Vehicles and Driving Technology UCITS ETF (Acc)",
+   "isin": "IE00BGL86Z12",
+   "tickerEur": "ECAR",
+   "ter": "0,40%",
+   "accDis": "ACC",
+   "nota": "Coches eléctricos y conducción"
+  },
+  "BLOK": {
+   "nombre": "Invesco CoinShares Global Blockchain UCITS ETF (Acc)",
+   "isin": "IE00BGBN6P67",
+   "tickerEur": "BCHN / BNXG",
+   "ter": "0,65%",
+   "accDis": "ACC",
+   "nota": ""
   }
  }
 }
