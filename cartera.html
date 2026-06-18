@@ -87,6 +87,10 @@
   .sumbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--line-2);
     font-size:12px}
   .sumbar b{font-family:"IBM Plex Mono",monospace}
+  .sumright{display:flex;align-items:center;gap:9px}
+  .minibtn{border:1px solid var(--blue);background:#fff;color:var(--blue);border-radius:7px;padding:3px 9px;font-size:10.5px;
+    font-weight:600;cursor:pointer;font-family:inherit}
+  .minibtn:hover{background:#F5F8FF}
   .sum-ok{color:var(--up)} .sum-warn{color:#B5851F}
   .pfacts{display:flex;gap:7px;padding:0 16px 14px;flex-wrap:wrap}
   .btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 12px;font-size:12px;font-weight:500;
@@ -161,7 +165,7 @@
     <div class="panel pf">
       <div class="ptitle"><h2>Tu cartera</h2><span class="sub" id="pfcount">0 activos</span></div>
       <div class="pflist" id="pflist"></div>
-      <div class="sumbar"><span>Suma de pesos</span><b id="sumv">0%</b></div>
+      <div class="sumbar"><span>Suma de pesos</span><span class="sumright"><b id="sumv">0%</b><button class="minibtn" id="norm">ajustar a 100%</button></span></div>
       <div class="pfacts">
         <button class="btn" id="equal">Repartir igual</button>
         <button class="btn" id="clear">Limpiar</button>
@@ -321,11 +325,13 @@ $("#q").addEventListener("input",e=>{
 });
 
 /* ---------- cartera ---------- */
+function staleResults(){ const r=$("#results"); if(!r.classList.contains("hide")) r.classList.add("hide"); }
+function rebalEqual(){ if(PF.length){const eq=to100(PF.map(()=>1)); PF.forEach((p,i)=>p.w=eq[i]);} }
 function toggle(tk){
   const i=PF.findIndex(p=>p.tk===tk);
   if(i>=0) PF.splice(i,1);
-  else PF.push({tk,w:Math.round(100/(PF.length+1))});
-  renderPF(); syncSelector();
+  else PF.push({tk,w:0});
+  rebalEqual(); renderPF(); syncSelector(); staleResults();
 }
 function renderPF(){
   const host=$("#pflist");
@@ -338,17 +344,28 @@ function renderPF(){
       <input type="number" min="0" step="1" value="${p.w}" data-i="${i}"><span class="pct">%</span>
       <button class="rm" data-i="${i}" title="Quitar">×</button></div>`).join("");
     host.querySelectorAll("input").forEach(inp=>inp.oninput=e=>{PF[+e.target.dataset.i].w=Math.max(0,+e.target.value||0);updateSum();});
-    host.querySelectorAll(".rm").forEach(b=>b.onclick=e=>{PF.splice(+e.target.dataset.i,1);renderPF();syncSelector();});
+    host.querySelectorAll(".rm").forEach(b=>b.onclick=e=>{PF.splice(+e.target.dataset.i,1);rebalEqual();renderPF();syncSelector();staleResults();});
   }
   updateSum();
 }
 function updateSum(){
   const s=PF.reduce((a,p)=>a+p.w,0);
   const el=$("#sumv"); el.textContent=Math.round(s)+"%";
-  el.className=(Math.abs(s-100)<0.5?"sum-ok":"sum-warn");
-  $("#run").disabled=PF.length<1;
+  const ok=Math.abs(s-100)<0.5;
+  el.className=ok?"sum-ok":"sum-warn";
+  $("#norm").style.display=(PF.length&&!ok)?"":"none";
+  $("#run").disabled=!(PF.length>=1&&ok);
 }
-$("#equal").onclick=()=>{ if(!PF.length)return; const w=Math.round(100/PF.length); PF.forEach(p=>p.w=w); renderPF(); };
+// reparte una lista de pesos a enteros que suman EXACTAMENTE 100 (método del mayor resto)
+function to100(weights){
+  const s=weights.reduce((a,b)=>a+b,0); if(s<=0) return weights.map(()=>0);
+  const raw=weights.map(w=>w/s*100), fl=raw.map(Math.floor);
+  let rem=100-fl.reduce((a,b)=>a+b,0);
+  raw.map((w,i)=>[w-fl[i],i]).sort((a,b)=>b[0]-a[0]).forEach(([,i])=>{if(rem>0){fl[i]++;rem--;}});
+  return fl;
+}
+$("#equal").onclick=()=>{ if(!PF.length)return; const eq=to100(PF.map(()=>1)); PF.forEach((p,i)=>p.w=eq[i]); renderPF(); };
+$("#norm").onclick=()=>{ if(!PF.length)return; const nw=to100(PF.map(p=>p.w)); PF.forEach((p,i)=>p.w=nw[i]); renderPF(); };
 $("#clear").onclick=()=>{ PF=[]; renderPF(); syncSelector(); $("#results").classList.add("hide"); };
 
 /* ---------- cálculo ---------- */
@@ -361,9 +378,14 @@ function commonRange(tks){
 function stats(arr){const m=arr.reduce((a,b)=>a+b,0)/arr.length;
   const v=arr.reduce((a,b)=>a+(b-m)*(b-m),0)/arr.length;return[m,Math.sqrt(v)];}
 function run(){
-  const tks=PF.map(p=>p.tk), sw=PF.reduce((a,p)=>a+p.w,0)||1, wn=PF.map(p=>p.w/sw);
+  const tks=PF.map(p=>p.tk), sw=PF.reduce((a,p)=>a+p.w,0);
+  if(sw<=0){ alert("Pon algún peso mayor que 0% para poder calcular."); return; }
+  const wn=PF.map(p=>p.w/sw);
   const [a,b]=commonRange(tks);
   if(a<0||b-a<60){ alert("El periodo común de estos ETFs es demasiado corto para un backtest fiable. Prueba a quitar el ETF más nuevo."); return; }
+  // ETF que marca el inicio (el de salida a bolsa más tardía)
+  let limTk=tks[0],limI=-1;
+  tks.forEach(t=>{const f=DATA.etfs[t].px.findIndex(x=>x!=null); if(f>limI){limI=f;limTk=t;}});
   const dates=DATA.dates.slice(a,b+1), L=dates.length;
   // curva cartera (compra y mantén, $10.000)
   const base=tks.map(t=>DATA.etfs[t].px[a]);
@@ -380,7 +402,8 @@ function run(){
   let benchPt=null;
   if(bench){const bp=DATA.etfs[bench].px,br=[];for(let i=a+1;i<=b;i++)br.push(bp[i]/bp[i-1]-1);
     const[,bsd]=stats(br); benchPt={tk:bench,cagr:Math.pow(bp[b]/bp[a],1/years)-1,vol:bsd*Math.sqrt(252)};}
-  renderResults(M,pv,bpv,bench,dates,tks,a,b,Math.abs(sw-100)>=0.5,assetsPts,benchPt);
+  const limited = limTk && limI>0;   // el inicio lo marca un ETF que no estaba desde el principio
+  renderResults(M,pv,bpv,bench,dates,tks,a,b,Math.abs(sw-100)>=0.5,assetsPts,benchPt,limited?limTk:null);
 }
 function metrics(pv,rp,dates){
   const years=(new Date(dates[dates.length-1])-new Date(dates[0]))/(365.25*864e5);
@@ -391,18 +414,28 @@ function metrics(pv,rp,dates){
   const dn=rp.filter(x=>x<0); const dd=dn.length?Math.sqrt(dn.reduce((a,x)=>a+x*x,0)/rp.length)*Math.sqrt(252):0;
   const sortino=dd?(mean*252)/dd:0;
   let peak=pv[0],maxdd=0; pv.forEach(v=>{if(v>peak)peak=v;const d=v/peak-1;if(d<maxdd)maxdd=d;});
-  // por año
+  // retorno por año natural; marca como parcial el primer/último si no cubren el año entero
   const yend={}; dates.forEach((d,i)=>{yend[d.slice(0,4)]=pv[i];});
-  const ys=Object.keys(yend).sort(); let prev=pv[0],best=null,worst=null,bestY="",worstY="";
-  ys.forEach(y=>{const r=yend[y]/prev-1;prev=yend[y]; if(best===null||r>best){best=r;bestY=y;} if(worst===null||r<worst){worst=r;worstY=y;}});
-  return{years,total,cagr,vol,sharpe,sortino,maxdd,best,bestY,worst,worstY};
+  const ys=Object.keys(yend).sort();
+  const fY=dates[0].slice(0,4), lY=dates[dates.length-1].slice(0,4);
+  const firstFull=dates[0].slice(5)<="01-10", lastFull=dates[dates.length-1].slice(5)>="12-22";
+  let prev=pv[0]; const rows=ys.map(y=>{const r=yend[y]/prev-1;prev=yend[y];
+    const partial=(y===fY&&!firstFull)||(y===lY&&!lastFull); return {y,r,partial};});
+  let cand=rows.filter(r=>!r.partial); if(!cand.length) cand=rows;   // si no hay año completo, usa lo que haya
+  let bst=cand[0],wst=cand[0];
+  cand.forEach(r=>{if(r.r>bst.r)bst=r; if(r.r<wst.r)wst=r;});
+  return{years,total,cagr,vol,sharpe,sortino,maxdd,
+    best:bst.r,bestY:bst.y+(bst.partial?"*":""),worst:wst.r,worstY:wst.y+(wst.partial?"*":""),
+    anyPartial:rows.some(r=>r.partial)&&!cand.some(r=>r.partial)?false:cand.some(r=>r.partial)};
 }
 
 /* ---------- resultados ---------- */
-function renderResults(M,pv,bpv,bench,dates,tks,a,b,unbal,assetsPts,benchPt){
+function renderResults(M,pv,bpv,bench,dates,tks,a,b,unbal,assetsPts,benchPt,limTk){
   $("#results").classList.remove("hide");
-  $("#periodNote").innerHTML=`Periodo común analizado: <b>${dlabel(dates[0])} → ${dlabel(dates[dates.length-1])}</b> (${M.years.toFixed(1).replace(".",",")} años), `+
-    `limitado por el ETF más nuevo de la cartera.`+(unbal?` Los pesos no sumaban 100%, así que se han <b>normalizado</b> proporcionalmente.`:``)+
+  $("#periodNote").innerHTML=`Periodo común analizado: <b>${dlabel(dates[0])} → ${dlabel(dates[dates.length-1])}</b> (${M.years.toFixed(1).replace(".",",")} años)`+
+    (limTk?`, limitado por <b>${limTk}</b> (${nmOf(limTk)}), el de salida a bolsa más reciente.`:`.`)+
+    (unbal?` Los pesos no sumaban 100%, así que se han <b>normalizado</b> proporcionalmente.`:``)+
+    (M.anyPartial?` El año marcado con * es parcial (no cuenta de enero a diciembre completo).`:``)+
     (SAMPLE?` <b>Estás viendo datos de muestra</b> (sube history.json para datos reales).`:``);
   const card=(k,v,cls,s)=>`<div class="card"><div class="k">${k}</div><div class="v ${cls||''}">${v}</div>${s?`<div class="s">${s}</div>`:''}</div>`;
   $("#cards").innerHTML=
@@ -510,10 +543,12 @@ function drawScatter(pts,port,bench){
   $("#scatter").innerHTML=g;
   // hover
   $("#scatter").querySelectorAll(".spt").forEach(el=>{
-    el.style.cursor="default";
-    el.addEventListener("mouseenter",e=>showTip(el.dataset.tip.replace(/·/g,"<br>").replace(/^(.*?)<br>/,"<b>$1</b><br>"),e.clientX+12,e.clientY-10));
+    el.style.cursor="pointer";
+    const tipHtml=()=>el.dataset.tip.replace(/·/g,"<br>").replace(/^(.*?)<br>/,"<b>$1</b><br>");
+    el.addEventListener("mouseenter",e=>showTip(tipHtml(),e.clientX+12,e.clientY-10));
     el.addEventListener("mousemove",e=>{const t=$("#tip");t.style.left=(e.clientX+12)+"px";t.style.top=(e.clientY-10)+"px";});
     el.addEventListener("mouseleave",hideTip);
+    el.addEventListener("click",e=>{e.stopPropagation();showTip(tipHtml(),e.clientX+12,e.clientY-10);clearTimeout(window._st);window._st=setTimeout(hideTip,2800);});
   });
 }
 function drawDrawdown(pv,dates){
