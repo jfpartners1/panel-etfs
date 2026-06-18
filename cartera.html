@@ -120,8 +120,11 @@
   .chart{padding:6px 14px 12px}
   .chart svg{width:100%;height:auto;display:block}
   .ddwrap{border-top:1px solid var(--line-2);margin-top:2px}
-  .ddlabel{font-size:11.5px;font-weight:600;color:var(--ink-2);padding:10px 16px 0}
-  .ddlabel span{font-weight:400;color:var(--mute)}
+  .ddlabel{font-size:11.5px;font-weight:600;color:var(--ink-2);padding:10px 16px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .ddsub{font-weight:400;color:var(--mute)}
+  .ddleg{display:flex;gap:12px;font-weight:500}
+  .ddleg .lgi{white-space:nowrap;color:var(--ink-2)}
+  .ddleg .lgi i{display:inline-block;width:12px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
   .leg{display:flex;gap:16px;padding:6px 16px 12px;font-size:11.5px;color:var(--ink-2)}
   .leg i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
   .clbl{font-family:"IBM Plex Mono",monospace;font-size:10px;fill:var(--mute)}
@@ -185,7 +188,7 @@
       <div class="leg" id="leg"></div>
       <div class="chart"><svg id="curve" viewBox="0 0 920 360" preserveAspectRatio="xMidYMid meet"></svg></div>
       <div class="ddwrap">
-        <div class="ddlabel">Caídas desde máximos <span>· cuánto estabas por debajo de tu mejor momento</span></div>
+        <div class="ddlabel"><span>Caídas desde máximos <span class="ddsub">· cuánto estabas por debajo de tu mejor momento</span></span><span class="ddleg" id="ddleg"></span></div>
         <div class="chart"><svg id="dd" viewBox="0 0 920 150" preserveAspectRatio="xMidYMid meet"></svg></div>
       </div>
     </div>
@@ -448,7 +451,7 @@ function renderResults(M,pv,bpv,bench,dates,tks,a,b,unbal,assetsPts,benchPt,limT
     card("Mejor año",fmtPct(M.best*100),"up",M.bestY)+
     card("Peor año",fmtPct(M.worst*100),"down",M.worstY);
   drawCurve(pv,bpv,bench,dates);
-  drawDrawdown(pv,dates);
+  drawDrawdown(pv,dates,bpv,bench);
   drawScatter(assetsPts,{cagr:M.cagr,vol:M.vol},benchPt);
   drawCor(tks,a,b);
 }
@@ -551,11 +554,13 @@ function drawScatter(pts,port,bench){
     el.addEventListener("click",e=>{e.stopPropagation();showTip(tipHtml(),e.clientX+12,e.clientY-10);clearTimeout(window._st);window._st=setTimeout(hideTip,2800);});
   });
 }
-function drawDrawdown(pv,dates){
-  const W=920,H=150,L=52,R=16,T=10,B=24, w=W-L-R, h=H-T-B;
-  let peak=pv[0],mi=0; const dd=pv.map((v,i)=>{if(v>peak)peak=v;const x=v/peak-1;return x;});
-  let mn=0; dd.forEach((v,i)=>{if(v<mn){mn=v;mi=i;}});
-  const lo=Math.min(mn*1.12,-0.02), N=pv.length;
+function drawDrawdown(pv,dates,bpv,bench){
+  const W=920,H=150,L=52,R=16,T=10,B=24, w=W-L-R, h=H-T-B, N=pv.length;
+  const ddOf=arr=>{let pk=arr[0];return arr.map(v=>{if(v>pk)pk=v;return v/pk-1;});};
+  const dd=ddOf(pv), bdd=(bpv&&bpv.length===N)?ddOf(bpv):null;
+  let mn=0,mi=0; dd.forEach((v,i)=>{if(v<mn){mn=v;mi=i;}});
+  let bmn=0; if(bdd)bdd.forEach(v=>{if(v<bmn)bmn=v;});
+  const lo=Math.min(mn*1.12,(bdd?bmn*1.12:0),-0.02);
   const x=i=>L+w*i/(N-1), y=v=>T+h*(v/lo);
   let g="";
   const steps=Math.max(2,Math.min(5,Math.ceil(-lo/0.1)));
@@ -565,12 +570,40 @@ function drawDrawdown(pv,dates){
   const yrs={}; dates.forEach((d,i)=>{const y4=d.slice(0,4);if(!(y4 in yrs))yrs[y4]=i;});
   const yk=Object.keys(yrs),step=Math.ceil(yk.length/8);
   yk.forEach((y4,idx)=>{if(idx%step)return;g+=`<text class="clbl" x="${x(yrs[y4]).toFixed(1)}" y="${H-6}" text-anchor="middle">${y4}</text>`;});
+  // área de la cartera (relleno rojo)
   let area=`M ${L} ${T}`; for(let i=0;i<N;i++) area+=` L ${x(i).toFixed(1)} ${y(dd[i]).toFixed(1)}`; area+=` L ${x(N-1).toFixed(1)} ${T} Z`;
-  g+=`<path d="${area}" fill="rgba(224,68,68,0.16)" stroke="#E04444" stroke-width="1.2" stroke-linejoin="round"/>`;
-  // marca de la máxima caída
+  g+=`<path d="${area}" fill="rgba(224,68,68,0.15)" stroke="none"/>`;
+  // línea del benchmark (gris, sin relleno) — debajo de la línea de la cartera
+  if(bdd){let bl=`M ${x(0).toFixed(1)} ${y(bdd[0]).toFixed(1)}`; for(let i=1;i<N;i++) bl+=` L ${x(i).toFixed(1)} ${y(bdd[i]).toFixed(1)}`;
+    g+=`<path d="${bl}" fill="none" stroke="#9AA5B3" stroke-width="1.4" stroke-linejoin="round"/>`;}
+  // línea de la cartera (roja)
+  let cl=`M ${x(0).toFixed(1)} ${y(dd[0]).toFixed(1)}`; for(let i=1;i<N;i++) cl+=` L ${x(i).toFixed(1)} ${y(dd[i]).toFixed(1)}`;
+  g+=`<path d="${cl}" fill="none" stroke="#E04444" stroke-width="1.4" stroke-linejoin="round"/>`;
+  // marca de la máxima caída de la cartera
   g+=`<circle cx="${x(mi).toFixed(1)}" cy="${y(mn).toFixed(1)}" r="3.5" fill="#E04444" stroke="#fff" stroke-width="1.5"/>`+
      `<text class="clbl" x="${x(mi).toFixed(1)}" y="${(y(mn)+13).toFixed(1)}" text-anchor="middle" style="fill:#E04444;font-weight:600">${(mn*100).toFixed(1).replace('.',',')}%</text>`;
+  // leyenda fuera del gráfico (en el título), para no cruzarse con las curvas
+  const leg=$("#ddleg");
+  if(leg){ leg.innerHTML = bdd
+    ? `<span class="lgi"><i style="background:#E04444"></i>Cartera (${(mn*100).toFixed(0).replace("-","−")}%)</span><span class="lgi"><i style="background:#9AA5B3"></i>${bench} (${(bmn*100).toFixed(0).replace("-","−")}%)</span>`
+    : `<span class="lgi"><i style="background:#E04444"></i>Cartera (${(mn*100).toFixed(0).replace("-","−")}%)</span>`; }
+  // capa de hover
+  g+=`<line id="ddhl" x1="0" y1="${T}" x2="0" y2="${T+h}" stroke="#C9D3E0" stroke-width="1" style="opacity:0"/>`;
+  g+=`<rect id="ddhov" x="${L}" y="${T}" width="${w}" height="${h}" fill="transparent"/>`;
   $("#dd").innerHTML=g;
+  hookHoverDD(dd,bdd,bench,dates,{L,w,N,x});
+}
+function hookHoverDD(dd,bdd,bench,dates,G){
+  const svg=$("#dd"),hl=svg.querySelector("#ddhl"),hov=svg.querySelector("#ddhov"),tip=$("#tip");
+  hov.addEventListener("mousemove",e=>{
+    const r=svg.getBoundingClientRect(), sx=(e.clientX-r.left)*920/r.width;
+    let i=Math.round((sx-G.L)/G.w*(G.N-1)); i=Math.max(0,Math.min(G.N-1,i));
+    const xx=G.x(i); hl.setAttribute("x1",xx);hl.setAttribute("x2",xx);hl.style.opacity=1;
+    let html=`${dlabel(dates[i])}<br>Cartera ${(dd[i]*100).toFixed(1).replace(".",",")}%`;
+    if(bdd) html+=`<br>${bench} ${(bdd[i]*100).toFixed(1).replace(".",",")}%`;
+    tip.innerHTML=html; tip.style.opacity=1; tip.style.left=(e.clientX+12)+"px"; tip.style.top=(e.clientY-10)+"px";
+  });
+  hov.addEventListener("mouseleave",()=>{hl.style.opacity=0;tip.style.opacity=0;});
 }
 $("#run").onclick=run;
 load();
