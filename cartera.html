@@ -115,6 +115,9 @@
 
   .chart{padding:6px 14px 12px}
   .chart svg{width:100%;height:auto;display:block}
+  .ddwrap{border-top:1px solid var(--line-2);margin-top:2px}
+  .ddlabel{font-size:11.5px;font-weight:600;color:var(--ink-2);padding:10px 16px 0}
+  .ddlabel span{font-weight:400;color:var(--mute)}
   .leg{display:flex;gap:16px;padding:6px 16px 12px;font-size:11.5px;color:var(--ink-2)}
   .leg i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
   .clbl{font-family:"IBM Plex Mono",monospace;font-size:10px;fill:var(--mute)}
@@ -177,6 +180,10 @@
       <div class="ptitle"><h2>Crecimiento de $10.000</h2><span class="sub" id="chartSub"></span></div>
       <div class="leg" id="leg"></div>
       <div class="chart"><svg id="curve" viewBox="0 0 920 360" preserveAspectRatio="xMidYMid meet"></svg></div>
+      <div class="ddwrap">
+        <div class="ddlabel">Caídas desde máximos <span>· cuánto estabas por debajo de tu mejor momento</span></div>
+        <div class="chart"><svg id="dd" viewBox="0 0 920 150" preserveAspectRatio="xMidYMid meet"></svg></div>
+      </div>
     </div>
     <div class="twocol">
       <div class="panel">
@@ -395,6 +402,7 @@ function renderResults(M,pv,bpv,bench,dates,tks,a,b,unbal,assetsPts,benchPt){
     card("Mejor año",fmtPct(M.best*100),"up",M.bestY)+
     card("Peor año",fmtPct(M.worst*100),"down",M.worstY);
   drawCurve(pv,bpv,bench,dates);
+  drawDrawdown(pv,dates);
   drawScatter(assetsPts,{cagr:M.cagr,vol:M.vol},benchPt);
   drawCor(tks,a,b);
 }
@@ -494,6 +502,27 @@ function drawScatter(pts,port,bench){
     el.addEventListener("mousemove",e=>{const t=$("#tip");t.style.left=(e.clientX+12)+"px";t.style.top=(e.clientY-10)+"px";});
     el.addEventListener("mouseleave",hideTip);
   });
+}
+function drawDrawdown(pv,dates){
+  const W=920,H=150,L=52,R=16,T=10,B=24, w=W-L-R, h=H-T-B;
+  let peak=pv[0],mi=0; const dd=pv.map((v,i)=>{if(v>peak)peak=v;const x=v/peak-1;return x;});
+  let mn=0; dd.forEach((v,i)=>{if(v<mn){mn=v;mi=i;}});
+  const lo=Math.min(mn*1.12,-0.02), N=pv.length;
+  const x=i=>L+w*i/(N-1), y=v=>T+h*(v/lo);
+  let g="";
+  const steps=Math.max(2,Math.min(5,Math.ceil(-lo/0.1)));
+  for(let k=0;k<=steps;k++){const vv=lo*k/steps,yy=y(vv);
+    g+=`<line class="cgrid" x1="${L}" y1="${yy.toFixed(1)}" x2="${W-R}" y2="${yy.toFixed(1)}"/>`+
+       `<text class="clbl" x="${L-6}" y="${(yy+3).toFixed(1)}" text-anchor="end">${(vv*100).toFixed(0)}%</text>`;}
+  const yrs={}; dates.forEach((d,i)=>{const y4=d.slice(0,4);if(!(y4 in yrs))yrs[y4]=i;});
+  const yk=Object.keys(yrs),step=Math.ceil(yk.length/8);
+  yk.forEach((y4,idx)=>{if(idx%step)return;g+=`<text class="clbl" x="${x(yrs[y4]).toFixed(1)}" y="${H-6}" text-anchor="middle">${y4}</text>`;});
+  let area=`M ${L} ${T}`; for(let i=0;i<N;i++) area+=` L ${x(i).toFixed(1)} ${y(dd[i]).toFixed(1)}`; area+=` L ${x(N-1).toFixed(1)} ${T} Z`;
+  g+=`<path d="${area}" fill="rgba(224,68,68,0.16)" stroke="#E04444" stroke-width="1.2" stroke-linejoin="round"/>`;
+  // marca de la máxima caída
+  g+=`<circle cx="${x(mi).toFixed(1)}" cy="${y(mn).toFixed(1)}" r="3.5" fill="#E04444" stroke="#fff" stroke-width="1.5"/>`+
+     `<text class="clbl" x="${x(mi).toFixed(1)}" y="${(y(mn)+13).toFixed(1)}" text-anchor="middle" style="fill:#E04444;font-weight:600">${(mn*100).toFixed(1).replace('.',',')}%</text>`;
+  $("#dd").innerHTML=g;
 }
 $("#run").onclick=run;
 load();
