@@ -1,0 +1,45 @@
+name: update-history
+
+# Genera history.json (~12 años) para la página de carteras. Se ejecuta 1 vez por semana
+# (lunes 06:10 UTC) y también a mano desde la pestaña Actions. Cuesta ~56 llamadas a EODHD.
+
+on:
+  schedule:
+    - cron: "10 6 * * 1"      # cada lunes a las 06:10 UTC
+  workflow_dispatch:           # botón "Run workflow" manual
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-history
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Generar history.json
+        env:
+          EODHD_API_KEY: ${{ secrets.EODHD_API_KEY }}
+        run: python build_history.py --refresh --out history.json
+
+      - name: Commit si hay cambios
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain history.json)" ]; then
+            git add history.json
+            git commit -m "Actualiza history.json (carteras)"
+            git push
+          else
+            echo "Sin cambios en history.json"
+          fi
