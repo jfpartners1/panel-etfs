@@ -252,9 +252,22 @@ async function load(){
     if(!r.ok) throw 0;
     DATA=await r.json();
   }catch(e){ DATA=synthetic(); SAMPLE=true; }
+  fillGaps();
   $("#asof").textContent="datos a "+(DATA.asOf||"—");
   if(SAMPLE){const s=document.createElement("span");s.className="smpl";s.textContent="datos de muestra";$(".asof").after(s);}
   buildSelector();
+}
+// Rellena huecos internos (sesiones sueltas sin dato) con el último precio válido.
+// Deja en null solo lo ANTERIOR a la salida a bolsa de cada ETF. Evita que un null
+// intercalado corrompa retornos, volatilidad y correlaciones.
+function fillGaps(){
+  for(const tk in DATA.etfs){
+    const px=DATA.etfs[tk].px; let last=null;
+    for(let i=0;i<px.length;i++){
+      if(px[i]==null){ if(last!=null) px[i]=last; }
+      else last=px[i];
+    }
+  }
 }
 function synthetic(){
   const all=GROUPS.flatMap(g=>g.tks);
