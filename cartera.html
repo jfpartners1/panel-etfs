@@ -27,7 +27,10 @@
   .back{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);text-decoration:none;
     padding:6px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;white-space:nowrap}
   .back:hover{color:var(--ink);border-color:#D8DEE7}
-  .brand{display:flex;align-items:center;gap:9px;min-width:0}
+  .brand{display:flex;align-items:center;gap:11px;min-width:0}
+  .brandlogo{height:34px;width:auto;display:block}
+  .seclbl{font-size:12.5px;color:var(--ink-2);font-weight:500;padding-left:11px;border-left:1px solid var(--line);white-space:nowrap}
+  @media(max-width:620px){.seclbl{display:none}.brandlogo{height:28px}}
   .logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#1A2233,#39507E);
     color:#fff;font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:12px;display:grid;place-items:center;flex:none}
   .brand h1{font-size:15px;margin:0;font-weight:600;letter-spacing:-.01em}
@@ -149,8 +152,8 @@
   <div class="top">
     <a class="back" href="index.html">← Volver al panel</a>
     <div class="brand">
-      <div class="logo">JF</div>
-      <div><h1>Backtest de carteras</h1><div class="sub">cómo se habría comportado en el pasado</div></div>
+      <img class="brandlogo" src="logo.png" alt="JF Partners · Bolsa & Finanzas">
+      <span class="seclbl">Backtest de carteras</span>
     </div>
     <span class="asof" id="asof"></span>
   </div>

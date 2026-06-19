@@ -21,12 +21,14 @@
 
   .topbar{border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:40}
   .tbinner{max-width:1440px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .brand{display:flex;align-items:center;gap:11px;min-width:0}
+  .brandlogo{height:34px;width:auto;display:block}
+  .seclbl{font-size:12.5px;color:var(--ink-2);font-weight:500;border-left:1px solid var(--line);padding-left:11px;white-space:nowrap}
   .logo{width:26px;height:26px;border-radius:7px;background:var(--ink);color:#fff;
     font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:11.5px;display:grid;place-items:center;flex:none}
   .bname{font-weight:700;font-size:15px;letter-spacing:-.01em;color:var(--ink)}
   .bsub{font-size:12px;color:var(--mute);border-left:1px solid var(--line);padding-left:11px;white-space:nowrap}
-  @media(max-width:560px){.bsub{display:none}}
+  @media(max-width:560px){.bsub{display:none}.seclbl{display:none}.brandlogo{height:28px}}
   .head{display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap}
   .head h1{font-size:20px;font-weight:700;margin:0;letter-spacing:-.01em}
   .head .meta{font-size:12px;color:var(--mute)}
@@ -254,9 +256,8 @@
 <header class="topbar">
   <div class="tbinner">
     <div class="brand">
-      <span class="logo">JF</span>
-      <span class="bname">JFPartners</span>
-      <span class="bsub">Panel de mercado</span>
+      <img class="brandlogo" src="logo.png" alt="JF Partners · Bolsa & Finanzas">
+      <span class="seclbl">Panel de mercado</span>
     </div>
     <a class="navlink" href="cartera.html">Backtest de carteras →</a>
     <span class="badge demo" id="badge">Datos de muestra</span>
