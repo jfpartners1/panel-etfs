@@ -40,6 +40,23 @@
     color:#9A6B00;background:#FBEFD4;border-radius:20px;padding:3px 9px}
 
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+  .modebar{display:flex;align-items:center;gap:13px;margin-bottom:16px;flex-wrap:wrap}
+  .modeseg{border-radius:10px}
+  .modeseg button{font-size:13px;padding:8px 16px;font-weight:600}
+  .modehint{font-size:12px;color:var(--mute)}
+  .cmptable{overflow-x:auto}
+  .cmptb{width:100%;border-collapse:collapse;font-size:12.5px}
+  .cmptb th,.cmptb td{padding:9px 11px;text-align:right;white-space:nowrap}
+  .cmptb th{font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--mute);font-weight:600;border-bottom:1px solid var(--line)}
+  .cmptb th:first-child,.cmptb td:first-child{text-align:left}
+  .cmptb td{border-bottom:1px solid var(--line-2);font-family:"IBM Plex Mono",monospace}
+  .cmptb tr:last-child td{border-bottom:0}
+  .cmptb .fname{font-family:"Inter",sans-serif;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:7px}
+  .cmptb .fdot{width:9px;height:9px;border-radius:3px;flex:none}
+  .cmptb .ftag{font-family:"Inter",sans-serif;font-weight:500;font-size:9.5px;text-transform:uppercase;letter-spacing:.02em;color:var(--mute)}
+  .cmptb .up{color:var(--up)} .cmptb .down{color:var(--down)}
+  .cmptb tr.benchrow td{color:var(--ink-2)}
+  .cmptb tr.benchrow .fname{color:var(--ink-2);font-weight:500}
   .ptitle{display:flex;align-items:baseline;gap:9px;padding:14px 16px 0}
   .ptitle h2{font-size:13px;font-weight:600;margin:0;letter-spacing:.01em}
   .ptitle .sub{font-size:11px;color:var(--mute)}
@@ -179,6 +196,14 @@
     <span class="asof" id="asof"></span>
   </div>
 
+  <div class="modebar">
+    <div class="seg modeseg" id="mode">
+      <button data-m="backtest" class="on">Backtest de cartera</button>
+      <button data-m="compare">Comparador</button>
+    </div>
+    <span class="modehint" id="modehint">Mezcla fondos con pesos y simula la cartera resultante.</span>
+  </div>
+
   <div class="examples">
     <span class="exlbl">Empieza con una cartera clásica:</span>
     <div class="exchips" id="examples"></div>
@@ -223,8 +248,9 @@
   <div class="results hide" id="results">
     <div class="note" id="periodNote"></div>
     <div class="cards" id="cards"></div>
+    <div class="cmptable hide" id="cmptable"></div>
     <div class="panel">
-      <div class="ptitle"><h2>Crecimiento de 10.000 €</h2><span class="sub" id="chartSub"></span></div>
+      <div class="ptitle"><h2 id="curveTitle">Crecimiento de 10.000 €</h2><span class="sub" id="chartSub"></span></div>
       <div class="leg" id="leg"></div>
       <div class="chart"><svg id="curve" viewBox="0 0 920 360" preserveAspectRatio="xMidYMid meet"></svg></div>
       <div class="ddwrap">
@@ -236,7 +262,7 @@
       <div class="panel">
         <div class="ptitle"><h2>Rentabilidad vs riesgo</h2><span class="sub">anualizado · periodo común</span></div>
         <div class="chart"><svg id="scatter" viewBox="0 0 460 360" preserveAspectRatio="xMidYMid meet"></svg></div>
-        <div class="corhint">Arriba-izquierda es lo ideal: <b>más rentabilidad con menos riesgo</b>. El cuadrado azul es tu cartera.</div>
+        <div class="corhint">Arriba-izquierda es lo ideal: <b>más rentabilidad con menos riesgo</b>. Cada punto es un fondo; en modo backtest, el cuadrado azul es tu cartera.</div>
       </div>
       <div class="panel">
         <div class="ptitle"><h2>X-Ray · solapamiento entre fondos</h2><span class="sub">correlación de retornos diarios</span></div>
@@ -272,7 +298,8 @@ const BENCH_LABEL={"IE00BYX5NX33":"MSCI World","IE00BYX5MX67":"S&P 500","ES01848
 
 const SERIES_COL=["#2563EB","#C0892E","#15A86B","#7257D8","#E0734E","#0E9BA8","#C0397B","#6B8E23","#5B6675","#D4A017"];
 
-let DATA=null, SAMPLE=false, PF=[], PERIOD="all";  // PF: [{tk,w}] (tk = ISIN) · PERIOD: all/1/3/5/10/ytd
+let DATA=null, SAMPLE=false, PF=[], PERIOD="all", MODE="backtest";  // MODE: backtest | compare
+const CMPLIM=8;  // máximo de fondos en el comparador para que se lea bien
 const $=s=>document.querySelector(s);
 const fmtPct=(n,d=1)=>(n>0?"+":"")+n.toFixed(d).replace(".",",")+"%";
 const fmt2=n=>n.toFixed(2).replace(".",",");
@@ -413,25 +440,35 @@ function rebalEqual(){ if(PF.length){const eq=to100(PF.map(()=>1)); PF.forEach((
 function toggle(tk){
   const i=PF.findIndex(p=>p.tk===tk);
   if(i>=0) PF.splice(i,1);
-  else PF.push({tk,w:0});
-  rebalEqual(); renderPF(); syncSelector(); staleResults();
+  else{
+    if(MODE==="compare" && PF.length>=CMPLIM){ alert(`En el comparador puedes ver hasta ${CMPLIM} fondos a la vez para que se lea bien. Quita alguno antes de añadir otro.`); return; }
+    PF.push({tk,w:0});
+  }
+  if(MODE==="backtest") rebalEqual();
+  renderPF(); syncSelector(); staleResults();
 }
 function renderPF(){
   const host=$("#pflist");
+  const cmp=MODE==="compare";
   $("#pfcount").textContent=PF.length+(PF.length===1?" fondo":" fondos");
-  if(!PF.length){host.innerHTML='<div class="pfempty">Aún no has añadido nada.<br>Elige fondos de la izquierda para empezar.</div>';}
+  if(!PF.length){host.innerHTML=`<div class="pfempty">Aún no has añadido nada.<br>Elige fondos de la izquierda para ${cmp?"compararlos":"empezar"}.</div>`;}
   else{
     host.innerHTML=PF.map((p,i)=>`<div class="pfrow">
       <span class="dotc" style="background:${COLOR_OF[p.tk]||'#999'}"></span>
       <span class="pnm" title="${nmOf(p.tk)}">${shortOf(p.tk)}${notaOf(p.tk)?` · <span class="pnota">${notaOf(p.tk)}</span>`:``}</span>
-      <input type="number" min="0" step="1" value="${p.w}" data-i="${i}"><span class="pct">%</span>
+      ${cmp?``:`<input type="number" min="0" step="1" value="${p.w}" data-i="${i}"><span class="pct">%</span>`}
       <button class="rm" data-i="${i}" title="Quitar">×</button></div>`).join("");
-    host.querySelectorAll("input").forEach(inp=>inp.oninput=e=>{PF[+e.target.dataset.i].w=Math.max(0,+e.target.value||0);updateSum();});
-    host.querySelectorAll(".rm").forEach(b=>b.onclick=e=>{PF.splice(+e.target.dataset.i,1);rebalEqual();renderPF();syncSelector();staleResults();});
+    if(!cmp) host.querySelectorAll("input").forEach(inp=>inp.oninput=e=>{PF[+e.target.dataset.i].w=Math.max(0,+e.target.value||0);updateSum();});
+    host.querySelectorAll(".rm").forEach(b=>b.onclick=e=>{PF.splice(+e.target.dataset.i,1);if(MODE==="backtest")rebalEqual();renderPF();syncSelector();staleResults();});
   }
   updateSum();
 }
 function updateSum(){
+  if(MODE==="compare"){
+    $("#run").disabled = PF.length<2;
+    if(typeof updatePeriods==="function") updatePeriods();
+    return;
+  }
   const s=PF.reduce((a,p)=>a+p.w,0);
   const el=$("#sumv"); el.textContent=Math.round(s)+"%";
   const ok=Math.abs(s-100)<0.5;
@@ -540,6 +577,9 @@ function metrics(pv,rp,dates){
 /* ---------- resultados ---------- */
 function renderResults(M,pv,bpv,bench,dates,tks,a,b,unbal,assetsPts,benchPt,limTk,periodMsg,benchMsg){
   $("#results").classList.remove("hide");
+  $("#cards").style.display="grid";
+  $("#cmptable").classList.add("hide");
+  $("#curveTitle").textContent="Crecimiento de 10.000 €";
   $("#periodNote").innerHTML=(periodMsg?`<span style="color:#B5851F">${periodMsg}</span> `:``)+
     (benchMsg?`<span style="color:#B5851F">${benchMsg}</span> `:``)+
     `Periodo analizado: <b>${dlabel(dates[0])} → ${dlabel(dates[dates.length-1])}</b> (${M.years.toFixed(1).replace(".",",")} años)`+
@@ -624,7 +664,7 @@ function perAsset(tks,a,b,years){
 }
 function drawScatter(pts,port,bench){
   const W=460,H=360,L=46,R=16,T=16,B=34, w=W-L-R, h=H-T-B;
-  const all=pts.concat([{cagr:port.cagr,vol:port.vol}]); if(bench)all.push({cagr:bench.cagr,vol:bench.vol});
+  const all=pts.slice(); if(port)all.push({cagr:port.cagr,vol:port.vol}); if(bench)all.push({cagr:bench.cagr,vol:bench.vol});
   let vmax=Math.max(...all.map(p=>p.vol))*1.12||0.1;
   let ymin=Math.min(0,...all.map(p=>p.cagr)), ymax=Math.max(...all.map(p=>p.cagr));
   const pad=(ymax-ymin)*0.12||0.05; ymin-=pad; ymax+=pad;
@@ -646,10 +686,10 @@ function drawScatter(pts,port,bench){
   // benchmark
   if(bench){g+=`<g class="spt" data-tip="${BENCH_LABEL[bench.tk]||shortOf(bench.tk)} (benchmark) · rent ${(bench.cagr*100).toFixed(1).replace('.',',')}% · vol ${(bench.vol*100).toFixed(1).replace('.',',')}%">`+
     `<circle cx="${x(bench.vol).toFixed(1)}" cy="${y(bench.cagr).toFixed(1)}" r="6" fill="none" stroke="#5B6675" stroke-width="2"/></g>`;}
-  // cartera (cuadrado azul)
-  const px=x(port.vol),py=y(port.cagr);
-  g+=`<g class="spt" data-tip="Tu cartera · rent ${(port.cagr*100).toFixed(1).replace('.',',')}% · vol ${(port.vol*100).toFixed(1).replace('.',',')}%">`+
-    `<rect x="${(px-6).toFixed(1)}" y="${(py-6).toFixed(1)}" width="12" height="12" rx="2" fill="#2563EB" stroke="#fff" stroke-width="1.5"/></g>`;
+  // cartera (cuadrado azul) — solo en modo backtest
+  if(port){const px=x(port.vol),py=y(port.cagr);
+    g+=`<g class="spt" data-tip="Tu cartera · rent ${(port.cagr*100).toFixed(1).replace('.',',')}% · vol ${(port.vol*100).toFixed(1).replace('.',',')}%">`+
+    `<rect x="${(px-6).toFixed(1)}" y="${(py-6).toFixed(1)}" width="12" height="12" rx="2" fill="#2563EB" stroke="#fff" stroke-width="1.5"/></g>`;}
   $("#scatter").innerHTML=g;
   // hover
   $("#scatter").querySelectorAll(".spt").forEach(el=>{
@@ -713,7 +753,7 @@ function hookHoverDD(dd,bdd,bench,dates,G){
   });
   hov.addEventListener("mouseleave",()=>{hl.style.opacity=0;tip.style.opacity=0;});
 }
-$("#run").onclick=run;
+$("#run").onclick=run2;
 
 /* ---------- carteras de ejemplo ---------- */
 const PRESETS=[
@@ -769,8 +809,176 @@ function updatePeriods(){
 }
 document.querySelectorAll("#period button").forEach(btn=>{
   btn.onclick=()=>{ if(btn.disabled)return; PERIOD=btn.dataset.p; setActivePeriod();
-    if(!$("#run").disabled && !$("#results").classList.contains("hide")) run(); };
+    if(!$("#run").disabled && !$("#results").classList.contains("hide")) run2(); };
 });
+
+/* ---------- modo Backtest / Comparador ---------- */
+function run2(){ MODE==="compare"?runCompare():run(); }
+
+function runCompare(){
+  const tks=PF.map(p=>p.tk);
+  if(tks.length<2){ alert("Elige al menos 2 fondos para compararlos."); return; }
+  let [a,b]=commonRange(tks);
+  if(a<0){ alert("Estos fondos no tienen periodo común de datos."); return; }
+  const a0=a;
+  const availY=(new Date(DATA.dates[b])-new Date(DATA.dates[a0]))/(365.25*864e5);
+  let periodMsg="";
+  if(PERIOD!=="all"){
+    let start=a0;
+    if(PERIOD==="ytd"){
+      const y0=DATA.dates[b].slice(0,4)+"-01-01";
+      for(let i=a0;i<=b;i++){ if(DATA.dates[i]>=y0){start=i;break;} }
+    }else{
+      const t=new Date(DATA.dates[b]); t.setFullYear(t.getFullYear()-(+PERIOD));
+      const ts=t.toISOString().slice(0,10);
+      for(let i=a0;i<=b;i++){ if(DATA.dates[i]>=ts){start=i;break;} }
+      if(availY<(+PERIOD)-0.05) periodMsg=`Pediste <b>${PERIOD} años</b>, pero solo hay <b>${availY.toFixed(1).replace(".",",")}</b> disponibles para estos fondos. Se muestra todo el histórico común.`;
+    }
+    a=Math.max(a0,start);
+  }
+  if(b-a<20){ alert("El plazo elegido es demasiado corto. Prueba un plazo más largo."); return; }
+  let limTk=tks[0],limI=-1;
+  tks.forEach(t=>{const f=DATA.funds[t].px.findIndex(x=>x!=null); if(f>limI){limI=f;limTk=t;}});
+  const dates=DATA.dates.slice(a,b+1), L=dates.length;
+  const years=(new Date(dates[L-1])-new Date(dates[0]))/(365.25*864e5);
+  // serie y métricas de cada fondo por separado (10.000 € en cada uno)
+  const series=tks.map((t,idx)=>{
+    const p=DATA.funds[t].px, base=p[a], pv=new Array(L);
+    for(let i=0;i<L;i++) pv[i]=10000*p[a+i]/base;
+    const rp=[]; for(let i=1;i<L;i++) rp.push(pv[i]/pv[i-1]-1);
+    return {tk:t,col:SERIES_COL[idx%SERIES_COL.length],pv,M:metrics(pv,rp,dates)};
+  });
+  // benchmark
+  const bmk=$("#bench").value; let bench=null,bpv=null,benchMsg="",benchM=null;
+  if(bmk&&DATA.funds[bmk]){
+    const bp=DATA.funds[bmk].px;
+    if(bp[a]!=null){ bpv=new Array(L); for(let i=0;i<L;i++) bpv[i]=10000*bp[a+i]/bp[a]; bench=bmk;
+      const br=[]; for(let i=1;i<L;i++) br.push(bpv[i]/bpv[i-1]-1); benchM={tk:bench,M:metrics(bpv,br,dates)}; }
+    else{ const bs=bp.findIndex(x=>x!=null);
+      benchMsg=`El benchmark <b>${BENCH_LABEL[bmk]||"elegido"}</b> empieza en ${dlabel(DATA.dates[bs])} y no cubre todo el periodo, así que no se dibuja.`; }
+  }
+  const assetsPts=perAsset(tks,a,b,years);
+  let benchPt=null;
+  if(bench){const bp=DATA.funds[bench].px,br=[];for(let i=a+1;i<=b;i++)br.push(bp[i]/bp[i-1]-1);
+    const[,bsd]=stats(br); benchPt={tk:bench,cagr:Math.pow(bp[b]/bp[a],1/years)-1,vol:bsd*Math.sqrt(252)};}
+  const limited=(a===a0)&&limI>0;
+  renderCompare(series,bench,bpv,benchM,dates,tks,a,b,assetsPts,benchPt,limited?limTk:null,periodMsg,benchMsg);
+}
+function renderCompare(series,bench,bpv,benchM,dates,tks,a,b,assetsPts,benchPt,limTk,periodMsg,benchMsg){
+  $("#results").classList.remove("hide");
+  $("#cards").style.display="none";
+  $("#cmptable").classList.remove("hide");
+  $("#curveTitle").textContent="Crecimiento de 10.000 € en cada fondo";
+  const yrs=series[0].M.years;
+  $("#periodNote").innerHTML=(periodMsg?`<span style="color:#B5851F">${periodMsg}</span> `:``)+
+    (benchMsg?`<span style="color:#B5851F">${benchMsg}</span> `:``)+
+    `Comparando <b>${series.length} fondos</b> por separado · periodo <b>${dlabel(dates[0])} → ${dlabel(dates[dates.length-1])}</b> (${yrs.toFixed(1).replace(".",",")} años)`+
+    (limTk?`, limitado por <b>${shortOf(limTk)}</b>, el de menos histórico.`:`.`)+
+    (series[0].M.anyPartial?` El año con * es parcial.`:``)+
+    (SAMPLE?` <b>Estás viendo datos de muestra.</b>`:``);
+  drawCompareTable(series,benchM);
+  drawCompareCurve(series,bpv,bench,dates);
+  drawCompareDD(series,bpv,bench,dates);
+  drawScatter(assetsPts,null,benchPt);
+  drawCor(tks,a,b);
+}
+function drawCompareTable(series,benchM){
+  const rows=series.slice().sort((x,y)=>y.M.cagr-x.M.cagr);   // mejor CAGR arriba
+  const head=`<tr><th>Fondo</th><th>Rent. total</th><th>CAGR</th><th>Volatilidad</th><th>Máx. caída</th><th>Sharpe</th><th>Mejor año</th><th>Peor año</th></tr>`;
+  const row=o=>{const M=o.M, mut='style="color:var(--mute);font-weight:400"';
+    return `<tr${o.bench?' class="benchrow"':''}>`+
+      `<td><span class="fname"><span class="fdot" style="background:${o.col}"></span>${shortOf(o.tk)}${o.bench?` <span class="ftag">índice</span>`:(notaOf(o.tk)?` <span class="ftag">${notaOf(o.tk)}</span>`:``)}</span></td>`+
+      `<td class="${M.total>=0?'up':'down'}">${fmtPct(M.total*100)}</td>`+
+      `<td class="${M.cagr>=0?'up':'down'}">${fmtPct(M.cagr*100)}</td>`+
+      `<td>${(M.vol*100).toFixed(1).replace('.',',')}%</td>`+
+      `<td class="down">${fmtPct(M.maxdd*100)}</td>`+
+      `<td>${fmt2(M.sharpe)}</td>`+
+      `<td class="up">${fmtPct(M.best*100)} <span ${mut}>${M.bestY}</span></td>`+
+      `<td class="down">${fmtPct(M.worst*100)} <span ${mut}>${M.worstY}</span></td></tr>`;};
+  let h=`<table class="cmptb">${head}`;
+  rows.forEach(o=>h+=row(o));
+  if(benchM) h+=row({tk:benchM.tk,col:"#9AA5B3",M:benchM.M,bench:true});
+  $("#cmptable").innerHTML=h+`</table>`;
+}
+function drawCompareCurve(series,bpv,bench,dates){
+  const W=920,H=360,L=52,R=16,T=14,B=28, w=W-L-R, h=H-T-B;
+  const all=series.map(s=>({name:s.tk,col:s.col,d:s.pv}));
+  if(bpv) all.push({name:bench,col:"#9AA5B3",d:bpv,isBench:true});
+  let lo=Infinity,hi=-Infinity; all.forEach(s=>s.d.forEach(v=>{if(v<lo)lo=v;if(v>hi)hi=v;}));
+  lo=Math.min(lo,10000)*0.985; hi*=1.015;
+  const N=series[0].pv.length, x=i=>L+w*i/(N-1), y=v=>T+h*(1-(v-lo)/(hi-lo));
+  const path=d=>d.map((v,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)).join(" ");
+  let g="";
+  for(let k=0;k<=5;k++){const val=lo+(hi-lo)*k/5,yy=y(val);
+    g+=`<line class="cgrid" x1="${L}" y1="${yy.toFixed(1)}" x2="${W-R}" y2="${yy.toFixed(1)}"/>`+
+       `<text class="clbl" x="${L-6}" y="${(yy+3).toFixed(1)}" text-anchor="end">${eur(val/1000)}k</text>`;}
+  const yrs={}; dates.forEach((d,i)=>{const y4=d.slice(0,4);if(!(y4 in yrs))yrs[y4]=i;});
+  const yk=Object.keys(yrs),step=Math.ceil(yk.length/8);
+  yk.forEach((y4,idx)=>{if(idx%step)return;g+=`<text class="clbl" x="${x(yrs[y4]).toFixed(1)}" y="${H-8}" text-anchor="middle">${y4}</text>`;});
+  all.forEach(s=>{g+=`<path d="${path(s.d)}" fill="none" stroke="${s.col}" stroke-width="${s.isBench?1.4:1.9}" stroke-linejoin="round"${s.isBench?' stroke-dasharray="4 3"':''}/>`;});
+  g+=`<rect id="hov" x="${L}" y="${T}" width="${w}" height="${h}" fill="transparent"/>`;
+  g+=`<line id="hl" x1="0" y1="${T}" x2="0" y2="${T+h}" stroke="#C9D3E0" stroke-width="1" style="opacity:0"/>`;
+  $("#curve").innerHTML=g;
+  $("#leg").innerHTML=all.map(s=>`<span><i style="background:${s.col}"></i>${s.isBench?(BENCH_LABEL[s.name]||shortOf(s.name)):shortOf(s.name)}</span>`).join("");
+  $("#chartSub").textContent=`${dlabel(dates[0])} – ${dlabel(dates[dates.length-1])}`;
+  hookHoverCompare(all,dates,{L,w,N,x});
+}
+function hookHoverCompare(all,dates,G){
+  const svg=$("#curve"),hl=svg.querySelector("#hl"),hov=svg.querySelector("#hov"),tip=$("#tip");
+  hov.addEventListener("mousemove",e=>{
+    const r=svg.getBoundingClientRect(), sx=(e.clientX-r.left)*920/r.width;
+    let i=Math.round((sx-G.L)/G.w*(G.N-1)); i=Math.max(0,Math.min(G.N-1,i));
+    const xx=G.x(i); hl.setAttribute("x1",xx);hl.setAttribute("x2",xx);hl.style.opacity=1;
+    const ord=all.map(s=>({s,v:s.d[i]})).sort((p,q)=>q.v-p.v);
+    let html=`${dlabel(dates[i])}`;
+    ord.forEach(({s})=>{const nm=s.isBench?(BENCH_LABEL[s.name]||shortOf(s.name)):shortOf(s.name);
+      html+=`<br><span style="color:${s.col}">●</span> ${nm} ${eur(s.d[i])} €`;});
+    tip.innerHTML=html; tip.style.opacity=1; tip.style.left=(e.clientX+12)+"px"; tip.style.top=(e.clientY-10)+"px";
+  });
+  hov.addEventListener("mouseleave",()=>{hl.style.opacity=0;tip.style.opacity=0;});
+}
+function drawCompareDD(series,bpv,bench,dates){
+  const W=920,H=150,L=52,R=16,T=10,B=24, w=W-L-R, h=H-T-B, N=series[0].pv.length;
+  const ddOf=arr=>{let pk=arr[0];return arr.map(v=>{if(v>pk)pk=v;return v/pk-1;});};
+  const lines=series.map(s=>({col:s.col,dd:ddOf(s.pv)}));
+  const bdd=bpv?ddOf(bpv):null;
+  let lo=-0.02; lines.forEach(l=>l.dd.forEach(v=>{if(v<lo)lo=v;})); if(bdd)bdd.forEach(v=>{if(v<lo)lo=v;}); lo*=1.08;
+  const x=i=>L+w*i/(N-1), y=v=>T+h*(v/lo);
+  let g="";
+  const steps=Math.max(2,Math.min(5,Math.ceil(-lo/0.1)));
+  for(let k=0;k<=steps;k++){const vv=lo*k/steps,yy=y(vv);
+    g+=`<line class="cgrid" x1="${L}" y1="${yy.toFixed(1)}" x2="${W-R}" y2="${yy.toFixed(1)}"/>`+
+       `<text class="clbl" x="${L-6}" y="${(yy+3).toFixed(1)}" text-anchor="end">${(vv*100).toFixed(0)}%</text>`;}
+  const yrs={}; dates.forEach((d,i)=>{const y4=d.slice(0,4);if(!(y4 in yrs))yrs[y4]=i;});
+  const yk=Object.keys(yrs),step=Math.ceil(yk.length/8);
+  yk.forEach((y4,idx)=>{if(idx%step)return;g+=`<text class="clbl" x="${x(yrs[y4]).toFixed(1)}" y="${H-6}" text-anchor="middle">${y4}</text>`;});
+  if(bdd){let bl=`M ${x(0).toFixed(1)} ${y(bdd[0]).toFixed(1)}`;for(let i=1;i<N;i++)bl+=` L ${x(i).toFixed(1)} ${y(bdd[i]).toFixed(1)}`;
+    g+=`<path d="${bl}" fill="none" stroke="#9AA5B3" stroke-width="1.2" stroke-dasharray="4 3"/>`;}
+  lines.forEach(l=>{let p=`M ${x(0).toFixed(1)} ${y(l.dd[0]).toFixed(1)}`;for(let i=1;i<N;i++)p+=` L ${x(i).toFixed(1)} ${y(l.dd[i]).toFixed(1)}`;
+    g+=`<path d="${p}" fill="none" stroke="${l.col}" stroke-width="1.4" stroke-linejoin="round"/>`;});
+  $("#ddleg").innerHTML="";
+  $("#dd").innerHTML=g;
+}
+function setMode(m){
+  if(MODE===m) return;
+  MODE=m;
+  document.querySelectorAll("#mode button").forEach(b=>b.classList.toggle("on",b.dataset.m===m));
+  const cmp=m==="compare";
+  $("#modehint").textContent=cmp
+    ? "Enfrenta varios fondos por separado: cada uno su curva y sus métricas, lado a lado."
+    : "Mezcla fondos con pesos y simula la cartera resultante.";
+  // elementos que solo aplican al backtest
+  $(".examples").style.display=cmp?"none":"";
+  $(".sumbar").style.display=cmp?"none":"";
+  $("#equal").style.display=cmp?"none":"";
+  document.querySelector(".pf .ptitle h2").textContent=cmp?"Fondos a comparar":"Tu cartera";
+  $("#run").textContent=cmp?"Comparar":"Calcular";
+  $("#pfcount").textContent=PF.length+(PF.length===1?" fondo":" fondos");
+  // en comparador no hay pesos; al volver a backtest, repartir igual
+  if(!cmp) rebalEqual();
+  renderPF(); staleResults();
+}
+document.querySelectorAll("#mode button").forEach(btn=>{ btn.onclick=()=>setMode(btn.dataset.m); });
 load();
 </script>
 </body>
