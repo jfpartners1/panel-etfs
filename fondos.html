@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backtest de fondos · JFPartners</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F3F5F8;--panel:#FFFFFF;--line:#E8ECF1;--line-2:#EEF1F5;
+    --ink:#1A2233;--ink-2:#5B6675;--mute:#8A95A5;
+    --up:#15A86B;--up-bg:#22B573;--down:#E04444;--blue:#2563EB;
+    --core:#2563EB;--sat:#7257D8;--real:#C0892E;--radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  .num,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+  a{color:inherit}
+  .wrap{max-width:1180px;margin:0 auto;padding:18px 20px 60px}
+
+  /* top bar */
+  .top{display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:20;background:rgba(243,245,248,.86);
+    backdrop-filter:blur(8px);padding:10px 0 12px;border-bottom:1px solid var(--line);margin-bottom:18px}
+  .back{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);text-decoration:none;
+    padding:6px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;white-space:nowrap}
+  .back:hover{color:var(--ink);border-color:#D8DEE7}
+  .brand{display:flex;align-items:center;gap:11px;min-width:0}
+  .brandlogo{height:34px;width:auto;display:block}
+  .seclbl{font-size:12.5px;color:var(--ink-2);font-weight:500;padding-left:11px;border-left:1px solid var(--line);white-space:nowrap}
+  @media(max-width:620px){.seclbl{display:none}.brandlogo{height:28px}}
+  .logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#1A2233,#39507E);
+    color:#fff;font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:12px;display:grid;place-items:center;flex:none}
+  .brand h1{font-size:15px;margin:0;font-weight:600;letter-spacing:-.01em}
+  .brand .sub{font-size:11px;color:var(--mute)}
+  .asof{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--mute);white-space:nowrap}
+  .smpl{margin-left:8px;font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+    color:#9A6B00;background:#FBEFD4;border-radius:20px;padding:3px 9px}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+  .ptitle{display:flex;align-items:baseline;gap:9px;padding:14px 16px 0}
+  .ptitle h2{font-size:13px;font-weight:600;margin:0;letter-spacing:.01em}
+  .ptitle .sub{font-size:11px;color:var(--mute)}
+
+  /* layout */
+  .build{display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start}
+  @media(max-width:920px){.build{grid-template-columns:1fr}}
+  .examples{display:flex;align-items:center;gap:10px 12px;flex-wrap:wrap;margin-bottom:14px}
+  .exlbl{font-size:12px;color:var(--ink-2);font-weight:500}
+  .exchips{display:flex;gap:7px;flex-wrap:wrap}
+  .exchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:20px;
+    padding:5px 7px 5px 12px;cursor:pointer;transition:all .12s}
+  .exchip:hover{border-color:var(--blue);background:#F5F8FF}
+  .exname{font-size:12px;font-weight:600;color:var(--ink)}
+  .exchip:hover .exname{color:var(--blue)}
+
+  /* selector */
+  .search{margin:10px 16px 4px;position:relative}
+  .search input{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 12px 9px 32px;font-size:13px;
+    font-family:inherit;color:var(--ink);background:#FAFBFD}
+  .search input:focus{outline:none;border-color:var(--blue);background:#fff}
+  .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.4}
+  .grp{padding:8px 16px 6px}
+  .grphd{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;color:var(--ink);margin-bottom:8px;
+    text-transform:uppercase;letter-spacing:.04em}
+  .gdot{width:9px;height:9px;border-radius:3px;flex:none}
+  .subhd{font-size:10px;font-weight:700;color:var(--mute);text-transform:uppercase;letter-spacing:.05em;margin:11px 0 6px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .echip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-2);background:#F7F9FC;border-radius:8px;
+    padding:6px 9px;cursor:pointer;transition:all .12s;user-select:none;max-width:100%}
+  .echip:hover{border-color:#C9D3E0;background:#fff}
+  .echip.on{background:var(--ink);border-color:var(--ink)}
+  .echip.on .enm{color:#fff}
+  .echip.on .etag{color:#fff;background:rgba(255,255,255,.16);border-color:transparent}
+  .echip .enm{font-size:11.5px;font-weight:600;color:var(--ink);white-space:nowrap}
+  .echip .etag{font-size:9px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;color:var(--ink-2);
+    background:#EEF1F6;border:1px solid var(--line);border-radius:5px;padding:1px 5px;white-space:nowrap;
+    max-width:140px;overflow:hidden;text-overflow:ellipsis}
+  .einfo{margin:0;width:14px;height:14px;border:0;background:transparent;color:var(--mute);
+    font-size:11px;font-weight:400;font-style:italic;font-family:Georgia,"Times New Roman",serif;line-height:1;
+    display:grid;place-items:center;cursor:help;flex:none;padding:0;opacity:.45;transition:opacity .12s,color .12s}
+  .einfo:hover{opacity:1;color:var(--blue)}
+  .echip.on .einfo{color:#fff;opacity:.6}
+  .echip.on .einfo:hover{opacity:1;color:#fff}
+  .echip.dim{display:none}
+
+  /* portfolio */
+  .pf{position:sticky;top:78px}
+  .pflist{padding:8px 14px 4px;display:flex;flex-direction:column;gap:6px;max-height:330px;overflow-y:auto}
+  .pfrow{display:flex;align-items:center;gap:8px}
+  .pfrow .dotc{width:8px;height:8px;border-radius:3px;flex:none}
+  .pfrow .ptk{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;width:46px;flex:none}
+  .pfrow .pnm{font-size:11.5px;color:var(--ink);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;font-weight:500}
+  .pfrow .pnota{color:var(--mute);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.02em}
+  .pfrow input{width:54px;border:1px solid var(--line);border-radius:7px;padding:5px 6px;font-size:12px;text-align:right;
+    font-family:"IBM Plex Mono",monospace;color:var(--ink)}
+  .pfrow input:focus{outline:none;border-color:var(--blue)}
+  .pfrow .pct{font-size:11px;color:var(--mute)}
+  .pfrow .rm{border:0;background:none;color:var(--mute);cursor:pointer;font-size:15px;line-height:1;padding:0 2px}
+  .pfrow .rm:hover{color:var(--down)}
+  .pfempty{color:var(--mute);font-size:12px;padding:14px;text-align:center;line-height:1.5}
+  .sumbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--line-2);
+    font-size:12px}
+  .sumbar b{font-family:"IBM Plex Mono",monospace}
+  .sumright{display:flex;align-items:center;gap:9px}
+  .minibtn{border:1px solid var(--blue);background:#fff;color:var(--blue);border-radius:7px;padding:3px 9px;font-size:10.5px;
+    font-weight:600;cursor:pointer;font-family:inherit}
+  .minibtn:hover{background:#F5F8FF}
+  .sum-ok{color:var(--up)} .sum-warn{color:#B5851F}
+  .pfacts{display:flex;gap:7px;padding:0 16px 14px;flex-wrap:wrap}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 12px;font-size:12px;font-weight:500;
+    cursor:pointer;color:var(--ink-2);font-family:inherit}
+  .btn:hover{border-color:#C9D3E0;color:var(--ink)}
+  .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600;flex:1}
+  .btn.primary:hover{background:#1D4FD0}
+  .btn.primary:disabled{background:#AEBEE0;border-color:#AEBEE0;cursor:not-allowed}
+  .bmrow{display:flex;align-items:center;gap:8px;padding:2px 16px 12px;font-size:11.5px;color:var(--mute)}
+  .bmrow select{font-family:inherit;font-size:12px;border:1px solid var(--line);border-radius:7px;padding:5px 8px;color:var(--ink);background:#fff}
+  .perrow{display:flex;align-items:center;gap:9px;padding:0 16px 14px;font-size:11.5px;color:var(--mute);flex-wrap:wrap}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{border:0;background:#fff;color:var(--ink-2);font-family:inherit;font-size:11.5px;font-weight:500;padding:5px 10px;cursor:pointer;border-left:1px solid var(--line)}
+  .seg button:first-child{border-left:0}
+  .seg button:hover:not(:disabled):not(.on){background:#F5F8FB}
+  .seg button.on{background:var(--blue);color:#fff;font-weight:600}
+  .seg button:disabled{color:#C5CCD6;cursor:not-allowed;background:#FAFBFD}
+
+  /* results */
+  .results{margin-top:16px;display:flex;flex-direction:column;gap:16px}
+  .hide{display:none}
+  .note{font-size:11.5px;color:var(--ink-2);background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;line-height:1.5}
+  .note b{color:var(--ink)}
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  @media(max-width:760px){.cards{grid-template-columns:repeat(2,1fr)}}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  @media(max-width:860px){.twocol{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 13px}
+  .card .k{font-size:10.5px;color:var(--mute);text-transform:uppercase;letter-spacing:.03em}
+  .card .v{font-family:"IBM Plex Mono",monospace;font-size:20px;font-weight:600;margin-top:5px;letter-spacing:-.01em}
+  .card .s{font-size:10.5px;color:var(--mute);margin-top:2px}
+  .v.up{color:var(--up)} .v.down{color:var(--down)}
+
+  .chart{padding:6px 14px 12px}
+  .chart svg{width:100%;height:auto;display:block}
+  .ddwrap{border-top:1px solid var(--line-2);margin-top:2px}
+  .ddlabel{font-size:11.5px;font-weight:600;color:var(--ink-2);padding:10px 16px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .ddsub{font-weight:400;color:var(--mute)}
+  .ddleg{display:flex;gap:12px;font-weight:500}
+  .ddleg .lgi{white-space:nowrap;color:var(--ink-2)}
+  .ddleg .lgi i{display:inline-block;width:12px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+  .leg{display:flex;gap:16px;padding:6px 16px 12px;font-size:11.5px;color:var(--ink-2)}
+  .leg i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+  .clbl{font-family:"IBM Plex Mono",monospace;font-size:10px;fill:var(--mute)}
+  .cgrid{stroke:var(--line);stroke-width:1}
+
+  /* correlation */
+  .cor{padding:8px 16px 16px;overflow-x:auto}
+  .cortb{border-collapse:separate;border-spacing:3px;font-family:"IBM Plex Mono",monospace}
+  .cortb th{font-size:10.5px;font-weight:600;color:var(--ink-2);padding:3px 5px}
+  .cortb th.rowh{text-align:right}
+  .cortb td{width:40px;height:30px;text-align:center;font-size:10.5px;border-radius:5px;color:#1A2233}
+  .corhint{font-size:11px;color:var(--mute);padding:0 16px 14px}
+
+  .tip{position:fixed;pointer-events:none;background:#1A2233;color:#fff;font-size:11px;border-radius:7px;
+    padding:7px 10px;opacity:0;transition:opacity .1s;z-index:50;max-width:240px;line-height:1.4}
+  .tip b{font-family:"IBM Plex Mono",monospace}
+  footer{margin-top:30px;color:var(--mute);font-size:11px;line-height:1.6;border-top:1px solid var(--line);padding-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <a class="back" href="index.html">← Volver al panel</a>
+    <div class="brand">
+      <img class="brandlogo" src="logo.png" alt="JF Partners · Bolsa & Finanzas">
+      <span class="seclbl">Backtest de fondos</span>
+    </div>
+    <span class="asof" id="asof"></span>
+  </div>
+
+  <div class="examples">
+    <span class="exlbl">Empieza con una cartera clásica:</span>
+    <div class="exchips" id="examples"></div>
+  </div>
+
+  <div class="build">
+    <div class="panel">
+      <div class="ptitle"><h2>Elige los fondos</h2><span class="sub">pulsa para añadir a tu cartera</span></div>
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="q" type="text" placeholder="Buscar fondo (ej. Cobas, salud, Fundsmith)…" autocomplete="off">
+      </div>
+      <div id="selector"></div>
+    </div>
+
+    <div class="panel pf">
+      <div class="ptitle"><h2>Tu cartera</h2><span class="sub" id="pfcount">0 fondos</span></div>
+      <div class="pflist" id="pflist"></div>
+      <div class="sumbar"><span>Suma de pesos</span><span class="sumright"><b id="sumv">0%</b><button class="minibtn" id="norm">ajustar a 100%</button></span></div>
+      <div class="pfacts">
+        <button class="btn" id="equal">Repartir igual</button>
+        <button class="btn" id="clear">Limpiar</button>
+        <button class="btn primary" id="run" disabled>Calcular</button>
+      </div>
+      <div class="bmrow">Comparar contra
+        <select id="bench">
+          <option value="IE00BYX5NX33">MSCI World</option>
+          <option value="IE00BYX5MX67">S&amp;P 500</option>
+          <option value="ES0184894006">MSCI ACWI</option>
+          <option value="IE0007987690">Europa</option>
+          <option value="">— sin benchmark —</option>
+        </select>
+      </div>
+      <div class="perrow">Plazo
+        <div class="seg" id="period">
+          <button data-p="1">1A</button><button data-p="3">3A</button><button data-p="5">5A</button><button data-p="10">10A</button><button data-p="ytd">YTD</button><button data-p="all" class="on">Todo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="results hide" id="results">
+    <div class="note" id="periodNote"></div>
+    <div class="cards" id="cards"></div>
+    <div class="panel">
+      <div class="ptitle"><h2>Crecimiento de 10.000 €</h2><span class="sub" id="chartSub"></span></div>
+      <div class="leg" id="leg"></div>
+      <div class="chart"><svg id="curve" viewBox="0 0 920 360" preserveAspectRatio="xMidYMid meet"></svg></div>
+      <div class="ddwrap">
+        <div class="ddlabel"><span>Caídas desde máximos <span class="ddsub">· cuánto estabas por debajo de tu mejor momento</span></span><span class="ddleg" id="ddleg"></span></div>
+        <div class="chart"><svg id="dd" viewBox="0 0 920 150" preserveAspectRatio="xMidYMid meet"></svg></div>
+      </div>
+    </div>
+    <div class="twocol">
+      <div class="panel">
+        <div class="ptitle"><h2>Rentabilidad vs riesgo</h2><span class="sub">anualizado · periodo común</span></div>
+        <div class="chart"><svg id="scatter" viewBox="0 0 460 360" preserveAspectRatio="xMidYMid meet"></svg></div>
+        <div class="corhint">Arriba-izquierda es lo ideal: <b>más rentabilidad con menos riesgo</b>. El cuadrado azul es tu cartera.</div>
+      </div>
+      <div class="panel">
+        <div class="ptitle"><h2>X-Ray · solapamiento entre fondos</h2><span class="sub">correlación de retornos diarios</span></div>
+        <div class="cor" id="cor"></div>
+        <div class="corhint">Cerca de <b>+1</b> (azul): los dos fondos se mueven casi igual — <b>se solapan</b> y diversificas poco aunque sean de gestoras distintas. Cerca de <b>0</b>: independientes. Negativo (rojo): se mueven al revés, lo que más diversifica.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Backtesting con el valor liquidativo (NAV) de cada fondo, en euros · compra y mantén, sin rebalanceo ·
+    histórico de EODHD. Los fondos incluyen sus comisiones de gestión en el NAV. <b>Rentabilidad pasada no garantiza resultados futuros.</b>
+    Herramienta educativa, no es asesoramiento de inversión.
+  </footer>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+// Orden y color de bloques/subbloques. Los grupos se construyen desde los datos.
+const BLOCKS=[
+  {key:"Indexado",   label:"Indexados · réplica de un índice",          color:"#2563EB", subs:[""]},
+  {key:"Activo",     label:"Fondos activos · gestión que busca batir",  color:"#7257D8",
+     subs:["Value","Growth","Salud","Tecnología","Consumo","Market Neutral"]},
+  {key:"Renta Fija", label:"Renta fija · bonos por duración",           color:"#C0892E",
+     subs:["Ultra Corto Plazo","Corto Plazo","Medio Plazo","Largo Plazo"]},
+];
+let GROUPS=[];           // se rellena en buildGroups() con los ISIN reales
+const COLOR_OF={};       // ISIN -> color del bloque
+const SUBSHORT={"Ultra Corto Plazo":"Ultra corto","Corto Plazo":"Corto plazo",
+  "Medio Plazo":"Medio plazo","Largo Plazo":"Largo plazo","Market Neutral":"Mkt neutral"};
+// Benchmarks seleccionables (ISIN -> nombre limpio del índice)
+const BENCH_LABEL={"IE00BYX5NX33":"MSCI World","IE00BYX5MX67":"S&P 500","ES0184894006":"MSCI ACWI","IE0007987690":"Europa"};
+
+const SERIES_COL=["#2563EB","#C0892E","#15A86B","#7257D8","#E0734E","#0E9BA8","#C0397B","#6B8E23","#5B6675","#D4A017"];
+
+let DATA=null, SAMPLE=false, PF=[], PERIOD="all";  // PF: [{tk,w}] (tk = ISIN) · PERIOD: all/1/3/5/10/ytd
+const $=s=>document.querySelector(s);
+const fmtPct=(n,d=1)=>(n>0?"+":"")+n.toFixed(d).replace(".",",")+"%";
+const fmt2=n=>n.toFixed(2).replace(".",",");
+const eur=n=>Math.round(n).toLocaleString("es-ES");
+const MON=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+function dlabel(iso){const[y,m]=iso.split("-");return MON[+m-1]+" "+y;}
+function showTip(html,x,y){const t=$("#tip");t.innerHTML=html;t.style.opacity=1;
+  t.style.left=Math.min(x,window.innerWidth-250)+"px";t.style.top=y+"px";}
+function hideTip(){$("#tip").style.opacity=0;}
+
+// Nombre completo, nota (etiqueta corta del Excel) y nombre abreviado para gráficos
+function nmOf(tk){return (DATA.funds[tk]&&DATA.funds[tk].nm)||tk;}
+function notaOf(tk){return (DATA.funds[tk]&&DATA.funds[tk].nota)||"";}
+const STOP=new Set(["fund","funds","index","investor","stock","equity","fondo","de","del","la","el","r","c","a","b","d","p","z","t","acc","eur","usd","fi","sicav","lux","invest","investment","class","cap","plus","global"]);
+function shortOf(tk){
+  const nm=nmOf(tk);
+  // corta en el primer separador de "clase" y deja 1-2 palabras significativas
+  let base=nm.split(/[–\-(]/)[0];
+  const words=base.split(/\s+/).filter(w=>w && !STOP.has(w.toLowerCase().replace(/[.,&]/g,"")));
+  let out=words.slice(0,2).join(" ");
+  if(out.length>16) out=out.slice(0,16);
+  return out||nm.slice(0,16);
+}
+
+/* ---------- carga de datos ---------- */
+async function load(){
+  try{
+    const r=await fetch("history_fondos.json",{cache:"no-store"});
+    if(!r.ok) throw 0;
+    DATA=await r.json();
+  }catch(e){ DATA=synthetic(); SAMPLE=true; }
+  fillGaps();
+  buildGroups();
+  $("#asof").textContent="datos a "+(DATA.asOf||"—");
+  if(SAMPLE){const s=document.createElement("span");s.className="smpl";s.textContent="datos de muestra";$(".asof").after(s);}
+  buildSelector();
+  buildExamples();
+}
+// Agrupa los ISIN por bloque y subbloque, en el orden definido en BLOCKS
+function buildGroups(){
+  GROUPS=[];
+  BLOCKS.forEach(B=>{
+    const subs=[];
+    B.subs.forEach(sname=>{
+      const isins=Object.keys(DATA.funds).filter(i=>{
+        const f=DATA.funds[i]; return f.bloque===B.key && (f.sub||"")===sname;
+      });
+      if(isins.length) subs.push({name:sname,isins});
+    });
+    if(subs.length){
+      GROUPS.push({key:B.key,label:B.label,color:B.color,subs});
+      subs.forEach(s=>s.isins.forEach(i=>COLOR_OF[i]=B.color));
+    }
+  });
+}
+// Rellena huecos internos (sesiones sueltas sin dato) con el último NAV válido;
+// deja en null solo lo ANTERIOR al inicio de cada fondo.
+function fillGaps(){
+  for(const k in DATA.funds){
+    const px=DATA.funds[k].px; let last=null;
+    for(let i=0;i<px.length;i++){
+      if(px[i]==null){ if(last!=null) px[i]=last; }
+      else last=px[i];
+    }
+  }
+}
+function synthetic(){
+  const defs=[
+    ["IE00BYX5NX33","Fidelity MSCI World Index Fund EUR P Acc","Indexado","","MSCI WORLD"],
+    ["IE00BYX5MX67","Fidelity S&P 500 Index Fund EUR P Acc","Indexado","","S&P500"],
+    ["ES0184894006","Myinvestor ACWI FI","Indexado","","MSCI ACWI"],
+    ["IE0007987690","Vanguard European Stock Index EUR Acc","Indexado","","EUROPA"],
+    ["LU0690375182","Fundsmith Equity Fund Sicav T EUR Acc","Activo","Growth","COMPOUNDERS"],
+    ["ES0124037005","Cobas Selección C FI","Activo","Value","VALUE GLOBAL"],
+    ["ES0112611001","Azvalor Internacional FI","Activo","Value","VALUE GLOBAL"],
+    ["LU0171307068","BGF World Healthscience A2","Activo","Salud","SALUD GLOBAL"],
+    ["LU0171310443","BGF World Technology","Activo","Tecnología","MEGACAPS TECH"],
+    ["FR0010149120","Carmignac Securité","Renta Fija","Corto Plazo","BONOS CORTO"],
+    ["IE00B246KL88","Vanguard 20+ Year Euro Treasury","Renta Fija","Largo Plazo","DEUDA LARGA"],
+  ];
+  const N=2600, dates=[], d=new Date(); d.setFullYear(d.getFullYear()-10);
+  while(dates.length<N){ if(d.getDay()!==0&&d.getDay()!==6) dates.push(d.toISOString().slice(0,10)); d.setDate(d.getDate()+1); }
+  const mkt=[]; let mv=0; for(let i=0;i<N;i++){mv+=(Math.random()-0.48)*0.01; mkt.push(mv);}
+  const funds={};
+  defs.forEach(([isin,nm,bloque,sub,nota])=>{
+    const isRF=bloque==="Renta Fija";
+    const beta=isRF?0.1+Math.random()*0.2:0.5+Math.random()*1.0, drift=0.0001+Math.random()*0.0004, vol=isRF?0.002:0.008+Math.random()*0.016;
+    const start=Math.random()<0.3?Math.floor(N*Math.random()*0.4):0;
+    let px=10+Math.random()*40; const arr=new Array(N).fill(null);
+    for(let i=start;i<N;i++){ const r=drift+beta*(mkt[i]-(mkt[i-1]||0))+(Math.random()-0.5)*vol; px*=(1+r); arr[i]=Math.round(px*1e4)/1e4; }
+    funds[isin]={nm,bloque,sub,nota,px:arr};
+  });
+  return {asOf:"muestra",dates,funds};
+}
+
+/* ---------- selector ---------- */
+function chipEl(isin){
+  const c=document.createElement("div"); c.className="echip"; c.dataset.tk=isin;
+  c.innerHTML=`<span class="enm">${shortOf(isin)}</span>`+(notaOf(isin)?`<span class="etag">${notaOf(isin)}</span>`:``)+
+    `<button class="einfo" tabindex="-1" aria-label="Qué es">i</button>`;
+  c.onclick=()=>toggle(isin);
+  const ib=c.querySelector(".einfo");
+  const show=()=>{const r=ib.getBoundingClientRect();showTip(`<b>${nmOf(isin)}</b>${notaOf(isin)?` · ${notaOf(isin)}`:``}<br><span style="opacity:.7">${isin}</span>`,r.left,r.bottom+6);};
+  ib.addEventListener("click",e=>{e.stopPropagation();show();clearTimeout(window._it);window._it=setTimeout(hideTip,3200);});
+  ib.addEventListener("mouseenter",show);
+  ib.addEventListener("mouseleave",hideTip);
+  return c;
+}
+function buildSelector(){
+  const host=$("#selector"); host.innerHTML="";
+  GROUPS.forEach(g=>{
+    const wrap=document.createElement("div"); wrap.className="grp";
+    wrap.innerHTML=`<div class="grphd"><span class="gdot" style="background:${g.color}"></span>${g.label}</div>`;
+    g.subs.forEach(s=>{
+      if(s.name){ const sh=document.createElement("div"); sh.className="subhd"; sh.textContent=SUBSHORT[s.name]||s.name; wrap.appendChild(sh); }
+      const chips=document.createElement("div"); chips.className="chips";
+      s.isins.forEach(isin=>{ if(DATA.funds[isin]) chips.appendChild(chipEl(isin)); });
+      wrap.appendChild(chips);
+    });
+    host.appendChild(wrap);
+  });
+  syncSelector();
+}
+function syncSelector(){
+  document.querySelectorAll(".echip").forEach(c=>c.classList.toggle("on", PF.some(p=>p.tk===c.dataset.tk)));
+}
+$("#q").addEventListener("input",e=>{
+  const q=e.target.value.trim().toLowerCase();
+  document.querySelectorAll(".echip").forEach(c=>{
+    const isin=c.dataset.tk, hit=!q||isin.toLowerCase().includes(q)||nmOf(isin).toLowerCase().includes(q)||notaOf(isin).toLowerCase().includes(q);
+    c.classList.toggle("dim",!hit);
+  });
+});
+
+/* ---------- cartera ---------- */
+function staleResults(){ const r=$("#results"); if(!r.classList.contains("hide")) r.classList.add("hide"); }
+function rebalEqual(){ if(PF.length){const eq=to100(PF.map(()=>1)); PF.forEach((p,i)=>p.w=eq[i]);} }
+function toggle(tk){
+  const i=PF.findIndex(p=>p.tk===tk);
+  if(i>=0) PF.splice(i,1);
+  else PF.push({tk,w:0});
+  rebalEqual(); renderPF(); syncSelector(); staleResults();
+}
+function renderPF(){
+  const host=$("#pflist");
+  $("#pfcount").textContent=PF.length+(PF.length===1?" fondo":" fondos");
+  if(!PF.length){host.innerHTML='<div class="pfempty">Aún no has añadido nada.<br>Elige fondos de la izquierda para empezar.</div>';}
+  else{
+    host.innerHTML=PF.map((p,i)=>`<div class="pfrow">
+      <span class="dotc" style="background:${COLOR_OF[p.tk]||'#999'}"></span>
+      <span class="pnm" title="${nmOf(p.tk)}">${shortOf(p.tk)}${notaOf(p.tk)?` · <span class="pnota">${notaOf(p.tk)}</span>`:``}</span>
+      <input type="number" min="0" step="1" value="${p.w}" data-i="${i}"><span class="pct">%</span>
+      <button class="rm" data-i="${i}" title="Quitar">×</button></div>`).join("");
+    host.querySelectorAll("input").forEach(inp=>inp.oninput=e=>{PF[+e.target.dataset.i].w=Math.max(0,+e.target.value||0);updateSum();});
+    host.querySelectorAll(".rm").forEach(b=>b.onclick=e=>{PF.splice(+e.target.dataset.i,1);rebalEqual();renderPF();syncSelector();staleResults();});
+  }
+  updateSum();
+}
+function updateSum(){
+  const s=PF.reduce((a,p)=>a+p.w,0);
+  const el=$("#sumv"); el.textContent=Math.round(s)+"%";
+  const ok=Math.abs(s-100)<0.5;
+  el.className=ok?"sum-ok":"sum-warn";
+  $("#norm").style.display=(PF.length&&!ok)?"":"none";
+  $("#run").disabled=!(PF.length>=1&&ok);
+  if(typeof updatePeriods==="function") updatePeriods();
+}
+// reparte una lista de pesos a enteros que suman EXACTAMENTE 100 (método del mayor resto)
+function to100(weights){
+  const s=weights.reduce((a,b)=>a+b,0); if(s<=0) return weights.map(()=>0);
+  const raw=weights.map(w=>w/s*100), fl=raw.map(Math.floor);
+  let rem=100-fl.reduce((a,b)=>a+b,0);
+  raw.map((w,i)=>[w-fl[i],i]).sort((a,b)=>b[0]-a[0]).forEach(([,i])=>{if(rem>0){fl[i]++;rem--;}});
+  return fl;
+}
+$("#equal").onclick=()=>{ if(!PF.length)return; const eq=to100(PF.map(()=>1)); PF.forEach((p,i)=>p.w=eq[i]); renderPF(); };
+$("#norm").onclick=()=>{ if(!PF.length)return; const nw=to100(PF.map(p=>p.w)); PF.forEach((p,i)=>p.w=nw[i]); renderPF(); };
+$("#clear").onclick=()=>{ PF=[]; renderPF(); syncSelector(); $("#results").classList.add("hide"); };
+
+/* ---------- cálculo ---------- */
+function commonRange(tks){
+  const px=tks.map(t=>DATA.funds[t].px), n=DATA.dates.length;
+  let a=0; for(let i=0;i<n;i++){ if(px.every(p=>p[i]!=null)){a=i;break;} if(i===n-1)a=-1; }
+  let b=n-1; for(let i=n-1;i>=0;i--){ if(px.every(p=>p[i]!=null)){b=i;break;} }
+  return [a,b];
+}
+function stats(arr){const m=arr.reduce((a,b)=>a+b,0)/arr.length;
+  const v=arr.reduce((a,b)=>a+(b-m)*(b-m),0)/arr.length;return[m,Math.sqrt(v)];}
+function run(){
+  const tks=PF.map(p=>p.tk), sw=PF.reduce((a,p)=>a+p.w,0);
+  if(sw<=0){ alert("Pon algún peso mayor que 0% para poder calcular."); return; }
+  const wn=PF.map(p=>p.w/sw);
+  let [a,b]=commonRange(tks);
+  if(a<0){ alert("Estos ETFs no tienen periodo común de datos."); return; }
+  const a0=a;                                  // inicio del rango común completo
+  const availY=(new Date(DATA.dates[b])-new Date(DATA.dates[a0]))/(365.25*864e5);
+  // recorte por plazo
+  let periodMsg="";
+  if(PERIOD!=="all"){
+    let start=a0;
+    if(PERIOD==="ytd"){
+      const y0=DATA.dates[b].slice(0,4)+"-01-01";
+      for(let i=a0;i<=b;i++){ if(DATA.dates[i]>=y0){start=i;break;} }
+    }else{
+      const t=new Date(DATA.dates[b]); t.setFullYear(t.getFullYear()-(+PERIOD));
+      const ts=t.toISOString().slice(0,10);
+      for(let i=a0;i<=b;i++){ if(DATA.dates[i]>=ts){start=i;break;} }
+      if(availY<(+PERIOD)-0.05)
+        periodMsg=`Pediste <b>${PERIOD} años</b>, pero solo hay <b>${availY.toFixed(1).replace(".",",")}</b> disponibles para esta cartera. Se muestra todo el histórico común.`;
+    }
+    a=Math.max(a0,start);
+  }
+  if(b-a<20){ alert("El plazo elegido es demasiado corto para calcular. Prueba un plazo más largo."); return; }
+  // fondo que marca el inicio del rango común (el de menos histórico)
+  let limTk=tks[0],limI=-1;
+  tks.forEach(t=>{const f=DATA.funds[t].px.findIndex(x=>x!=null); if(f>limI){limI=f;limTk=t;}});
+  const dates=DATA.dates.slice(a,b+1), L=dates.length;
+  // curva cartera (compra y mantén, 10.000 €)
+  const base=tks.map(t=>DATA.funds[t].px[a]);
+  const pv=new Array(L);
+  for(let i=0;i<L;i++){let s=0; tks.forEach((t,k)=>{s+=wn[k]*DATA.funds[t].px[a+i]/base[k];}); pv[i]=10000*s;}
+  // retornos diarios cartera
+  const rp=[]; for(let i=1;i<L;i++) rp.push(pv[i]/pv[i-1]-1);
+  // benchmark (índice en EUR seleccionable); solo se dibuja si cubre todo el periodo
+  const bmk=$("#bench").value; let bench=null,bpv=null,benchMsg="";
+  if(bmk&&DATA.funds[bmk]){
+    const bp=DATA.funds[bmk].px;
+    if(bp[a]!=null){ bpv=new Array(L); for(let i=0;i<L;i++) bpv[i]=10000*bp[a+i]/bp[a]; bench=bmk; }
+    else{ const bs=bp.findIndex(x=>x!=null);
+      benchMsg=`El benchmark <b>${BENCH_LABEL[bmk]||"elegido"}</b> empieza en ${dlabel(DATA.dates[bs])} y no cubre todo el periodo, así que no se dibuja. Acorta el plazo (p. ej. 5A) o elige otro índice.`; }
+  }
+  const M=metrics(pv,rp,dates);
+  const years=(new Date(dates[L-1])-new Date(dates[0]))/(365.25*864e5);
+  const assetsPts=perAsset(tks,a,b,years);
+  let benchPt=null;
+  if(bench){const bp=DATA.funds[bench].px,br=[];for(let i=a+1;i<=b;i++)br.push(bp[i]/bp[i-1]-1);
+    const[,bsd]=stats(br); benchPt={tk:bench,cagr:Math.pow(bp[b]/bp[a],1/years)-1,vol:bsd*Math.sqrt(252)};}
+  const limited = (a===a0) && limTk && limI>0;   // inicio por fondo joven (solo si el plazo no recortó antes)
+  renderResults(M,pv,bpv,bench,dates,tks,a,b,Math.abs(sw-100)>=0.5,assetsPts,benchPt,limited?limTk:null,periodMsg,benchMsg);
+}
+function metrics(pv,rp,dates){
+  const years=(new Date(dates[dates.length-1])-new Date(dates[0]))/(365.25*864e5);
+  const total=pv[pv.length-1]/pv[0]-1;
+  const cagr=Math.pow(pv[pv.length-1]/pv[0],1/years)-1;
+  const[mean,sd]=stats(rp); const vol=sd*Math.sqrt(252);
+  const sharpe=vol?(mean*252)/vol:0;
+  const dn=rp.filter(x=>x<0); const dd=dn.length?Math.sqrt(dn.reduce((a,x)=>a+x*x,0)/rp.length)*Math.sqrt(252):0;
+  const sortino=dd?(mean*252)/dd:0;
+  let peak=pv[0],maxdd=0; pv.forEach(v=>{if(v>peak)peak=v;const d=v/peak-1;if(d<maxdd)maxdd=d;});
+  // retorno por año natural; marca como parcial el primer/último si no cubren el año entero
+  const yend={}; dates.forEach((d,i)=>{yend[d.slice(0,4)]=pv[i];});
+  const ys=Object.keys(yend).sort();
+  const fY=dates[0].slice(0,4), lY=dates[dates.length-1].slice(0,4);
+  const firstFull=dates[0].slice(5)<="01-10", lastFull=dates[dates.length-1].slice(5)>="12-22";
+  let prev=pv[0]; const rows=ys.map(y=>{const r=yend[y]/prev-1;prev=yend[y];
+    const partial=(y===fY&&!firstFull)||(y===lY&&!lastFull); return {y,r,partial};});
+  let cand=rows.filter(r=>!r.partial); if(!cand.length) cand=rows;   // si no hay año completo, usa lo que haya
+  let bst=cand[0],wst=cand[0];
+  cand.forEach(r=>{if(r.r>bst.r)bst=r; if(r.r<wst.r)wst=r;});
+  return{years,total,cagr,vol,sharpe,sortino,maxdd,
+    best:bst.r,bestY:bst.y+(bst.partial?"*":""),worst:wst.r,worstY:wst.y+(wst.partial?"*":""),
+    anyPartial:rows.some(r=>r.partial)&&!cand.some(r=>r.partial)?false:cand.some(r=>r.partial)};
+}
+
+/* ---------- resultados ---------- */
+function renderResults(M,pv,bpv,bench,dates,tks,a,b,unbal,assetsPts,benchPt,limTk,periodMsg,benchMsg){
+  $("#results").classList.remove("hide");
+  $("#periodNote").innerHTML=(periodMsg?`<span style="color:#B5851F">${periodMsg}</span> `:``)+
+    (benchMsg?`<span style="color:#B5851F">${benchMsg}</span> `:``)+
+    `Periodo analizado: <b>${dlabel(dates[0])} → ${dlabel(dates[dates.length-1])}</b> (${M.years.toFixed(1).replace(".",",")} años)`+
+    (limTk?`, limitado por <b>${shortOf(limTk)}</b>, el fondo con menos histórico.`:`.`)+
+    (unbal?` Los pesos no sumaban 100%, así que se han <b>normalizado</b> proporcionalmente.`:``)+
+    (M.anyPartial?` El año marcado con * es parcial (no cuenta de enero a diciembre completo).`:``)+
+    (SAMPLE?` <b>Estás viendo datos de muestra</b> (sube history_fondos.json para datos reales).`:``);
+  const card=(k,v,cls,s)=>`<div class="card"><div class="k">${k}</div><div class="v ${cls||''}">${v}</div>${s?`<div class="s">${s}</div>`:''}</div>`;
+  $("#cards").innerHTML=
+    card("Rentab. total",fmtPct(M.total*100),M.total>=0?"up":"down",eur(10000*(1+M.total))+" €")+
+    card("CAGR (anual)",fmtPct(M.cagr*100),M.cagr>=0?"up":"down","compuesto")+
+    card("Volatilidad",fmtPct(M.vol*100,1).replace("+",""),"","anualizada")+
+    card("Máx. caída",fmtPct(M.maxdd*100),"down","pico a valle")+
+    card("Sharpe",fmt2(M.sharpe),M.sharpe>=1?"up":"","rentab./riesgo")+
+    card("Sortino",fmt2(M.sortino),M.sortino>=1?"up":"","riesgo a la baja")+
+    card("Mejor año",fmtPct(M.best*100),"up",M.bestY)+
+    card("Peor año",fmtPct(M.worst*100),"down",M.worstY);
+  drawCurve(pv,bpv,bench,dates);
+  drawDrawdown(pv,dates,bpv,bench);
+  drawScatter(assetsPts,{cagr:M.cagr,vol:M.vol},benchPt);
+  drawCor(tks,a,b);
+}
+function drawCurve(pv,bpv,bench,dates){
+  const W=920,H=360,L=52,R=16,T=14,B=28, w=W-L-R, h=H-T-B;
+  const series=[{name:"Cartera",col:"#2563EB",d:pv}]; if(bpv)series.push({name:bench,col:"#9AA5B3",d:bpv});
+  let lo=Infinity,hi=-Infinity; series.forEach(s=>s.d.forEach(v=>{if(v<lo)lo=v;if(v>hi)hi=v;}));
+  lo=Math.min(lo,10000)*0.985; hi*=1.015;
+  const N=pv.length, x=i=>L+w*i/(N-1), y=v=>T+h*(1-(v-lo)/(hi-lo));
+  const path=d=>d.map((v,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)).join(" ");
+  let g="";
+  const ticks=5; for(let k=0;k<=ticks;k++){const val=lo+(hi-lo)*k/ticks,yy=y(val);
+    g+=`<line class="cgrid" x1="${L}" y1="${yy.toFixed(1)}" x2="${W-R}" y2="${yy.toFixed(1)}"/>`+
+       `<text class="clbl" x="${L-6}" y="${(yy+3).toFixed(1)}" text-anchor="end">${eur(val/1000)}k</text>`;}
+  const yrs={}; dates.forEach((d,i)=>{const y4=d.slice(0,4);if(!(y4 in yrs))yrs[y4]=i;});
+  const yk=Object.keys(yrs); const step=Math.ceil(yk.length/8);
+  yk.forEach((y4,idx)=>{if(idx%step)return;const xx=x(yrs[y4]);
+    g+=`<text class="clbl" x="${xx.toFixed(1)}" y="${H-8}" text-anchor="middle">${y4}</text>`;});
+  series.forEach(s=>{g+=`<path d="${path(s.d)}" fill="none" stroke="${s.col}" stroke-width="${s.name==='Cartera'?2.4:1.6}" stroke-linejoin="round"/>`;});
+  // capa de hover
+  g+=`<rect id="hov" x="${L}" y="${T}" width="${w}" height="${h}" fill="transparent"/>`;
+  g+=`<line id="hl" x1="0" y1="${T}" x2="0" y2="${T+h}" stroke="#C9D3E0" stroke-width="1" style="opacity:0"/>`;
+  $("#curve").innerHTML=g;
+  $("#leg").innerHTML=series.map(s=>`<span><i style="background:${s.col}"></i>${s.name==='Cartera'?'Tu cartera':(BENCH_LABEL[s.name]||shortOf(s.name))}</span>`).join("");
+  $("#chartSub").textContent=`${dlabel(dates[0])} – ${dlabel(dates[dates.length-1])}`;
+  hookHover(pv,bpv,bench,dates,{L,T,w,h,N,x,y,lo,hi});
+}
+function hookHover(pv,bpv,bench,dates,G){
+  const svg=$("#curve"),hl=svg.querySelector("#hl"),hov=svg.querySelector("#hov"),tip=$("#tip");
+  hov.addEventListener("mousemove",e=>{
+    const r=svg.getBoundingClientRect(), sx=(e.clientX-r.left)*920/r.width;
+    let i=Math.round((sx-G.L)/G.w*(G.N-1)); i=Math.max(0,Math.min(G.N-1,i));
+    const xx=G.x(i); hl.setAttribute("x1",xx);hl.setAttribute("x2",xx);hl.style.opacity=1;
+    let html=`${dlabel(dates[i])}<br>Cartera ${eur(pv[i])} €`; if(bpv)html+=`<br>${BENCH_LABEL[bench]||shortOf(bench)} ${eur(bpv[i])} €`;
+    tip.innerHTML=html; tip.style.opacity=1; tip.style.left=(e.clientX+12)+"px"; tip.style.top=(e.clientY-10)+"px";
+  });
+  hov.addEventListener("mouseleave",()=>{hl.style.opacity=0;tip.style.opacity=0;});
+}
+function drawCor(tks,a,b){
+  const rets=tks.map(t=>{const p=DATA.funds[t].px,o=[];for(let i=a+1;i<=b;i++)o.push(p[i]/p[i-1]-1);return o;});
+  const ms=rets.map(r=>r.reduce((x,y)=>x+y,0)/r.length);
+  const sds=rets.map((r,k)=>Math.sqrt(r.reduce((x,y)=>x+(y-ms[k])*(y-ms[k]),0)/r.length));
+  const corr=(i,j)=>{let c=0;for(let t=0;t<rets[i].length;t++)c+=(rets[i][t]-ms[i])*(rets[j][t]-ms[j]);
+    c/=rets[i].length; return (sds[i]&&sds[j])?c/(sds[i]*sds[j]):0;};
+  const cell=v=>{ // azul (+) / rojo (−)
+    const t=Math.max(-1,Math.min(1,v));
+    const bg=t>=0?`rgba(37,99,235,${(0.10+0.55*t).toFixed(3)})`:`rgba(224,68,68,${(0.10+0.55*-t).toFixed(3)})`;
+    return `background:${bg};color:${Math.abs(t)>0.6?'#fff':'#1A2233'}`;};
+  let h='<table class="cortb"><tr><th></th>'+tks.map(t=>`<th title="${nmOf(t)}">${shortOf(t)}</th>`).join("")+'</tr>';
+  tks.forEach((ti,i)=>{ h+=`<tr><th class="rowh" title="${nmOf(ti)}">${shortOf(ti)}</th>`;
+    tks.forEach((tj,j)=>{const v=i===j?1:corr(i,j); h+=`<td style="${cell(v)}">${i===j?'1':fmt2(v)}</td>`;});
+    h+='</tr>'; });
+  h+='</table>'; $("#cor").innerHTML=h;
+}
+function perAsset(tks,a,b,years){
+  return tks.map(t=>{
+    const p=DATA.funds[t].px, rp=[];
+    for(let i=a+1;i<=b;i++) rp.push(p[i]/p[i-1]-1);
+    const cagr=Math.pow(p[b]/p[a],1/years)-1;
+    const[,sd]=stats(rp); const vol=sd*Math.sqrt(252);
+    return {tk:t,cagr,vol,col:COLOR_OF[t]||"#5B6675"};
+  });
+}
+function drawScatter(pts,port,bench){
+  const W=460,H=360,L=46,R=16,T=16,B=34, w=W-L-R, h=H-T-B;
+  const all=pts.concat([{cagr:port.cagr,vol:port.vol}]); if(bench)all.push({cagr:bench.cagr,vol:bench.vol});
+  let vmax=Math.max(...all.map(p=>p.vol))*1.12||0.1;
+  let ymin=Math.min(0,...all.map(p=>p.cagr)), ymax=Math.max(...all.map(p=>p.cagr));
+  const pad=(ymax-ymin)*0.12||0.05; ymin-=pad; ymax+=pad;
+  const x=v=>L+w*v/vmax, y=v=>T+h*(1-(v-ymin)/(ymax-ymin));
+  let g="";
+  // rejilla + ejes
+  for(let k=0;k<=4;k++){const vv=vmax*k/4,xx=x(vv);
+    g+=`<line class="cgrid" x1="${xx.toFixed(1)}" y1="${T}" x2="${xx.toFixed(1)}" y2="${T+h}"/>`+
+       `<text class="clbl" x="${xx.toFixed(1)}" y="${H-12}" text-anchor="middle">${(vv*100).toFixed(0)}%</text>`;}
+  for(let k=0;k<=4;k++){const vv=ymin+(ymax-ymin)*k/4,yy=y(vv);
+    g+=`<line class="cgrid" x1="${L}" y1="${yy.toFixed(1)}" x2="${W-R}" y2="${yy.toFixed(1)}"/>`+
+       `<text class="clbl" x="${L-6}" y="${(yy+3).toFixed(1)}" text-anchor="end">${(vv*100).toFixed(0)}%</text>`;}
+  if(ymin<0&&ymax>0){const y0=y(0);g+=`<line x1="${L}" y1="${y0.toFixed(1)}" x2="${W-R}" y2="${y0.toFixed(1)}" stroke="#C9D3E0" stroke-width="1.2"/>`;}
+  g+=`<text class="clbl" x="${L+w/2}" y="${H-1}" text-anchor="middle">Volatilidad anual →</text>`;
+  // puntos de cada fondo
+  pts.forEach(p=>{ g+=`<g class="spt" data-tip="${shortOf(p.tk)} · rent ${(p.cagr*100).toFixed(1).replace('.',',')}% · vol ${(p.vol*100).toFixed(1).replace('.',',')}%">`+
+    `<circle cx="${x(p.vol).toFixed(1)}" cy="${y(p.cagr).toFixed(1)}" r="5" fill="${p.col}" fill-opacity="0.85" stroke="#fff" stroke-width="1"/>`+
+    `<text class="clbl" x="${(x(p.vol)+8).toFixed(1)}" y="${(y(p.cagr)+3).toFixed(1)}" style="font-size:8.5px">${shortOf(p.tk).split(" ")[0]}</text></g>`; });
+  // benchmark
+  if(bench){g+=`<g class="spt" data-tip="${BENCH_LABEL[bench.tk]||shortOf(bench.tk)} (benchmark) · rent ${(bench.cagr*100).toFixed(1).replace('.',',')}% · vol ${(bench.vol*100).toFixed(1).replace('.',',')}%">`+
+    `<circle cx="${x(bench.vol).toFixed(1)}" cy="${y(bench.cagr).toFixed(1)}" r="6" fill="none" stroke="#5B6675" stroke-width="2"/></g>`;}
+  // cartera (cuadrado azul)
+  const px=x(port.vol),py=y(port.cagr);
+  g+=`<g class="spt" data-tip="Tu cartera · rent ${(port.cagr*100).toFixed(1).replace('.',',')}% · vol ${(port.vol*100).toFixed(1).replace('.',',')}%">`+
+    `<rect x="${(px-6).toFixed(1)}" y="${(py-6).toFixed(1)}" width="12" height="12" rx="2" fill="#2563EB" stroke="#fff" stroke-width="1.5"/></g>`;
+  $("#scatter").innerHTML=g;
+  // hover
+  $("#scatter").querySelectorAll(".spt").forEach(el=>{
+    el.style.cursor="pointer";
+    const tipHtml=()=>el.dataset.tip.replace(/·/g,"<br>").replace(/^(.*?)<br>/,"<b>$1</b><br>");
+    el.addEventListener("mouseenter",e=>showTip(tipHtml(),e.clientX+12,e.clientY-10));
+    el.addEventListener("mousemove",e=>{const t=$("#tip");t.style.left=(e.clientX+12)+"px";t.style.top=(e.clientY-10)+"px";});
+    el.addEventListener("mouseleave",hideTip);
+    el.addEventListener("click",e=>{e.stopPropagation();showTip(tipHtml(),e.clientX+12,e.clientY-10);clearTimeout(window._st);window._st=setTimeout(hideTip,2800);});
+  });
+}
+function drawDrawdown(pv,dates,bpv,bench){
+  const W=920,H=150,L=52,R=16,T=10,B=24, w=W-L-R, h=H-T-B, N=pv.length;
+  const ddOf=arr=>{let pk=arr[0];return arr.map(v=>{if(v>pk)pk=v;return v/pk-1;});};
+  const dd=ddOf(pv), bdd=(bpv&&bpv.length===N)?ddOf(bpv):null;
+  let mn=0,mi=0; dd.forEach((v,i)=>{if(v<mn){mn=v;mi=i;}});
+  let bmn=0; if(bdd)bdd.forEach(v=>{if(v<bmn)bmn=v;});
+  const lo=Math.min(mn*1.12,(bdd?bmn*1.12:0),-0.02);
+  const x=i=>L+w*i/(N-1), y=v=>T+h*(v/lo);
+  let g="";
+  const steps=Math.max(2,Math.min(5,Math.ceil(-lo/0.1)));
+  for(let k=0;k<=steps;k++){const vv=lo*k/steps,yy=y(vv);
+    g+=`<line class="cgrid" x1="${L}" y1="${yy.toFixed(1)}" x2="${W-R}" y2="${yy.toFixed(1)}"/>`+
+       `<text class="clbl" x="${L-6}" y="${(yy+3).toFixed(1)}" text-anchor="end">${(vv*100).toFixed(0)}%</text>`;}
+  const yrs={}; dates.forEach((d,i)=>{const y4=d.slice(0,4);if(!(y4 in yrs))yrs[y4]=i;});
+  const yk=Object.keys(yrs),step=Math.ceil(yk.length/8);
+  yk.forEach((y4,idx)=>{if(idx%step)return;g+=`<text class="clbl" x="${x(yrs[y4]).toFixed(1)}" y="${H-6}" text-anchor="middle">${y4}</text>`;});
+  // área de la cartera (relleno rojo)
+  let area=`M ${L} ${T}`; for(let i=0;i<N;i++) area+=` L ${x(i).toFixed(1)} ${y(dd[i]).toFixed(1)}`; area+=` L ${x(N-1).toFixed(1)} ${T} Z`;
+  g+=`<path d="${area}" fill="rgba(224,68,68,0.15)" stroke="none"/>`;
+  // línea del benchmark (gris, sin relleno) — debajo de la línea de la cartera
+  if(bdd){let bl=`M ${x(0).toFixed(1)} ${y(bdd[0]).toFixed(1)}`; for(let i=1;i<N;i++) bl+=` L ${x(i).toFixed(1)} ${y(bdd[i]).toFixed(1)}`;
+    g+=`<path d="${bl}" fill="none" stroke="#9AA5B3" stroke-width="1.4" stroke-linejoin="round"/>`;}
+  // línea de la cartera (roja)
+  let cl=`M ${x(0).toFixed(1)} ${y(dd[0]).toFixed(1)}`; for(let i=1;i<N;i++) cl+=` L ${x(i).toFixed(1)} ${y(dd[i]).toFixed(1)}`;
+  g+=`<path d="${cl}" fill="none" stroke="#E04444" stroke-width="1.4" stroke-linejoin="round"/>`;
+  // marca de la máxima caída de la cartera
+  g+=`<circle cx="${x(mi).toFixed(1)}" cy="${y(mn).toFixed(1)}" r="3.5" fill="#E04444" stroke="#fff" stroke-width="1.5"/>`+
+     `<text class="clbl" x="${x(mi).toFixed(1)}" y="${(y(mn)+13).toFixed(1)}" text-anchor="middle" style="fill:#E04444;font-weight:600">${(mn*100).toFixed(1).replace('.',',')}%</text>`;
+  // leyenda fuera del gráfico (en el título), para no cruzarse con las curvas
+  const leg=$("#ddleg");
+  if(leg){ const bl=BENCH_LABEL[bench]||shortOf(bench||"");
+    leg.innerHTML = bdd
+    ? `<span class="lgi"><i style="background:#E04444"></i>Cartera (${(mn*100).toFixed(0).replace("-","−")}%)</span><span class="lgi"><i style="background:#9AA5B3"></i>${bl} (${(bmn*100).toFixed(0).replace("-","−")}%)</span>`
+    : `<span class="lgi"><i style="background:#E04444"></i>Cartera (${(mn*100).toFixed(0).replace("-","−")}%)</span>`; }
+  // capa de hover
+  g+=`<line id="ddhl" x1="0" y1="${T}" x2="0" y2="${T+h}" stroke="#C9D3E0" stroke-width="1" style="opacity:0"/>`;
+  g+=`<rect id="ddhov" x="${L}" y="${T}" width="${w}" height="${h}" fill="transparent"/>`;
+  $("#dd").innerHTML=g;
+  hookHoverDD(dd,bdd,bench,dates,{L,w,N,x});
+}
+function hookHoverDD(dd,bdd,bench,dates,G){
+  const svg=$("#dd"),hl=svg.querySelector("#ddhl"),hov=svg.querySelector("#ddhov"),tip=$("#tip");
+  hov.addEventListener("mousemove",e=>{
+    const r=svg.getBoundingClientRect(), sx=(e.clientX-r.left)*920/r.width;
+    let i=Math.round((sx-G.L)/G.w*(G.N-1)); i=Math.max(0,Math.min(G.N-1,i));
+    const xx=G.x(i); hl.setAttribute("x1",xx);hl.setAttribute("x2",xx);hl.style.opacity=1;
+    let html=`${dlabel(dates[i])}<br>Cartera ${(dd[i]*100).toFixed(1).replace(".",",")}%`;
+    if(bdd) html+=`<br>${BENCH_LABEL[bench]||shortOf(bench)} ${(bdd[i]*100).toFixed(1).replace(".",",")}%`;
+    tip.innerHTML=html; tip.style.opacity=1; tip.style.left=(e.clientX+12)+"px"; tip.style.top=(e.clientY-10)+"px";
+  });
+  hov.addEventListener("mouseleave",()=>{hl.style.opacity=0;tip.style.opacity=0;});
+}
+$("#run").onclick=run;
+
+/* ---------- carteras de ejemplo ---------- */
+const PRESETS=[
+  {name:"Indexada global", desc:"Lo más sencillo y barato: replicar el mundo entero con un fondo índice MSCI World. La referencia que muchos buscan batir.",
+   w:[["IE00BYX5NX33",100]]},
+  {name:"Mundo + Emergentes", desc:"El mundo desarrollado (80%) más una pizca de mercados emergentes (20%) para captar su crecimiento.",
+   w:[["IE00BYX5NX33",80],["IE0031786142",20]]},
+  {name:"Value español", desc:"Las gestoras value patrias clásicas (Azvalor, Cobas, Magallanes). Mucho potencial, pero con caídas más profundas — se ve en el drawdown.",
+   w:[["ES0112611001",40],["ES0124037005",30],["ES0159201013",30]]},
+  {name:"Calidad / Growth global", desc:"Compañías de calidad que componen a largo plazo (Fundsmith, MS Global Opportunity, Comgest Europa).",
+   w:[["LU0690375182",40],["LU0552385535",30],["IE00BZ0X9T58",30]]},
+  {name:"Salud + Tecnología", desc:"Dos megatendencias a partes iguales (BGF World Healthscience y BGF World Technology). Más rentabilidad, más vaivén.",
+   w:[["LU0171307068",50],["LU0171310443",50]]},
+  {name:"Mixta defensiva", desc:"Bolsa mundial amortiguada con bonos: 50% MSCI World, 30% deuda pública larga, 20% renta fija corta. Mucho menos drawdown.",
+   w:[["IE00BYX5NX33",50],["IE00B246KL88",30],["FR0010149120",20]]}
+];
+function buildExamples(){
+  const host=$("#examples"); if(!host)return;
+  host.innerHTML=PRESETS.map((ex,i)=>`<span class="exchip" data-i="${i}"><span class="exname">${ex.name}</span><button class="einfo" data-i="${i}" tabindex="-1" aria-label="Qué es ${ex.name}">i</button></span>`).join("");
+  host.querySelectorAll(".exchip").forEach(c=>{
+    c.onclick=()=>loadExample(+c.dataset.i);
+    const ib=c.querySelector(".einfo"), j=+ib.dataset.i;
+    const show=()=>{const r=ib.getBoundingClientRect();showTip(`<b>${PRESETS[j].name}</b> · ${PRESETS[j].desc}`,r.left,r.bottom+6);};
+    ib.addEventListener("click",e=>{e.stopPropagation();show();clearTimeout(window._it);window._it=setTimeout(hideTip,4000);});
+    ib.addEventListener("mouseenter",show);
+    ib.addEventListener("mouseleave",hideTip);
+  });
+}
+function loadExample(i){
+  const ex=PRESETS[i];
+  PF=ex.w.filter(([tk])=>DATA.funds[tk]).map(([tk,w])=>({tk,w}));
+  const w100=to100(PF.map(p=>p.w)); PF.forEach((p,k)=>p.w=w100[k]);
+  renderPF(); syncSelector();
+  if(!$("#run").disabled) run();          // muestra el resultado al instante
+}
+
+/* ---------- selector de plazo ---------- */
+function setActivePeriod(){ document.querySelectorAll("#period button").forEach(b=>b.classList.toggle("on",b.dataset.p===PERIOD)); }
+function availYears(){
+  if(!PF.length) return Infinity;
+  const [a,b]=commonRange(PF.map(p=>p.tk));
+  if(a<0) return 0;
+  return (new Date(DATA.dates[b])-new Date(DATA.dates[a]))/(365.25*864e5);
+}
+function updatePeriods(){
+  const av=availYears();
+  document.querySelectorAll("#period button").forEach(btn=>{
+    const p=btn.dataset.p, need=(p==="all"||p==="ytd")?0:+p;
+    btn.disabled = PF.length && need>av+0.05;
+  });
+  const cur=document.querySelector(`#period button[data-p="${PERIOD}"]`);
+  if(cur&&cur.disabled){ PERIOD="all"; setActivePeriod(); }
+}
+document.querySelectorAll("#period button").forEach(btn=>{
+  btn.onclick=()=>{ if(btn.disabled)return; PERIOD=btn.dataset.p; setActivePeriod();
+    if(!$("#run").disabled && !$("#results").classList.contains("hide")) run(); };
+});
+load();
+</script>
+</body>
+</html>
