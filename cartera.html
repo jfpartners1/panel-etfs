@@ -299,8 +299,11 @@ async function load(){
 // intercalado corrompa retornos, volatilidad y correlaciones.
 function fillGaps(){
   for(const tk in DATA.etfs){
-    const px=DATA.etfs[tk].px; let last=null;
-    for(let i=0;i<px.length;i++){
+    const px=DATA.etfs[tk].px;
+    let lastReal=-1;
+    for(let i=0;i<px.length;i++) if(px[i]!=null) lastReal=i;
+    let last=null;
+    for(let i=0;i<=lastReal;i++){
       if(px[i]==null){ if(last!=null) px[i]=last; }
       else last=px[i];
     }

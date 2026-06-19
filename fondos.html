@@ -355,12 +355,16 @@ function buildGroups(){
     }
   });
 }
-// Rellena huecos internos (sesiones sueltas sin dato) con el último NAV válido;
-// deja en null solo lo ANTERIOR al inicio de cada fondo.
+// Rellena huecos internos (festivos desalineados / sesiones sueltas) con el último NAV
+// válido, pero NO rellena la "cola": si un fondo dejó de reportar (p. ej. Hamco), se
+// deja en null a partir de su último dato real, para no inventar una línea plana.
 function fillGaps(){
   for(const k in DATA.funds){
-    const px=DATA.funds[k].px; let last=null;
-    for(let i=0;i<px.length;i++){
+    const px=DATA.funds[k].px;
+    let lastReal=-1;
+    for(let i=0;i<px.length;i++) if(px[i]!=null) lastReal=i;
+    let last=null;
+    for(let i=0;i<=lastReal;i++){
       if(px[i]==null){ if(last!=null) px[i]=last; }
       else last=px[i];
     }
@@ -498,6 +502,18 @@ function commonRange(tks){
 }
 function stats(arr){const m=arr.reduce((a,b)=>a+b,0)/arr.length;
   const v=arr.reduce((a,b)=>a+(b-m)*(b-m),0)/arr.length;return[m,Math.sqrt(v)];}
+// Identificador de semana (semanas enteras desde epoch) para remuestrear a frecuencia semanal.
+function weekId(iso){ return Math.floor(Date.parse(iso)/(7*864e5)); }
+// Índices del ÚLTIMO día de cada semana dentro de [a,b] (sobre el array de fechas dado).
+function weeklyIdx(a,b,dts){
+  const out=[]; let cur=null;
+  for(let i=a;i<=b;i++){ const w=weekId(dts[i]); if(w!==cur){ out.push(i); cur=w; } else { out[out.length-1]=i; } }
+  return out;
+}
+// Retornos semanales de una serie de precios sobre los índices semanales dados.
+function weeklyRets(px,wi){ const r=[]; for(let i=1;i<wi.length;i++){const a=px[wi[i-1]],b=px[wi[i]]; if(a&&b)r.push(b/a-1);} return r; }
+// Volatilidad anualizada (semanal) de una serie de precios (slice de longitud L).
+function weekVol(pv,dates){ const wr=weeklyRets(pv,weeklyIdx(0,pv.length-1,dates)); if(wr.length<2)return 0; const[,sd]=stats(wr); return sd*Math.sqrt(52); }
 function run(){
   const tks=PF.map(p=>p.tk), sw=PF.reduce((a,p)=>a+p.w,0);
   if(sw<=0){ alert("Pon algún peso mayor que 0% para poder calcular."); return; }
@@ -531,8 +547,6 @@ function run(){
   const base=tks.map(t=>DATA.funds[t].px[a]);
   const pv=new Array(L);
   for(let i=0;i<L;i++){let s=0; tks.forEach((t,k)=>{s+=wn[k]*DATA.funds[t].px[a+i]/base[k];}); pv[i]=10000*s;}
-  // retornos diarios cartera
-  const rp=[]; for(let i=1;i<L;i++) rp.push(pv[i]/pv[i-1]-1);
   // benchmark (índice en EUR seleccionable); solo se dibuja si cubre todo el periodo
   const bmk=$("#bench").value; let bench=null,bpv=null,benchMsg="";
   if(bmk&&DATA.funds[bmk]){
@@ -541,23 +555,34 @@ function run(){
     else{ const bs=bp.findIndex(x=>x!=null);
       benchMsg=`El benchmark <b>${BENCH_LABEL[bmk]||"elegido"}</b> empieza en ${dlabel(DATA.dates[bs])} y no cubre todo el periodo, así que no se dibuja. Acorta el plazo (p. ej. 5A) o elige otro índice.`; }
   }
-  const M=metrics(pv,rp,dates);
+  const M=metrics(pv,dates);
   const years=(new Date(dates[L-1])-new Date(dates[0]))/(365.25*864e5);
   const assetsPts=perAsset(tks,a,b,years);
   let benchPt=null;
-  if(bench){const bp=DATA.funds[bench].px,br=[];for(let i=a+1;i<=b;i++)br.push(bp[i]/bp[i-1]-1);
-    const[,bsd]=stats(br); benchPt={tk:bench,cagr:Math.pow(bp[b]/bp[a],1/years)-1,vol:bsd*Math.sqrt(252)};}
+  if(bench){ benchPt={tk:bench,cagr:M.years?Math.pow(bpv[L-1]/bpv[0],1/years)-1:0,vol:weekVol(bpv,dates)}; }
   const limited = (a===a0) && limTk && limI>0;   // inicio por fondo joven (solo si el plazo no recortó antes)
+  // aviso si algún fondo dejó de publicar NAV antes del final global (limita el fin del periodo)
+  if(b < DATA.dates.length-1){
+    let endTk=null;
+    for(const t of tks){const px=DATA.funds[t].px;let li=-1;for(let i=0;i<px.length;i++)if(px[i]!=null)li=i;if(li===b){endTk=t;break;}}
+    if(endTk) periodMsg=(periodMsg?periodMsg+" ":"")+`El periodo termina en ${dlabel(DATA.dates[b])} porque <b>${shortOf(endTk)}</b> dejó de publicar valor liquidativo ahí.`;
+  }
   renderResults(M,pv,bpv,bench,dates,tks,a,b,Math.abs(sw-100)>=0.5,assetsPts,benchPt,limited?limTk:null,periodMsg,benchMsg);
 }
-function metrics(pv,rp,dates){
-  const years=(new Date(dates[dates.length-1])-new Date(dates[0]))/(365.25*864e5);
-  const total=pv[pv.length-1]/pv[0]-1;
-  const cagr=Math.pow(pv[pv.length-1]/pv[0],1/years)-1;
-  const[mean,sd]=stats(rp); const vol=sd*Math.sqrt(252);
-  const sharpe=vol?(mean*252)/vol:0;
-  const dn=rp.filter(x=>x<0); const dd=dn.length?Math.sqrt(dn.reduce((a,x)=>a+x*x,0)/rp.length)*Math.sqrt(252):0;
-  const sortino=dd?(mean*252)/dd:0;
+function metrics(pv,dates){
+  const L=pv.length;
+  const years=(new Date(dates[L-1])-new Date(dates[0]))/(365.25*864e5);
+  const total=pv[L-1]/pv[0]-1;
+  const cagr=Math.pow(pv[L-1]/pv[0],1/years)-1;
+  // Métricas de riesgo sobre retornos SEMANALES (evita el ruido de festivos
+  // desalineados entre países y los días planos del forward-fill).
+  const wi=weeklyIdx(0,L-1,dates), wr=weeklyRets(pv,wi);
+  const[mean,sd]= wr.length?stats(wr):[0,0];
+  const vol=sd*Math.sqrt(52);
+  const sharpe=vol?(mean*52)/vol:0;
+  const dn=wr.filter(x=>x<0); const dd=dn.length?Math.sqrt(dn.reduce((a,x)=>a+x*x,0)/wr.length)*Math.sqrt(52):0;
+  const sortino=dd?(mean*52)/dd:0;
+  // Máxima caída sobre la curva DIARIA (más fina y correcta).
   let peak=pv[0],maxdd=0; pv.forEach(v=>{if(v>peak)peak=v;const d=v/peak-1;if(d<maxdd)maxdd=d;});
   // retorno por año natural; marca como parcial el primer/último si no cubren el año entero
   const yend={}; dates.forEach((d,i)=>{yend[d.slice(0,4)]=pv[i];});
@@ -566,12 +591,12 @@ function metrics(pv,rp,dates){
   const firstFull=dates[0].slice(5)<="01-10", lastFull=dates[dates.length-1].slice(5)>="12-22";
   let prev=pv[0]; const rows=ys.map(y=>{const r=yend[y]/prev-1;prev=yend[y];
     const partial=(y===fY&&!firstFull)||(y===lY&&!lastFull); return {y,r,partial};});
-  let cand=rows.filter(r=>!r.partial); if(!cand.length) cand=rows;   // si no hay año completo, usa lo que haya
+  let cand=rows.filter(r=>!r.partial); if(!cand.length) cand=rows;
   let bst=cand[0],wst=cand[0];
   cand.forEach(r=>{if(r.r>bst.r)bst=r; if(r.r<wst.r)wst=r;});
   return{years,total,cagr,vol,sharpe,sortino,maxdd,
     best:bst.r,bestY:bst.y+(bst.partial?"*":""),worst:wst.r,worstY:wst.y+(wst.partial?"*":""),
-    anyPartial:rows.some(r=>r.partial)&&!cand.some(r=>r.partial)?false:cand.some(r=>r.partial)};
+    anyPartial:cand.some(r=>r.partial)};
 }
 
 /* ---------- resultados ---------- */
@@ -638,9 +663,10 @@ function hookHover(pv,bpv,bench,dates,G){
   hov.addEventListener("mouseleave",()=>{hl.style.opacity=0;tip.style.opacity=0;});
 }
 function drawCor(tks,a,b){
-  const rets=tks.map(t=>{const p=DATA.funds[t].px,o=[];for(let i=a+1;i<=b;i++)o.push(p[i]/p[i-1]-1);return o;});
-  const ms=rets.map(r=>r.reduce((x,y)=>x+y,0)/r.length);
-  const sds=rets.map((r,k)=>Math.sqrt(r.reduce((x,y)=>x+(y-ms[k])*(y-ms[k]),0)/r.length));
+  const wi=weeklyIdx(a,b,DATA.dates);
+  const rets=tks.map(t=>weeklyRets(DATA.funds[t].px,wi));
+  const ms=rets.map(r=>r.length?r.reduce((x,y)=>x+y,0)/r.length:0);
+  const sds=rets.map((r,k)=>Math.sqrt(r.reduce((x,y)=>x+(y-ms[k])*(y-ms[k]),0)/(r.length||1)));
   const corr=(i,j)=>{let c=0;for(let t=0;t<rets[i].length;t++)c+=(rets[i][t]-ms[i])*(rets[j][t]-ms[j]);
     c/=rets[i].length; return (sds[i]&&sds[j])?c/(sds[i]*sds[j]):0;};
   const cell=v=>{ // azul (+) / rojo (−)
@@ -654,11 +680,11 @@ function drawCor(tks,a,b){
   h+='</table>'; $("#cor").innerHTML=h;
 }
 function perAsset(tks,a,b,years){
+  const wi=weeklyIdx(a,b,DATA.dates);
   return tks.map(t=>{
-    const p=DATA.funds[t].px, rp=[];
-    for(let i=a+1;i<=b;i++) rp.push(p[i]/p[i-1]-1);
+    const p=DATA.funds[t].px;
     const cagr=Math.pow(p[b]/p[a],1/years)-1;
-    const[,sd]=stats(rp); const vol=sd*Math.sqrt(252);
+    const wr=weeklyRets(p,wi); const[,sd]=wr.length?stats(wr):[0,0]; const vol=sd*Math.sqrt(52);
     return {tk:t,cagr,vol,col:COLOR_OF[t]||"#5B6675"};
   });
 }
@@ -845,23 +871,26 @@ function runCompare(){
   const series=tks.map((t,idx)=>{
     const p=DATA.funds[t].px, base=p[a], pv=new Array(L);
     for(let i=0;i<L;i++) pv[i]=10000*p[a+i]/base;
-    const rp=[]; for(let i=1;i<L;i++) rp.push(pv[i]/pv[i-1]-1);
-    return {tk:t,col:SERIES_COL[idx%SERIES_COL.length],pv,M:metrics(pv,rp,dates)};
+    return {tk:t,col:SERIES_COL[idx%SERIES_COL.length],pv,M:metrics(pv,dates)};
   });
   // benchmark
   const bmk=$("#bench").value; let bench=null,bpv=null,benchMsg="",benchM=null;
   if(bmk&&DATA.funds[bmk]){
     const bp=DATA.funds[bmk].px;
     if(bp[a]!=null){ bpv=new Array(L); for(let i=0;i<L;i++) bpv[i]=10000*bp[a+i]/bp[a]; bench=bmk;
-      const br=[]; for(let i=1;i<L;i++) br.push(bpv[i]/bpv[i-1]-1); benchM={tk:bench,M:metrics(bpv,br,dates)}; }
+      benchM={tk:bench,M:metrics(bpv,dates)}; }
     else{ const bs=bp.findIndex(x=>x!=null);
       benchMsg=`El benchmark <b>${BENCH_LABEL[bmk]||"elegido"}</b> empieza en ${dlabel(DATA.dates[bs])} y no cubre todo el periodo, así que no se dibuja.`; }
   }
   const assetsPts=perAsset(tks,a,b,years);
   let benchPt=null;
-  if(bench){const bp=DATA.funds[bench].px,br=[];for(let i=a+1;i<=b;i++)br.push(bp[i]/bp[i-1]-1);
-    const[,bsd]=stats(br); benchPt={tk:bench,cagr:Math.pow(bp[b]/bp[a],1/years)-1,vol:bsd*Math.sqrt(252)};}
+  if(bench){ benchPt={tk:bench,cagr:Math.pow(bpv[L-1]/bpv[0],1/years)-1,vol:weekVol(bpv,dates)}; }
   const limited=(a===a0)&&limI>0;
+  if(b < DATA.dates.length-1){
+    let endTk=null;
+    for(const t of tks){const px=DATA.funds[t].px;let li=-1;for(let i=0;i<px.length;i++)if(px[i]!=null)li=i;if(li===b){endTk=t;break;}}
+    if(endTk) periodMsg=(periodMsg?periodMsg+" ":"")+`El periodo termina en ${dlabel(DATA.dates[b])} porque <b>${shortOf(endTk)}</b> dejó de publicar valor liquidativo ahí.`;
+  }
   renderCompare(series,bench,bpv,benchM,dates,tks,a,b,assetsPts,benchPt,limited?limTk:null,periodMsg,benchMsg);
 }
 function renderCompare(series,bench,bpv,benchM,dates,tks,a,b,assetsPts,benchPt,limTk,periodMsg,benchMsg){
@@ -874,7 +903,7 @@ function renderCompare(series,bench,bpv,benchM,dates,tks,a,b,assetsPts,benchPt,l
     (benchMsg?`<span style="color:#B5851F">${benchMsg}</span> `:``)+
     `Comparando <b>${series.length} fondos</b> por separado · periodo <b>${dlabel(dates[0])} → ${dlabel(dates[dates.length-1])}</b> (${yrs.toFixed(1).replace(".",",")} años)`+
     (limTk?`, limitado por <b>${shortOf(limTk)}</b>, el de menos histórico.`:`.`)+
-    (series[0].M.anyPartial?` El año con * es parcial.`:``)+
+    ((series.some(s=>s.M.anyPartial)||(benchM&&benchM.M.anyPartial))?` El año con * es parcial.`:``)+
     (SAMPLE?` <b>Estás viendo datos de muestra.</b>`:``);
   drawCompareTable(series,benchM);
   drawCompareCurve(series,bpv,bench,dates);
