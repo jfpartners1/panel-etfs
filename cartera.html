@@ -104,6 +104,13 @@
   .btn.primary:disabled{background:#AEBEE0;border-color:#AEBEE0;cursor:not-allowed}
   .bmrow{display:flex;align-items:center;gap:8px;padding:2px 16px 12px;font-size:11.5px;color:var(--mute)}
   .bmrow select{font-family:inherit;font-size:12px;border:1px solid var(--line);border-radius:7px;padding:5px 8px;color:var(--ink);background:#fff}
+  .perrow{display:flex;align-items:center;gap:9px;padding:0 16px 14px;font-size:11.5px;color:var(--mute);flex-wrap:wrap}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{border:0;background:#fff;color:var(--ink-2);font-family:inherit;font-size:11.5px;font-weight:500;padding:5px 10px;cursor:pointer;border-left:1px solid var(--line)}
+  .seg button:first-child{border-left:0}
+  .seg button:hover:not(:disabled):not(.on){background:#F5F8FB}
+  .seg button.on{background:var(--blue);color:#fff;font-weight:600}
+  .seg button:disabled{color:#C5CCD6;cursor:not-allowed;background:#FAFBFD}
 
   /* results */
   .results{margin-top:16px;display:flex;flex-direction:column;gap:16px}
@@ -180,6 +187,11 @@
       <div class="bmrow">Comparar contra
         <select id="bench"><option value="SPY">S&amp;P 500 (SPY)</option><option value="QQQ">Nasdaq 100 (QQQ)</option><option value="IWM">Russell 2000 (IWM)</option><option value="">— sin benchmark —</option></select>
       </div>
+      <div class="perrow">Plazo
+        <div class="seg" id="period">
+          <button data-p="1">1A</button><button data-p="3">3A</button><button data-p="5">5A</button><button data-p="10">10A</button><button data-p="ytd">YTD</button><button data-p="all" class="on">Todo</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -244,7 +256,7 @@ const DESC={
 };
 const SERIES_COL=["#2563EB","#C0892E","#15A86B","#7257D8","#E0734E","#0E9BA8","#C0397B","#6B8E23","#5B6675","#D4A017"];
 
-let DATA=null, SAMPLE=false, PF=[];  // PF: [{tk,w}]
+let DATA=null, SAMPLE=false, PF=[], PERIOD="all";  // PF: [{tk,w}] · PERIOD: all/1/3/5/10/ytd
 const $=s=>document.querySelector(s);
 const fmtPct=(n,d=1)=>(n>0?"+":"")+n.toFixed(d).replace(".",",")+"%";
 const fmt2=n=>n.toFixed(2).replace(".",",");
@@ -361,6 +373,7 @@ function updateSum(){
   el.className=ok?"sum-ok":"sum-warn";
   $("#norm").style.display=(PF.length&&!ok)?"":"none";
   $("#run").disabled=!(PF.length>=1&&ok);
+  if(typeof updatePeriods==="function") updatePeriods();
 }
 // reparte una lista de pesos a enteros que suman EXACTAMENTE 100 (método del mayor resto)
 function to100(weights){
@@ -387,9 +400,28 @@ function run(){
   const tks=PF.map(p=>p.tk), sw=PF.reduce((a,p)=>a+p.w,0);
   if(sw<=0){ alert("Pon algún peso mayor que 0% para poder calcular."); return; }
   const wn=PF.map(p=>p.w/sw);
-  const [a,b]=commonRange(tks);
-  if(a<0||b-a<60){ alert("El periodo común de estos ETFs es demasiado corto para un backtest fiable. Prueba a quitar el ETF más nuevo."); return; }
-  // ETF que marca el inicio (el de salida a bolsa más tardía)
+  let [a,b]=commonRange(tks);
+  if(a<0){ alert("Estos ETFs no tienen periodo común de datos."); return; }
+  const a0=a;                                  // inicio del rango común completo
+  const availY=(new Date(DATA.dates[b])-new Date(DATA.dates[a0]))/(365.25*864e5);
+  // recorte por plazo
+  let periodMsg="";
+  if(PERIOD!=="all"){
+    let start=a0;
+    if(PERIOD==="ytd"){
+      const y0=DATA.dates[b].slice(0,4)+"-01-01";
+      for(let i=a0;i<=b;i++){ if(DATA.dates[i]>=y0){start=i;break;} }
+    }else{
+      const t=new Date(DATA.dates[b]); t.setFullYear(t.getFullYear()-(+PERIOD));
+      const ts=t.toISOString().slice(0,10);
+      for(let i=a0;i<=b;i++){ if(DATA.dates[i]>=ts){start=i;break;} }
+      if(availY<(+PERIOD)-0.05)
+        periodMsg=`Pediste <b>${PERIOD} años</b>, pero solo hay <b>${availY.toFixed(1).replace(".",",")}</b> disponibles para esta cartera. Se muestra todo el histórico común.`;
+    }
+    a=Math.max(a0,start);
+  }
+  if(b-a<20){ alert("El plazo elegido es demasiado corto para calcular. Prueba un plazo más largo."); return; }
+  // ETF que marca el inicio del rango común
   let limTk=tks[0],limI=-1;
   tks.forEach(t=>{const f=DATA.etfs[t].px.findIndex(x=>x!=null); if(f>limI){limI=f;limTk=t;}});
   const dates=DATA.dates.slice(a,b+1), L=dates.length;
@@ -408,8 +440,8 @@ function run(){
   let benchPt=null;
   if(bench){const bp=DATA.etfs[bench].px,br=[];for(let i=a+1;i<=b;i++)br.push(bp[i]/bp[i-1]-1);
     const[,bsd]=stats(br); benchPt={tk:bench,cagr:Math.pow(bp[b]/bp[a],1/years)-1,vol:bsd*Math.sqrt(252)};}
-  const limited = limTk && limI>0;   // el inicio lo marca un ETF que no estaba desde el principio
-  renderResults(M,pv,bpv,bench,dates,tks,a,b,Math.abs(sw-100)>=0.5,assetsPts,benchPt,limited?limTk:null);
+  const limited = (a===a0) && limTk && limI>0;   // inicio por ETF joven (solo si el plazo no recortó antes)
+  renderResults(M,pv,bpv,bench,dates,tks,a,b,Math.abs(sw-100)>=0.5,assetsPts,benchPt,limited?limTk:null,periodMsg);
 }
 function metrics(pv,rp,dates){
   const years=(new Date(dates[dates.length-1])-new Date(dates[0]))/(365.25*864e5);
@@ -436,9 +468,10 @@ function metrics(pv,rp,dates){
 }
 
 /* ---------- resultados ---------- */
-function renderResults(M,pv,bpv,bench,dates,tks,a,b,unbal,assetsPts,benchPt,limTk){
+function renderResults(M,pv,bpv,bench,dates,tks,a,b,unbal,assetsPts,benchPt,limTk,periodMsg){
   $("#results").classList.remove("hide");
-  $("#periodNote").innerHTML=`Periodo común analizado: <b>${dlabel(dates[0])} → ${dlabel(dates[dates.length-1])}</b> (${M.years.toFixed(1).replace(".",",")} años)`+
+  $("#periodNote").innerHTML=(periodMsg?`<span style="color:#B5851F">${periodMsg}</span> `:``)+
+    `Periodo analizado: <b>${dlabel(dates[0])} → ${dlabel(dates[dates.length-1])}</b> (${M.years.toFixed(1).replace(".",",")} años)`+
     (limTk?`, limitado por <b>${limTk}</b> (${nmOf(limTk)}), el de salida a bolsa más reciente.`:`.`)+
     (unbal?` Los pesos no sumaban 100%, así que se han <b>normalizado</b> proporcionalmente.`:``)+
     (M.anyPartial?` El año marcado con * es parcial (no cuenta de enero a diciembre completo).`:``)+
@@ -609,6 +642,28 @@ function hookHoverDD(dd,bdd,bench,dates,G){
   hov.addEventListener("mouseleave",()=>{hl.style.opacity=0;tip.style.opacity=0;});
 }
 $("#run").onclick=run;
+
+/* ---------- selector de plazo ---------- */
+function setActivePeriod(){ document.querySelectorAll("#period button").forEach(b=>b.classList.toggle("on",b.dataset.p===PERIOD)); }
+function availYears(){
+  if(!PF.length) return Infinity;
+  const [a,b]=commonRange(PF.map(p=>p.tk));
+  if(a<0) return 0;
+  return (new Date(DATA.dates[b])-new Date(DATA.dates[a]))/(365.25*864e5);
+}
+function updatePeriods(){
+  const av=availYears();
+  document.querySelectorAll("#period button").forEach(btn=>{
+    const p=btn.dataset.p, need=(p==="all"||p==="ytd")?0:+p;
+    btn.disabled = PF.length && need>av+0.05;
+  });
+  const cur=document.querySelector(`#period button[data-p="${PERIOD}"]`);
+  if(cur&&cur.disabled){ PERIOD="all"; setActivePeriod(); }
+}
+document.querySelectorAll("#period button").forEach(btn=>{
+  btn.onclick=()=>{ if(btn.disabled)return; PERIOD=btn.dataset.p; setActivePeriod();
+    if(!$("#run").disabled && !$("#results").classList.contains("hide")) run(); };
+});
 load();
 </script>
 </body>
