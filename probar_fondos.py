@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
 """
-probar_fondos.py — Diagnóstico: comprueba qué fondos UCITS (por ISIN) tienen datos
-en EODHD a través del exchange virtual EUFUND ({ISIN}.EUFUND).
-
-Para cada fondo dice si tiene histórico, cuántos puntos y desde/hasta qué fecha.
-Si no está en EUFUND, busca con el Search API por si existe con otro código.
-
-Se ejecuta como workflow temporal (probar-fondos.yml) usando el secreto EODHD_API_KEY.
-El resultado sale en el log de Actions. Cuesta ~17 llamadas (1 por fondo). No hace commit.
+probar_fondos.py - Diagnostico: comprueba que fondos UCITS (por ISIN) tienen datos
+en EODHD a traves del exchange virtual EUFUND ({ISIN}.EUFUND).
+Se ejecuta como workflow temporal (probar-fondos.yml) con el secreto EODHD_API_KEY.
+El resultado sale en el log de Actions. No hace commit.
 """
 import os, sys, json, urllib.request
 
@@ -17,22 +13,49 @@ if not KEY:
 API = "https://eodhd.com/api"
 
 FUNDS = [
-    ("ES0165242001", "Myinvestor S&P500 Equiponderado FI"),
-    ("IE0032620787", "Vanguard U.S. 500 Stock Index Investor EUR Acc"),
-    ("IE00BYX5MX67", "Fidelity S&P 500 Index Fund EUR P Acc"),
-    ("ES0184894006", "Myinvestor ACWI FI"),
-    ("IE00BYX5NX33", "Fidelity MSCI World Index Fund EUR P Acc"),
-    ("IE00B03HCZ61", "Vanguard Global Stock Index Investor EUR Acc"),
-    ("IE00B42W3S00", "Vanguard Global Small-Cap Index Investor EUR Acc"),
-    ("IE0007281425", "Vanguard Japan Stock Index Investor EUR Acc"),
-    ("IE0007201266", "Vanguard Pacific ex-Japan Stock Index EUR Acc"),
-    ("IE0031786142", "Vanguard Emerging Markets Stock Index Investor EUR Acc"),
-    ("IE0007987690", "Vanguard European Stock Index Investor EUR Acc"),
-    ("ES0114105036", "Bankinter EE.UU. Nasdaq 100 R FI"),
-    ("IE00BYX5MD61", "Fidelity MSCI Europe Index Fund EUR P Acc"),
-    ("LU0625737910", "Pictet-China Index P EUR"),
-    ("ES0152741031", "ING Direct Fondo Naranja Ibex 35 FI"),
-    ("LU0996181599", "Amundi IS MSCI World IE-C"),
+    ("ES0119184002", "Cobas Iberia C FI"),
+    ("ES0159201013", "Magallanes Iberian Equity M FI"),
+    ("ES0112616000", "Azvalor Iberia FI"),
+    ("ES0175902008", "Sigma Internacional FI"),
+    ("ES0146309002", "Horos Value Internacional FI"),
+    ("ES0156673008", "Japan Deep Value Fund FI"),
+    ("ES0124037005", "Cobas Seleccion C FI"),
+    ("ES0113728002", "Cobas Grandes Companias C FI"),
+    ("ES0110407105", "Gestion Boutique VI Gestivalue Cap A FI"),
+    ("ES0119199000", "Cobas Internacional C FI"),
+    ("ES0165243009", "Myinvestor Value A FI"),
+    ("LU0203975437", "Robeco BP Global Premium Equities D EUR"),
+    ("ES0112611001", "Azvalor Internacional FI"),
+    ("ES0141116030", "Hamco Global Value Fund R FI"),
+    ("ES0112609005", "Azvalor Blue Chips FI"),
+    ("LU1278917452", "DWS Invest CROCI Sectors Plus LC"),
+    ("LU0094560744", "MFS Meridian Global Equity A1 EUR"),
+    ("LU0360477987", "Morgan Stanley US Growth ZH EUR"),
+    ("LU2015255867", "Morgan Stanley Global Insight ZH EUR"),
+    ("ES0173311079", "Renta 4 Andromeda Value Capital FI"),
+    ("LU0552385535", "MS Global Opportunity Z USD"),
+    ("ES0173311103", "Renta 4 Numantia Patrimonio Global FI"),
+    ("ES0168799064", "Gestion Boutique IV Only Compounders FI"),
+    ("LU0974293671", "Robeco MegaTrends D EUR"),
+    ("IE00BYYLQ421", "Comgest Growth World EUR Z Acc"),
+    ("LU0690375182", "Fundsmith Equity Fund Sicav T EUR Acc"),
+    ("ES0112617016", "B&H Acciones C FI"),
+    ("IE00BZ0X9T58", "Comgest Growth Europe Opportunities EUR Z Acc"),
+    ("IE00B2NXKW18", "Seilern World Growth EUR U R"),
+    ("ES0137768000", "Baelo Dividendo Creciente A FI"),
+    ("ES0147897005", "Impassive Wealth FI"),
+    ("ES0156572002", "Myinvestor Cartera Permanente FI"),
+    ("ES0116848005", "Global Allocation R FI"),
+    ("LU0171307068", "BGF World Healthscience A2"),
+    ("LU2441282899", "Janus Henderson Biotechnology"),
+    ("IE00B3NLSS43", "Polar Capital Healthcare"),
+    ("LU0415391431", "Bellevue (Lux) Bellevue Md & Svc B EUR"),
+    ("LU0251853072", "AB International HC A EUR"),
+    ("LU1213836080", "Fidelity Global Technology"),
+    ("LU0260870158", "Franklin Technology"),
+    ("LU0171310443", "BGF World Technology"),
+    ("LU0302296495", "DNB Fund - Technology"),
+    ("IE00B4468526", "Polar Capital Global Technology Fund"),
 ]
 
 
@@ -60,34 +83,30 @@ def search(isin):
 
 
 def main():
-    print("=" * 78)
-    print("  DIAGNÓSTICO DE FONDOS UCITS EN EODHD (exchange virtual EUFUND)")
-    print("=" * 78)
+    print("=" * 80)
+    print("  DIAGNOSTICO DE FONDOS UCITS EN EODHD (exchange virtual EUFUND)")
+    print("=" * 80)
     ok, ko = [], []
     for isin, name in FUNDS:
         rows = eod(f"{isin}.EUFUND")
         if rows:
             d0, d1 = rows[0].get("date"), rows[-1].get("date")
-            print(f"OK  {isin}  {name[:44]:<44} {len(rows):>5} pts · {d0} -> {d1}")
+            print(f"OK  {isin}  {name[:46]:<46} {len(rows):>5} pts - {d0} -> {d1}")
             ok.append((isin, name))
         else:
             res = search(isin)
             if res:
                 alt = ", ".join(f"{r.get('Code')}.{r.get('Exchange')}" for r in res[:3])
-                print(f"--  {isin}  {name[:44]:<44} no en EUFUND · search: {alt}")
+                print(f"--  {isin}  {name[:46]:<46} no en EUFUND - search: {alt}")
             else:
-                print(f"XX  {isin}  {name[:44]:<44} no encontrado")
+                print(f"XX  {isin}  {name[:46]:<46} no encontrado")
             ko.append((isin, name))
-
-    print("=" * 78)
-    print(f"  RESUMEN: {len(ok)} con datos en EUFUND · {len(ko)} sin datos")
-    print("=" * 78)
-    if ok:
-        print("\n  CON DATOS (listos para el backtester):")
-        for isin, name in ok:
-            print(f"    {isin}  {name}")
+    print("=" * 80)
+    print(f"  RESUMEN: {len(ok)} con datos en EUFUND - {len(ko)} sin datos")
+    print("=" * 80)
     if ko:
-        print("\n  SIN DATOS en EUFUND (revisar / pedir a soporte de EODHD):")
+        print()
+        print("  SIN DATOS en EUFUND (revisar / pedir a soporte EODHD):")
         for isin, name in ko:
             print(f"    {isin}  {name}")
 
