@@ -47,6 +47,14 @@
   /* layout */
   .build{display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start}
   @media(max-width:920px){.build{grid-template-columns:1fr}}
+  .examples{display:flex;align-items:center;gap:10px 12px;flex-wrap:wrap;margin-bottom:14px}
+  .exlbl{font-size:12px;color:var(--ink-2);font-weight:500}
+  .exchips{display:flex;gap:7px;flex-wrap:wrap}
+  .exchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:20px;
+    padding:5px 7px 5px 12px;cursor:pointer;transition:all .12s}
+  .exchip:hover{border-color:var(--blue);background:#F5F8FF}
+  .exname{font-size:12px;font-weight:600;color:var(--ink)}
+  .exchip:hover .exname{color:var(--blue)}
 
   /* selector */
   .search{margin:10px 16px 4px;position:relative}
@@ -66,11 +74,12 @@
   .echip.on .etk,.echip.on .enm{color:#fff}
   .echip .etk{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600;color:var(--ink)}
   .echip .enm{font-size:11px;color:var(--mute)}
-  .echip .einfo{margin-left:1px;width:15px;height:15px;border-radius:50%;border:1px solid #C9D3E0;background:#fff;
-    color:var(--mute);font-size:9.5px;font-weight:700;font-style:italic;font-family:Georgia,serif;line-height:1;
-    display:grid;place-items:center;cursor:help;flex:none;padding:0}
-  .echip .einfo:hover{border-color:var(--blue);color:var(--blue)}
-  .echip.on .einfo{border-color:rgba(255,255,255,.5);color:#fff;background:transparent}
+  .einfo{margin:0;width:14px;height:14px;border:0;background:transparent;color:var(--mute);
+    font-size:11px;font-weight:400;font-style:italic;font-family:Georgia,"Times New Roman",serif;line-height:1;
+    display:grid;place-items:center;cursor:help;flex:none;padding:0;opacity:.45;transition:opacity .12s,color .12s}
+  .einfo:hover{opacity:1;color:var(--blue)}
+  .echip.on .einfo{color:#fff;opacity:.6}
+  .echip.on .einfo:hover{opacity:1;color:#fff}
   .echip.dim{display:none}
 
   /* portfolio */
@@ -163,6 +172,11 @@
       <span class="seclbl">Backtest de carteras</span>
     </div>
     <span class="asof" id="asof"></span>
+  </div>
+
+  <div class="examples">
+    <span class="exlbl">Empieza con una cartera clásica:</span>
+    <div class="exchips" id="examples"></div>
   </div>
 
   <div class="build">
@@ -278,6 +292,7 @@ async function load(){
   $("#asof").textContent="datos a "+(DATA.asOf||"—");
   if(SAMPLE){const s=document.createElement("span");s.className="smpl";s.textContent="datos de muestra";$(".asof").after(s);}
   buildSelector();
+  buildExamples();
 }
 // Rellena huecos internos (sesiones sueltas sin dato) con el último precio válido.
 // Deja en null solo lo ANTERIOR a la salida a bolsa de cada ETF. Evita que un null
@@ -642,6 +657,39 @@ function hookHoverDD(dd,bdd,bench,dates,G){
   hov.addEventListener("mouseleave",()=>{hl.style.opacity=0;tip.style.opacity=0;});
 }
 $("#run").onclick=run;
+
+/* ---------- carteras de ejemplo ---------- */
+const PRESETS=[
+  {name:"60/40", desc:"La cartera de referencia clásica: 60% bolsa de EE. UU. y 40% bonos del Tesoro a largo plazo.",
+   w:[["SPY",60],["TLT",40]]},
+  {name:"All Weather", desc:"De Ray Dalio. Pensada para aguantar cualquier entorno económico repartiendo entre bolsa, bonos largos y medios, oro y materias primas.",
+   w:[["VTI",30],["TLT",40],["IEF",15],["GLD",8],["DBC",7]]},
+  {name:"Permanent Portfolio", desc:"De Harry Browne. Cuatro partes iguales: bolsa, bonos largos, oro y bonos cortos (aquí aproximados con IEF).",
+   w:[["VTI",25],["TLT",25],["GLD",25],["IEF",25]]},
+  {name:"Golden Butterfly", desc:"Cinco partes iguales: bolsa grande y pequeña, bonos largos y medios, y oro. Equilibrio entre crecer y aguantar caídas.",
+   w:[["VTI",20],["IWM",20],["TLT",20],["IEF",20],["GLD",20]]},
+  {name:"Bogleheads (3 fondos)", desc:"La cartera sencilla 'tres fondos': bolsa de EE. UU., bolsa internacional y bonos.",
+   w:[["VTI",60],["EFA",30],["IEF",10]]}
+];
+function buildExamples(){
+  const host=$("#examples"); if(!host)return;
+  host.innerHTML=PRESETS.map((ex,i)=>`<span class="exchip" data-i="${i}"><span class="exname">${ex.name}</span><button class="einfo" data-i="${i}" tabindex="-1" aria-label="Qué es ${ex.name}">i</button></span>`).join("");
+  host.querySelectorAll(".exchip").forEach(c=>{
+    c.onclick=()=>loadExample(+c.dataset.i);
+    const ib=c.querySelector(".einfo"), j=+ib.dataset.i;
+    const show=()=>{const r=ib.getBoundingClientRect();showTip(`<b>${PRESETS[j].name}</b> · ${PRESETS[j].desc}`,r.left,r.bottom+6);};
+    ib.addEventListener("click",e=>{e.stopPropagation();show();clearTimeout(window._it);window._it=setTimeout(hideTip,4000);});
+    ib.addEventListener("mouseenter",show);
+    ib.addEventListener("mouseleave",hideTip);
+  });
+}
+function loadExample(i){
+  const ex=PRESETS[i];
+  PF=ex.w.filter(([tk])=>DATA.etfs[tk]).map(([tk,w])=>({tk,w}));
+  const w100=to100(PF.map(p=>p.w)); PF.forEach((p,k)=>p.w=w100[k]);
+  renderPF(); syncSelector();
+  if(!$("#run").disabled) run();          // muestra el resultado al instante
+}
 
 /* ---------- selector de plazo ---------- */
 function setActivePeriod(){ document.querySelectorAll("#period button").forEach(b=>b.classList.toggle("on",b.dataset.p===PERIOD)); }
