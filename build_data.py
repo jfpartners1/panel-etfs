@@ -194,20 +194,27 @@ def build_curve(grid, series_map, hist):
 def _ret(cl, n):
     return (cl[-1] / cl[-1-n] - 1) * 100 if len(cl) > n else None
 
-def rs_block(universe_def, hist, grid):
-    """Cierres BRUTOS de todos los ETFs del universo alineados a `grid`, para calcular
-    ratios de fuerza relativa A/B en el navegador. Cero llamadas extra: reutiliza `hist`
-    y la misma rejilla (~1 año) que las curvas de clases de activo."""
+def rs_block(universe_def, hist, full_dates):
+    """Fuerza relativa: cierres SEMANALES (un punto por semana) de todos los ETFs sobre
+    ~5 años, para calcular ratios A/B en el navegador. Semanal = ligero (~260 puntos) y
+    suficiente para tendencias de medio/largo plazo. Cero llamadas extra: reutiliza `hist`.
+    `full_dates` es la lista completa de fechas (diaria) del histórico descargado."""
+    # un punto por semana ISO: nos quedamos con el ÚLTIMO día de cada semana
+    wk_last = {}
+    for d in full_dates:
+        iso = d.isocalendar()
+        wk_last[(iso[0], iso[1])] = d
+    wdates = sorted(wk_last.values())
     px = {}
     for tk, *_ in universe_def:
         rows = hist.get(eod_sym(tk), [])
         if not rows: continue
         didx = [r[0] for r in rows]
-        vals = [asof_close(rows, d, didx) for d in grid]
+        vals = [asof_close(rows, d, didx) for d in wdates]
         vals = [round(v, 4) if v else None for v in vals]
         if all(v is None for v in vals): continue
         px[tk] = vals
-    return {"dates": [d.isoformat() for d in grid], "px": px}
+    return {"dates": [d.isoformat() for d in wdates], "px": px, "freq": "w"}
 
 def momentum_block(universe_def, hist, live, volh):
     """Momentum Composite (0-100): tendencia multi-plazo, aceleración, proximidad a
@@ -505,7 +512,10 @@ def main():
 
     universe_def = [u for u in UNIVERSE if u[0] in DEV_TICKERS] if args.dev else UNIVERSE
     use_live = (not args.demo) and (not args.no_live) and (not args.dev)
-    start = date.today() - timedelta(days=600)
+    # 5 años de histórico: EODHD devuelve todo en la MISMA llamada (cero coste extra).
+    # El panel (momentum, curvas…) usa solo el tramo final que necesita; el plazo largo
+    # sirve al bloque de fuerza relativa (muestreado semanal).
+    start = date.today() - timedelta(days=365*5 + 90)
 
     def get_eod(sym):
         if args.demo: return fetch_eod_demo(sym, start)
@@ -585,7 +595,7 @@ def main():
             "breakouts": bo, "squeeze": sq,
             "factors": factor_block(hist, live), "breadth": breadth_block(universe_def, hist, live),
             "radar": radar_block(universe_def, hist, live),
-            "rs": rs_block(universe_def, hist, grid),
+            "rs": rs_block(universe_def, hist, [d for d, _ in spy]),
             "ucits": load_ucits()}
     json.dump(data, open(args.out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
