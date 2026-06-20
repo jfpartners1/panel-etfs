@@ -45,6 +45,18 @@
   .seg button.active{background:var(--ink);color:#fff;font-weight:600}
   .seg.alt button.active{background:var(--blue)}
   .seg-label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin-right:2px}
+  .rspanel{padding:16px 18px;margin-bottom:16px}
+  .rsbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:10px 0 6px}
+  .rssel{font-family:Inter,sans-serif;font-size:13px;font-weight:500;padding:7px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);max-width:240px;cursor:pointer}
+  .rssel:focus{outline:none;border-color:var(--blue)}
+  .rsvs{color:var(--mute);font-size:14px;font-weight:700}
+  .rsswap{appearance:none;border:1px solid var(--line);background:#fff;color:var(--ink-2);font-size:14px;width:34px;height:34px;border-radius:9px;cursor:pointer;transition:.12s}
+  .rsswap:hover{border-color:var(--blue);color:var(--blue)}
+  .rsmm{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);cursor:pointer;user-select:none}
+  .rsmm input{cursor:pointer}
+  .rsread{font-size:13.5px;color:var(--ink-2);margin:6px 0 4px;min-height:20px}
+  .rsread b{font-weight:700}
+  .rsread .lead{font-weight:700}
 
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
   .ptitle{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:14px 16px 0}
@@ -336,6 +348,27 @@
     </div>
   </div>
 
+  <section class="panel rspanel">
+    <div class="ptitle"><h2>Fuerza relativa</h2>
+      <span class="sub">ratio A ÷ B · la línea sube = A lidera · baja = B lidera</span></div>
+    <div class="rsbar">
+      <select id="rsA" class="rssel" title="ETF A (numerador)"></select>
+      <span class="rsvs">÷</span>
+      <select id="rsB" class="rssel" title="ETF B (referencia)"></select>
+      <button class="rsswap" id="rsSwap" title="Invertir A y B">⇄</button>
+      <div class="seg alt" id="rswin" style="margin-left:auto">
+        <button data-w="1m">1M</button>
+        <button data-w="3m">3M</button>
+        <button data-w="6m" class="active">6M</button>
+        <button data-w="ytd">YTD</button>
+        <button data-w="1y">1A</button>
+      </div>
+      <label class="rsmm"><input type="checkbox" id="rsMM"> media móvil</label>
+    </div>
+    <div class="rsread" id="rsRead"></div>
+    <div class="chart"><svg id="chRS" viewBox="0 0 720 320"></svg></div>
+  </section>
+
   <section class="panel mm">
     <div class="phead"><h2>Momentum Composite</h2>
       <span class="sub">score 0–100 · tendencia 45% · aceleración 15% · máximos 25% · baja volatilidad 15%</span></div>
@@ -493,13 +526,16 @@ function buildSample(){
     weak:[["JETS","Aerolíneas","TEM",4],["SKYY","Cloud","TEM",9],["IEF","Treasuries 7-10y","ACT",13],["SLV","Plata","ACT",16],["EWJ","Japón","IDX",19]],
     gaining:[["URA","Uranio","TEM",["máximos","acelera"]],["BLOK","Blockchain","TEM",["máximos"]],["XLF","Financieras","IND",["media 50","acelera"]],["FINX","Fintech","TEM",["media 50"]],["VNQ","Inmobiliario","ACT",["acelera"]]],
     losing:[["SKYY","Cloud","TEM",["pierde 50","frena"]],["JETS","Aerolíneas","TEM",["lejos de máx"]],["XBI","Biotech","IND",["frena"]],["SLV","Plata","ACT",["pierde 50"]],["TAN","Solar","TEM",["frena"]]]};
+  const rsPx={}; BASE.forEach(([tk],i)=>{rsPx[tk]=rawSeries(700+i*53,180,40+((i*37)%220));});
+  const rs={dates,px:rsPx};
   return {asOf:"datos de muestra",live:false,
     stats:{spx:"7.431,46",spxChg:"+0,6%",lo52:"5.802,82",hi52:"7.609,78"},
-    universe, assets:mk(ASSET_LBL,11), themes:mk(THEME_LBL,53), momentum:mom, momentumZ:momz, pulse, breakouts, squeeze, factors, breadth, radar, ucits};
+    universe, assets:mk(ASSET_LBL,11), themes:mk(THEME_LBL,53), momentum:mom, momentumZ:momz, pulse, breakouts, squeeze, factors, breadth, radar, rs, ucits};
 }
 
 /* ---- estado ---- */
 let DATA=buildSample(), U=[], CAT="todos", PER="w", WIN="ytd";
+let RS_A=null, RS_B=null, RS_WIN="6m", RS_MM=false;   // fuerza relativa A÷B
 const getR=x=>x.rets[PER];
 const filtered=()=>U.filter(x=>(CAT==="todos"||x.cat===CAT)&&getR(x)!=null);
 
@@ -656,7 +692,68 @@ function momZChart(){
   document.getElementById("lgMomZ").innerHTML=labels.map((l,i)=>{const col=PAL[i%PAL.length],off=hidden.has(l);
     return `<span class="lg${off?" off":""}" data-label="${l}"${off?"":` style="border-color:${col}"`}><i style="background:${off?"#C2CAD6":col}"></i>${l}</span>`;}).join("");}
 
-/* ---- momentum composite ---- */
+/* ---- fuerza relativa (ratio A÷B) ---- */
+function rsName(tk){const r=(DATA.universe||[]).find(u=>u[0]===tk);return r?r[1]:tk;}
+function buildRSOptions(){
+  const rs=DATA.rs; if(!rs||!rs.px)return;
+  const tks=Object.keys(rs.px);
+  // orden alfabético por nombre para encontrarlos fácil
+  tks.sort((a,b)=>rsName(a).localeCompare(rsName(b),"es"));
+  if(!RS_A||!rs.px[RS_A]) RS_A = rs.px["QQQ"]?"QQQ":tks[0];
+  if(!RS_B||!rs.px[RS_B]) RS_B = rs.px["SPY"]?"SPY":tks[1];
+  const opt=sel=>tks.map(tk=>`<option value="${tk}"${tk===sel?" selected":""}>${tk} · ${rsName(tk)}</option>`).join("");
+  $("#rsA").innerHTML=opt(RS_A); $("#rsB").innerHTML=opt(RS_B);
+}
+function rsChart(){
+  const rs=DATA.rs, sv=document.getElementById("chRS"); if(!rs||!rs.px||!sv)return;
+  const pxA=rs.px[RS_A], pxB=rs.px[RS_B], dates=rs.dates, n=dates.length;
+  if(!pxA||!pxB){sv.innerHTML="";$("#rsRead").innerHTML="";return;}
+  // recorte por periodo
+  let start=0;
+  if(RS_WIN==="1m")start=Math.max(0,n-21);
+  else if(RS_WIN==="3m")start=Math.max(0,n-63);
+  else if(RS_WIN==="6m")start=Math.max(0,n-126);
+  else if(RS_WIN==="ytd"){const y=new Date().getFullYear()+"";start=dates.findIndex(d=>d.slice(0,4)===y);if(start<0)start=0;}
+  // ratio crudo y rebase a 100 sobre el primer punto válido del tramo
+  const sd=dates.slice(start);
+  const raw=sd.map((_,j)=>{const a=pxA[start+j],b=pxB[start+j];return(a!=null&&b!=null&&b!==0)?a/b:null;});
+  const base=raw.find(v=>v!=null);
+  const ratio=raw.map(v=>v!=null&&base?v/base*100:null);
+  // media móvil opcional (20 sesiones) sobre el ratio rebasado
+  let mm=null;
+  if(RS_MM){const k=20;mm=ratio.map((_,i)=>{if(i<k-1)return null;let s=0,c=0;for(let j=i-k+1;j<=i;j++){if(ratio[j]!=null){s+=ratio[j];c++;}}return c?s/c:null;});}
+  const W=720,H=320,L=42,R=12,T=14,B=42;
+  const flat=ratio.filter(v=>v!=null).concat(mm?mm.filter(v=>v!=null):[]);
+  if(!flat.length){sv.innerHTML="";$("#rsRead").innerHTML="";return;}
+  let mn=Math.min(...flat,100),mx=Math.max(...flat,100); if(mn===mx){mn-=1;mx+=1;}
+  const m=sd.length,x=i=>L+(i/((m-1)||1))*(W-L-R),y=v=>T+(1-(v-mn)/((mx-mn)||1))*(H-T-B);
+  let svg="";
+  [mn,(mn+mx)/2,mx].forEach(g=>{svg+=`<line x1="${L}" y1="${y(g).toFixed(1)}" x2="${W-R}" y2="${y(g).toFixed(1)}" stroke="#EEF1F5"/>
+    <text x="${L-8}" y="${y(g)+3}" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#9AA5B3">${g.toFixed(0)}</text>`;});
+  // referencia en 100 (sin cambio relativo)
+  svg+=`<line x1="${L}" y1="${y(100).toFixed(1)}" x2="${W-R}" y2="${y(100).toFixed(1)}" stroke="#C7D0DB" stroke-dasharray="3 3"/>`;
+  let lastM="";sd.forEach((d,i)=>{const mo=d.slice(5,7);if(mo!==lastM){lastM=mo;
+    svg+=`<text x="${x(i).toFixed(1)}" y="${H-16}" text-anchor="middle" font-family="Inter" font-size="10" fill="#9AA5B3">${MONTHS[+mo-1]} ${d.slice(2,4)}</text>`;}});
+  // área tenue + línea del ratio (color según si termina por encima/debajo de 100)
+  const lastV=[...ratio].reverse().find(v=>v!=null), up=lastV>=100;
+  const col=up?"#15A86B":"#E04444";
+  const pts=ratio.map((v,j)=>v==null?null:`${x(j).toFixed(1)},${y(v).toFixed(1)}`).filter(Boolean).join(" ");
+  // relleno hacia la línea 100
+  const firstI=ratio.findIndex(v=>v!=null), lastI=ratio.length-1-[...ratio].reverse().findIndex(v=>v!=null);
+  if(pts){svg+=`<polygon points="${x(firstI).toFixed(1)},${y(100).toFixed(1)} ${pts} ${x(lastI).toFixed(1)},${y(100).toFixed(1)}" fill="${col}" opacity="0.07"/>`;}
+  if(mm){const mp=mm.map((v,j)=>v==null?null:`${x(j).toFixed(1)},${y(v).toFixed(1)}`).filter(Boolean).join(" ");
+    if(mp)svg+=`<polyline points="${mp}" fill="none" stroke="#8A95A5" stroke-width="1.2" stroke-dasharray="5 3"/>`;}
+  svg+=`<polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.9" stroke-linejoin="round"/>`;
+  sv.innerHTML=svg;
+  // lectura interpretativa
+  const chg=lastV!=null?(lastV-100):0;
+  const leadTk=up?RS_A:RS_B, lagTk=up?RS_B:RS_A;
+  const winLbl={ "1m":"1 mes","3m":"3 meses","6m":"6 meses","ytd":"lo que va de año","1y":"1 año" }[RS_WIN];
+  $("#rsRead").innerHTML = lastV==null ? "" :
+    `<span class="lead" style="color:${col}">${leadTk}</span> lidera sobre <b>${lagTk}</b> · `+
+    `<b style="color:${col}">${chg>=0?"+":""}${chg.toFixed(1).replace(".",",")}%</b> de fuerza relativa en ${winLbl}.`;
+}
+function renderRS(){buildRSOptions();rsChart();}
 function scoreColor(s){const l=93-(s/100)*53;return {bg:`hsl(150 58% ${l}%)`,fg:l<62?"#fff":"#13351f"};}
 function rvolFmt(v){return v==null?"—":(v.toFixed(1).replace(".",",")+"×");}
 function renderMom(){const m=DATA.momentum||[];
@@ -809,7 +906,7 @@ function renderBottom(){lineChart("chAssets","lgAssets",DATA.assets,"assets");li
 function renderAll(){
   U=DATA.universe.map(([tk,nm,cat,rets,key,rvol])=>({tk,nm,cat,rets,key:!!key,rvol:rvol==null?null:rvol}));
   initHidden();
-  renderTop();renderBottom();renderMom();momZChart();renderBreakouts();renderSqueeze();
+  renderTop();renderBottom();renderMom();momZChart();renderBreakouts();renderSqueeze();renderRS();
   const live=!!DATA.live,badge=$("#badge");
   badge.textContent=live?("Actualizado "+DATA.asOf):"Datos de muestra";
   badge.className="badge "+(live?"live":"demo");
@@ -823,6 +920,13 @@ bindSeg("#window","win",v=>{WIN=v;renderBottom();});
 bindChart("chAssets","lgAssets","assets",renderBottom);
 bindChart("chThemes","lgThemes","themes",renderBottom);
 bindChart("chMomZ","lgMomZ","momz",momZChart);
+/* fuerza relativa */
+bindSeg("#rswin","w",v=>{RS_WIN=v;rsChart();});
+$("#rsA").addEventListener("change",e=>{RS_A=e.target.value;rsChart();});
+$("#rsB").addEventListener("change",e=>{RS_B=e.target.value;rsChart();});
+$("#rsSwap").addEventListener("click",()=>{const t=RS_A;RS_A=RS_B;RS_B=t;
+  $("#rsA").value=RS_A;$("#rsB").value=RS_B;rsChart();});
+$("#rsMM").addEventListener("change",e=>{RS_MM=e.target.checked;rsChart();});
 
 function renderUcits(tk){const box=document.getElementById("ucitsBox");if(!box)return;
   const u=(DATA.ucits||{})[tk];

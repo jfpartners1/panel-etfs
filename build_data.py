@@ -194,6 +194,21 @@ def build_curve(grid, series_map, hist):
 def _ret(cl, n):
     return (cl[-1] / cl[-1-n] - 1) * 100 if len(cl) > n else None
 
+def rs_block(universe_def, hist, grid):
+    """Cierres BRUTOS de todos los ETFs del universo alineados a `grid`, para calcular
+    ratios de fuerza relativa A/B en el navegador. Cero llamadas extra: reutiliza `hist`
+    y la misma rejilla (~1 año) que las curvas de clases de activo."""
+    px = {}
+    for tk, *_ in universe_def:
+        rows = hist.get(eod_sym(tk), [])
+        if not rows: continue
+        didx = [r[0] for r in rows]
+        vals = [asof_close(rows, d, didx) for d in grid]
+        vals = [round(v, 4) if v else None for v in vals]
+        if all(v is None for v in vals): continue
+        px[tk] = vals
+    return {"dates": [d.isoformat() for d in grid], "px": px}
+
 def momentum_block(universe_def, hist, live, volh):
     """Momentum Composite (0-100): tendencia multi-plazo, aceleración, proximidad a
     máximos de 52s y baja volatilidad. Pesos 45/15/25/15. Percentiles dentro del universo.
@@ -570,6 +585,7 @@ def main():
             "breakouts": bo, "squeeze": sq,
             "factors": factor_block(hist, live), "breadth": breadth_block(universe_def, hist, live),
             "radar": radar_block(universe_def, hist, live),
+            "rs": rs_block(universe_def, hist, grid),
             "ucits": load_ucits()}
     json.dump(data, open(args.out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
