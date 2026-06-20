@@ -597,7 +597,9 @@ def main():
             "radar": radar_block(universe_def, hist, live),
             "rs": rs_block(universe_def, hist, [d for d, _ in spy]),
             "ucits": load_ucits()}
-    json.dump(data, open(args.out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    # compacto (sin indent): ~40% menos peso. Es un archivo de datos para el navegador,
+    # no para leer a mano; menos bytes = carga más rápida, sobre todo en móvil.
+    json.dump(data, open(args.out, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
 
     mode = "DEMO" if args.demo else ("DEV" if args.dev else
            ("EOD+LIVE" if (use_live and live) else "EOD"))

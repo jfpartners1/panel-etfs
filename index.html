@@ -248,17 +248,17 @@
   .radar .ptitle{padding:14px 16px 6px}
   .radargrid{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:4px 14px 14px}
   @media(max-width:560px){.radargrid{grid-template-columns:1fr}}
-  .rblock{border:1px solid var(--line-2);border-radius:10px;padding:10px 11px;display:flex;flex-direction:column;gap:8px;min-width:0}
+  .rblock{border:1px solid var(--line-2);border-radius:10px;padding:9px 10px;display:flex;flex-direction:column;gap:7px;min-width:0}
   .rbhd{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;color:var(--ink)}
   .rdot{width:9px;height:9px;border-radius:50%;flex:none}
   .rchips{display:flex;flex-wrap:wrap;gap:6px}
-  .rlist{display:flex;flex-direction:column;gap:5px}
-  .rrow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 8px;border-radius:7px;border:1px solid var(--line-2);background:#F6F8FB;cursor:pointer;transition:border-color .12s}
-  .rrow:hover{border-color:var(--blue)}
-  .rtk{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:700;flex:none}
-  .rrs{font-size:10.5px;color:var(--ink-2);font-variant-numeric:tabular-nums;font-weight:600}
-  .rtags{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
-  .rtag{font-size:8.5px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;padding:1px 6px;border-radius:20px;background:#EAEEF3;color:#5B6675;white-space:nowrap}
+  .rlist{display:flex;flex-wrap:wrap;gap:5px}
+  .rcell{display:inline-flex;flex-direction:column;gap:2px;padding:4px 7px;border-radius:7px;border:1px solid var(--line-2);background:#F6F8FB;cursor:pointer;transition:border-color .12s;min-width:0}
+  .rcell:hover{border-color:var(--blue)}
+  .rtk{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:700;line-height:1.1}
+  .rrs{font-size:9.5px;color:var(--ink-2);font-variant-numeric:tabular-nums;font-weight:600;line-height:1}
+  .rtags{display:flex;gap:3px;flex-wrap:wrap}
+  .rtag{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;padding:1px 4px;border-radius:5px;background:#EAEEF3;color:#5B6675;white-space:nowrap;line-height:1.5}
   .rnone{color:var(--mute);font-size:11px}
 
   footer{margin-top:26px;color:var(--mute);font-size:11.5px;font-family:"IBM Plex Mono",monospace;border-top:1px solid var(--line);padding-top:14px}
@@ -834,6 +834,7 @@ function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replac
 function renderRadar(){const el=document.getElementById("radar");if(!el)return;
   const R=DATA.radar;
   if(!R||!R.strong){el.innerHTML='<div class="rnone" style="padding:10px">Sin datos suficientes todavía.</div>';return;}
+  const TAG={"máximos":"máx","acelera":"acel","media 50":"+MA50","pierde 50":"−MA50","frena":"frena","lejos de máx":"lejos"};
   const blocks=[
     ["Los más fuertes","#15A86B",R.strong,"rs"],
     ["Ganando fuerza","#15A86B",R.gaining,"tags"],
@@ -841,10 +842,10 @@ function renderRadar(){const el=document.getElementById("radar");if(!el)return;
     ["Perdiendo fuerza","#E04444",R.losing,"tags"]];
   el.innerHTML=blocks.map(([lbl,col,rows,kind])=>{
     const body=(rows&&rows.length)?rows.map(r=>{
-      const right=kind==="rs"
+      const detail=kind==="rs"
         ? `<span class="rrs">RS ${r[3]}</span>`
-        : `<span class="rtags">${(r[3]||[]).map(t=>`<span class="rtag">${esc(t)}</span>`).join("")}</span>`;
-      return `<div class="rrow" data-tk="${r[0]}" data-nm="${esc(r[1])}" title="${esc(r[1])}"><span class="rtk" style="color:${col}">${r[0]}</span>${right}</div>`;
+        : `<span class="rtags">${(r[3]||[]).map(t=>`<span class="rtag">${esc(TAG[t]||t)}</span>`).join("")}</span>`;
+      return `<div class="rcell" data-tk="${r[0]}" data-nm="${esc(r[1])}" title="${esc(r[1])}"><span class="rtk" style="color:${col}">${r[0]}</span>${detail}</div>`;
     }).join(""):'<div class="rnone">— sin candidatos ahora —</div>';
     return `<div class="rblock"><div class="rbhd"><span class="rdot" style="background:${col}"></span>${lbl}</div>
       <div class="rlist">${body}</div></div>`;}).join("");
@@ -993,11 +994,15 @@ document.getElementById("brdPop").addEventListener("click",e=>{
   const c=e.target.closest(".bchip");if(c)openChart(c.dataset.tk,c.dataset.nm);});
 
 (async()=>{
-  try{const r=await fetch("data.json",{cache:"no-store"});
+  // 'no-cache' revalida con ETag: descarga el archivo solo si cambió (304 si no),
+  // en vez de bajar ~230KB cada 2 min. Gran ahorro, sobre todo en móvil.
+  try{const r=await fetch("data.json",{cache:"no-cache"});
     if(r.ok){const j=await r.json();if(j&&j.universe){j.live=true;DATA=j;}}}catch(e){}
   renderAll();
-  setInterval(async()=>{try{const r=await fetch("data.json",{cache:"no-store"});
-    if(r.ok){const j=await r.json();if(j&&j.universe){j.live=true;DATA=j;renderAll();}}}catch(e){}},120000);
+  setInterval(async()=>{try{const r=await fetch("data.json",{cache:"no-cache"});
+    if(r.ok){const j=await r.json();
+      // re-renderiza solo si los datos cambiaron (evita trabajo y parpadeos innecesarios)
+      if(j&&j.universe&&j.asOf!==DATA.asOf){j.live=true;DATA=j;renderAll();}}}catch(e){}},120000);
 })();
 </script>
 </body>
