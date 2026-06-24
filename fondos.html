@@ -80,6 +80,21 @@
   .search input:focus{outline:none;border-color:var(--blue);background:#fff}
   .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.4}
   .grp{padding:8px 16px 6px}
+  /* barra de filtros del selector */
+  .selfilter{display:flex;gap:6px;flex-wrap:wrap;padding:10px 16px 4px}
+  .selfbtn{font-size:11.5px;font-weight:600;padding:5px 12px;border:1px solid var(--line);background:#fff;border-radius:20px;
+    color:var(--ink-2);cursor:pointer;transition:all .12s;white-space:nowrap}
+  .selfbtn:hover{border-color:#C9D3E0;color:var(--ink)}
+  .selfbtn.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .gcount{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;color:var(--ink-2);background:var(--line-2);
+    border-radius:20px;padding:1px 7px;line-height:1.5}
+  .ghint{font-size:10.5px;font-weight:500;color:var(--mute);text-transform:none;letter-spacing:0}
+  .grp.block .grphd{cursor:pointer;user-select:none}
+  .grp.block .grphd:hover{color:var(--blue)}
+  .grphd .chev{margin-left:auto;font-size:11px;color:var(--mute);transition:transform .15s}
+  .grp.collapsed .grphd .chev{transform:rotate(-90deg)}
+  .grp.collapsed .grpbody{display:none}
+  .grphd.static{cursor:default}
   .grphd{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;color:var(--ink);margin-bottom:8px;
     text-transform:uppercase;letter-spacing:.04em}
   .gdot{width:9px;height:9px;border-radius:3px;flex:none}
@@ -285,9 +300,20 @@
 const BLOCKS=[
   {key:"Indexado",   label:"Indexados · réplica de un índice",          color:"#2563EB", subs:[""]},
   {key:"Activo",     label:"Fondos activos · gestión que busca batir",  color:"#7257D8",
-     subs:["Value","Growth","Salud","Tecnología","Consumo","Market Neutral"]},
+     subs:["Value","Growth","Salud","Tecnología","Consumo","Market Neutral",
+           "Global","Small Caps","Asia","Nórdico","Alternativo","Dividendo"]},
   {key:"Renta Fija", label:"Renta fija · bonos por duración",           color:"#C0892E",
-     subs:["Ultra Corto Plazo","Corto Plazo","Medio Plazo","Largo Plazo"]},
+     subs:["Ultra Corto Plazo","Corto Plazo","Medio Plazo","Largo Plazo","High Yield"]},
+];
+// Selección curada que se ve por defecto (1-2 representativos por categoría). Solo se
+// muestran los que existan en los datos; el resto se ignora sin romper nada.
+const DESTACADOS=[
+  "IE00BYX5NX33","IE00BYX5MX67","IE0031786142",            // Indexados
+  "ES0124037005","ES0112611001","ES0159201013",            // Value
+  "LU0690375182","LU0552385535","IE00BZ0X9T58",            // Calidad / Growth
+  "LU0171307068","LU0171310443","LU2295319300",            // Salud / Tech / Consumo
+  "LU1984712320","LU0345361124","LU0273159177","IE00BDGV0183", // Small caps / Asia / Oro / Dividendo
+  "FR0010149120","IE00B84J9L26","IE00B246KL88",            // Renta fija
 ];
 let GROUPS=[];           // se rellena en buildGroups() con los ISIN reales
 const COLOR_OF={};       // ISIN -> color del bloque
@@ -299,6 +325,7 @@ const BENCH_LABEL={"IE00BYX5NX33":"MSCI World","IE00BYX5MX67":"S&P 500","ES01848
 const SERIES_COL=["#2563EB","#C0892E","#15A86B","#7257D8","#E0734E","#0E9BA8","#C0397B","#6B8E23","#5B6675","#D4A017"];
 
 let DATA=null, SAMPLE=false, PF=[], PERIOD="all", MODE="backtest";  // MODE: backtest | compare
+let SELF="destacados";  // filtro del selector: destacados | Indexado | Activo | Renta Fija | todos
 const CMPLIM=8;  // máximo de fondos en el comparador para que se lea bien
 const $=s=>document.querySelector(s);
 const fmtPct=(n,d=1)=>(n>0?"+":"")+n.toFixed(d).replace(".",",")+"%";
@@ -414,29 +441,75 @@ function chipEl(isin){
 }
 function buildSelector(){
   const host=$("#selector"); host.innerHTML="";
-  GROUPS.forEach(g=>{
-    const wrap=document.createElement("div"); wrap.className="grp";
-    wrap.innerHTML=`<div class="grphd"><span class="gdot" style="background:${g.color}"></span>${g.label}</div>`;
-    g.subs.forEach(s=>{
-      if(s.name){ const sh=document.createElement("div"); sh.className="subhd"; sh.textContent=SUBSHORT[s.name]||s.name; wrap.appendChild(sh); }
+
+  // barra de filtros
+  const fb=document.createElement("div"); fb.className="selfilter";
+  const pills=[["destacados","Destacados"],["Indexado","Indexados"],["Activo","Activos"],["Renta Fija","Renta fija"],["todos","Todos"]];
+  fb.innerHTML=pills.map(([f,l])=>`<button class="selfbtn" data-f="${f}">${l}</button>`).join("");
+  fb.querySelectorAll(".selfbtn").forEach(b=>b.onclick=()=>{ SELF=b.dataset.f; applyFilter(); });
+  host.appendChild(fb);
+
+  // grupo Destacados (curado, abierto)
+  const dest=DESTACADOS.filter(i=>DATA.funds[i]);
+  if(dest.length){
+    const g=document.createElement("div"); g.className="grp dest"; g.id="grp-destacados";
+    g.innerHTML=`<div class="grphd static"><span class="gdot" style="background:linear-gradient(135deg,#2563EB,#7257D8)"></span>Destacados<span class="gcount">${dest.length}</span><span class="ghint">una selección para empezar</span></div>`;
+    const body=document.createElement("div"); body.className="grpbody";
+    const chips=document.createElement("div"); chips.className="chips";
+    dest.forEach(i=>chips.appendChild(chipEl(i)));
+    body.appendChild(chips); g.appendChild(body); host.appendChild(g);
+  }
+
+  // grupos por bloque (colapsables)
+  GROUPS.forEach(gr=>{
+    const total=gr.subs.reduce((n,s)=>n+s.isins.length,0);
+    const g=document.createElement("div"); g.className="grp block"; g.dataset.block=gr.key;
+    const hd=document.createElement("div"); hd.className="grphd";
+    hd.innerHTML=`<span class="gdot" style="background:${gr.color}"></span>${gr.label}<span class="gcount">${total}</span><span class="chev">▾</span>`;
+    hd.onclick=()=>g.classList.toggle("collapsed");
+    g.appendChild(hd);
+    const body=document.createElement("div"); body.className="grpbody";
+    gr.subs.forEach(s=>{
+      if(s.name){ const sh=document.createElement("div"); sh.className="subhd"; sh.textContent=SUBSHORT[s.name]||s.name; body.appendChild(sh); }
       const chips=document.createElement("div"); chips.className="chips";
       s.isins.forEach(isin=>{ if(DATA.funds[isin]) chips.appendChild(chipEl(isin)); });
-      wrap.appendChild(chips);
+      body.appendChild(chips);
     });
-    host.appendChild(wrap);
+    g.appendChild(body); host.appendChild(g);
   });
+
+  applyFilter();
   syncSelector();
 }
 function syncSelector(){
   document.querySelectorAll(".echip").forEach(c=>c.classList.toggle("on", PF.some(p=>p.tk===c.dataset.tk)));
 }
-$("#q").addEventListener("input",e=>{
-  const q=e.target.value.trim().toLowerCase();
+// Aplica filtro + búsqueda. Si hay texto en el buscador manda la búsqueda (ignora el
+// filtro, abre todos los bloques con resultados y oculta Destacados para no duplicar).
+function applyFilter(){
+  const q=$("#q").value.trim().toLowerCase();
+  const searching=!!q;
   document.querySelectorAll(".echip").forEach(c=>{
     const isin=c.dataset.tk, hit=!q||isin.toLowerCase().includes(q)||nmOf(isin).toLowerCase().includes(q)||notaOf(isin).toLowerCase().includes(q);
     c.classList.toggle("dim",!hit);
   });
-});
+  const dest=$("#grp-destacados");
+  const blocks=document.querySelectorAll(".grp.block");
+  if(searching){
+    if(dest) dest.style.display="none";
+    blocks.forEach(g=>{ g.classList.remove("collapsed"); g.style.display=g.querySelector(".echip:not(.dim)")?"":"none"; });
+  }else{
+    if(dest) dest.style.display=(SELF==="destacados")?"":"none";
+    blocks.forEach(g=>{
+      const bk=g.dataset.block;
+      if(SELF==="destacados"){ g.style.display="none"; }
+      else if(SELF==="todos"){ g.style.display=""; g.classList.add("collapsed"); }
+      else { g.style.display=(bk===SELF)?"":"none"; g.classList.remove("collapsed"); }
+    });
+  }
+  document.querySelectorAll(".selfbtn").forEach(b=>b.classList.toggle("on",b.dataset.f===SELF));
+}
+$("#q").addEventListener("input",applyFilter);
 
 /* ---------- cartera ---------- */
 function staleResults(){ const r=$("#results"); if(!r.classList.contains("hide")) r.classList.add("hide"); }
