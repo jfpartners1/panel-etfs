@@ -244,8 +244,8 @@
       </div>
       <div class="bmrow">Comparar contra
         <select id="bench">
-          <option value="IE00BYX5NX33">MSCI World</option>
-          <option value="IE00BYX5MX67">S&amp;P 500</option>
+          <option value="IE00B03HD191">MSCI World</option>
+          <option value="IE0032126645">S&amp;P 500</option>
           <option value="ES0184894006">MSCI ACWI</option>
           <option value="IE0007987690">Europa</option>
           <option value="">— sin benchmark —</option>
@@ -310,7 +310,7 @@ const COLOR_OF={};       // ISIN -> color del bloque
 const SUBSHORT={"Ultra Corto Plazo":"Ultra corto","Corto Plazo":"Corto plazo",
   "Medio Plazo":"Medio plazo","Largo Plazo":"Largo plazo","Market Neutral":"Mkt neutral"};
 // Benchmarks seleccionables (ISIN -> nombre limpio del índice)
-const BENCH_LABEL={"IE00BYX5NX33":"MSCI World","IE00BYX5MX67":"S&P 500","ES0184894006":"MSCI ACWI","IE0007987690":"Europa"};
+const BENCH_LABEL={"IE00B03HD191":"MSCI World","IE0032126645":"S&P 500","ES0184894006":"MSCI ACWI","IE0007987690":"Europa"};
 
 const SERIES_COL=["#2563EB","#C0892E","#15A86B","#7257D8","#E0734E","#0E9BA8","#C0397B","#6B8E23","#5B6675","#D4A017"];
 
@@ -668,8 +668,8 @@ function renderResults(M,pv,bpv,bench,dates,tks,a,b,unbal,assetsPts,benchPt,limT
     card("Máx. caída",fmtPct(M.maxdd*100),"down","pico a valle")+
     card("Sharpe",fmt2(M.sharpe),M.sharpe>=1?"up":"","rentab./riesgo")+
     card("Sortino",fmt2(M.sortino),M.sortino>=1?"up":"","riesgo a la baja")+
-    card("Mejor año",fmtPct(M.best*100),"up",M.bestY)+
-    card("Peor año",fmtPct(M.worst*100),"down",M.worstY);
+    card("Mejor año",fmtPct(M.best*100),M.best>=0?"up":"down",M.bestY)+
+    card("Peor año",fmtPct(M.worst*100),M.worst>=0?"up":"down",M.worstY);
   drawCurve(pv,bpv,bench,dates);
   drawDrawdown(pv,dates,bpv,bench);
   drawScatter(assetsPts,{cagr:M.cagr,vol:M.vol},benchPt);
@@ -970,8 +970,8 @@ function drawCompareTable(series,benchM){
       `<td>${(M.vol*100).toFixed(1).replace('.',',')}%</td>`+
       `<td class="down">${fmtPct(M.maxdd*100)}</td>`+
       `<td>${fmt2(M.sharpe)}</td>`+
-      `<td class="up">${fmtPct(M.best*100)} <span ${mut}>${M.bestY}</span></td>`+
-      `<td class="down">${fmtPct(M.worst*100)} <span ${mut}>${M.worstY}</span></td></tr>`;};
+      `<td class="${M.best>=0?'up':'down'}">${fmtPct(M.best*100)} <span ${mut}>${M.bestY}</span></td>`+
+      `<td class="${M.worst>=0?'up':'down'}">${fmtPct(M.worst*100)} <span ${mut}>${M.worstY}</span></td></tr>`;};
   let h=`<table class="cmptb">${head}`;
   rows.forEach(o=>h+=row(o));
   if(benchM) h+=row({tk:benchM.tk,col:"#9AA5B3",M:benchM.M,bench:true});
