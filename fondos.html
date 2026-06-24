@@ -239,13 +239,14 @@
     .cards{break-inside:avoid}
     .chart,.cor{break-inside:avoid}
     .twocol{break-before:page;grid-template-columns:1fr 1fr}
-    /* la tabla del comparador entera, sin scroll */
+    /* la tabla del comparador entera, sin recortes */
     .cmptable{overflow:visible!important}
-    .cmptb{width:100%;font-size:8.3px;table-layout:fixed}
-    .cmptb th,.cmptb td{padding:5px 4px;overflow:hidden;text-overflow:ellipsis}
-    .cmptb th:first-child,.cmptb td:first-child{width:26%}
-    .cmptb .fname{font-size:8.3px}
-    .cmptb .ftag{display:none}
+    .cmptb{width:100%;font-size:7.6px;table-layout:fixed;border-spacing:0}
+    .cmptb th{white-space:normal;letter-spacing:0;padding:3px 3px;vertical-align:bottom;line-height:1.15}
+    .cmptb td{white-space:nowrap;padding:5px 3px}
+    .cmptb th:first-child,.cmptb td:first-child{width:23%;white-space:normal}
+    .cmptb .fname{font-size:7.6px}
+    .cmptb .ftag,.cmptb .cyr{display:none}
     *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
 </style>
@@ -1058,8 +1059,8 @@ function drawCompareTable(series,benchM){
       `<td>${fmt2(M.sharpe)}</td>`+
       `<td>${fmt2(M.sortino)}</td>`+
       `<td>${fmt2(M.calmar)}</td>`+
-      `<td class="${M.best>=0?'up':'down'}">${fmtPct(M.best*100)} <span ${mut}>${M.bestY}</span></td>`+
-      `<td class="${M.worst>=0?'up':'down'}">${fmtPct(M.worst*100)} <span ${mut}>${M.worstY}</span></td></tr>`;};
+      `<td class="${M.best>=0?'up':'down'}">${fmtPct(M.best*100)} <span class="cyr" ${mut}>${M.bestY}</span></td>`+
+      `<td class="${M.worst>=0?'up':'down'}">${fmtPct(M.worst*100)} <span class="cyr" ${mut}>${M.worstY}</span></td></tr>`;};
   let h=`<table class="cmptb">${head}`;
   rows.forEach(o=>h+=row(o));
   if(benchM) h+=row({tk:benchM.tk,col:"#9AA5B3",M:benchM.M,bench:true});
