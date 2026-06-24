@@ -212,8 +212,10 @@
   .repbtn{display:inline-flex;align-items:center;gap:7px;font-weight:600;color:var(--ink-2)}
   .repbtn:hover{border-color:var(--blue);color:var(--blue)}
   .rephead,.repfoot{display:none}
-  .runhead{display:none}
-  .rephd{display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--ink);padding-bottom:11px}
+  .repbrand{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:11px}
+  .repbrandlogo{height:30px;width:auto}
+  .repbrandweb{font-size:9px;color:#5B6675;font-family:"IBM Plex Mono",monospace;letter-spacing:.02em;text-align:right;white-space:nowrap}
+  .rephd{display:flex;align-items:baseline;gap:14px;border-bottom:2px solid var(--ink);padding-bottom:10px}
   .repmeta{flex:1;min-width:0}
   .reptitle{font-size:16px;font-weight:700;color:var(--ink);letter-spacing:-.01em}
   .repsub{font-size:11px;color:var(--ink-2);margin-top:2px}
@@ -225,22 +227,25 @@
   .rcdot{width:8px;height:8px;border-radius:2px;display:inline-block;flex:none}
 
   @media print{
-    @page{size:A4;margin:21mm 13mm 13mm}
+    @page{size:A4;margin:13mm 13mm 12mm}
     body{background:#fff}
-    .top,.modebar,.examples,.build,footer,.tip,.repbar,#periodNote{display:none!important}
+    .top,.modebar,.examples,.build,footer,.tip,.repbar,.runhead,#periodNote{display:none!important}
     .wrap{max-width:none;margin:0;padding:0}
     #results{display:block!important}
     .rephead,.repfoot{display:block!important}
-    .runhead{display:flex!important;position:fixed;top:8mm;left:13mm;right:13mm;
-      align-items:center;justify-content:space-between;border-bottom:1px solid #DDE3EC;padding-bottom:5px}
-    .runhead img{height:21px;width:auto}
-    .runhead .rh-web{font-size:9px;color:#5B6675;font-family:"IBM Plex Mono",monospace;letter-spacing:.02em}
     .rephead{margin-bottom:14px}
     .repfoot{margin-top:12px;border-top:1px solid #DDE3EC;padding-top:7px;font-size:8.5px;color:#8A95A5;line-height:1.5}
     .panel{box-shadow:none;border:1px solid #DDE3EC;margin-bottom:12px}
     .cards{break-inside:avoid}
     .chart,.cor{break-inside:avoid}
     .twocol{break-before:page;grid-template-columns:1fr 1fr}
+    /* la tabla del comparador entera, sin scroll */
+    .cmptable{overflow:visible!important}
+    .cmptb{width:100%;font-size:8.3px;table-layout:fixed}
+    .cmptb th,.cmptb td{padding:5px 4px;overflow:hidden;text-overflow:ellipsis}
+    .cmptb th:first-child,.cmptb td:first-child{width:26%}
+    .cmptb .fname{font-size:8.3px}
+    .cmptb .ftag{display:none}
     *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
 </style>
@@ -306,10 +311,6 @@
   </div>
 
   <div class="results hide" id="results">
-    <div class="runhead" id="runhead">
-      <img src="logo.png" alt="JF Partners · Bolsa & Finanzas">
-      <span class="rh-web">jfpartners.net · Todos los derechos reservados ®</span>
-    </div>
     <div class="repbar" id="repbar">
       <button class="btn repbtn" id="exportpdf"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>Exportar PDF</button>
     </div>
@@ -933,7 +934,10 @@ function buildReportHead(){
     const yrs=((new Date(b)-new Date(a))/(365.25*864e5)).toFixed(1).replace(".",",");
     per=`Periodo ${dlabel(a)} → ${dlabel(b)} · ${yrs} años`;}
   const comp=PF.map(p=>`<span class="rc"><span class="rcdot" style="background:${COLOR_OF[p.tk]||'#999'}"></span>${nmOf(p.tk)}${MODE==="compare"?"":` · <b>${p.w}%</b>`}</span>`).join("");
-  head.innerHTML=`<div class="rephd">
+  head.innerHTML=`<div class="repbrand">
+      <img class="repbrandlogo" src="logo.png" alt="JF Partners · Bolsa & Finanzas">
+      <span class="repbrandweb">jfpartners.net · Todos los derechos reservados ®</span></div>
+    <div class="rephd">
       <div class="repmeta"><div class="reptitle">${title}</div>
         <div class="repsub">${per}${benchSel?` · benchmark: ${benchTxt}`:""}</div></div>
       <div class="repdate">${today}</div></div>
