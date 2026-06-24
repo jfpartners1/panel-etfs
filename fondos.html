@@ -88,10 +88,20 @@
   .selfbtn.on{background:var(--ink);border-color:var(--ink);color:#fff}
   .gcount{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;color:var(--ink-2);background:var(--line-2);
     border-radius:20px;padding:1px 7px;line-height:1.5}
-  .grp.block .grphd{cursor:pointer;user-select:none}
-  .grp.block .grphd:hover{color:var(--blue)}
-  .grphd .chev{margin-left:auto;font-size:11px;color:var(--mute);transition:transform .15s}
+  /* cabecera de bloque: fila claramente pulsable */
+  .grp.block{padding:5px 16px}
+  .grp.block .grphd{cursor:pointer;user-select:none;margin-bottom:0;
+    background:#FAFBFD;border:1px solid var(--line);border-radius:10px;padding:11px 13px;
+    transition:background .12s,border-color .12s,box-shadow .12s}
+  .grp.block .grphd:hover{background:#fff;border-color:#C9D3E0;box-shadow:0 1px 3px rgba(26,34,51,.05)}
+  .grp.block:not(.collapsed) .grphd{border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom-color:transparent;background:#fff}
+  .grphd .chev{margin-left:auto;flex:none;display:grid;place-items:center;width:22px;height:22px;border-radius:6px;
+    color:var(--ink-2);background:var(--line-2);transition:transform .18s ease,background .12s,color .12s}
+  .grphd .chev svg{width:13px;height:13px;display:block}
+  .grp.block .grphd:hover .chev{background:#E6EDFA;color:var(--blue)}
   .grp.collapsed .grphd .chev{transform:rotate(-90deg)}
+  .grp.block:not(.collapsed) .grpbody{border:1px solid var(--line);border-top:0;border-radius:0 0 10px 10px;
+    padding:6px 13px 12px;margin-bottom:2px}
   .grp.collapsed .grpbody{display:none}
 
   .grphd{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;color:var(--ink);margin-bottom:8px;
@@ -444,7 +454,7 @@ function buildSelector(){
     const total=gr.subs.reduce((n,s)=>n+s.isins.length,0);
     const g=document.createElement("div"); g.className="grp block"; g.dataset.block=gr.key;
     const hd=document.createElement("div"); hd.className="grphd";
-    hd.innerHTML=`<span class="gdot" style="background:${gr.color}"></span>${gr.label}<span class="gcount">${total}</span><span class="chev">▾</span>`;
+    hd.innerHTML=`<span class="gdot" style="background:${gr.color}"></span>${gr.label}<span class="gcount">${total}</span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>`;
     hd.onclick=()=>g.classList.toggle("collapsed");
     g.appendChild(hd);
     const body=document.createElement("div"); body.className="grpbody";
