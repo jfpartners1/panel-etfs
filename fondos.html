@@ -688,6 +688,8 @@ function metrics(pv,dates){
   const sortino=dd?(mean*52)/dd:0;
   // Máxima caída sobre la curva DIARIA (más fina y correcta).
   let peak=pv[0],maxdd=0; pv.forEach(v=>{if(v>peak)peak=v;const d=v/peak-1;if(d<maxdd)maxdd=d;});
+  // Calmar = CAGR / máxima caída (cuánta rentabilidad por unidad del peor batacazo).
+  const calmar=maxdd?cagr/Math.abs(maxdd):0;
   // retorno por año natural; marca como parcial el primer/último si no cubren el año entero
   const yend={}; dates.forEach((d,i)=>{yend[d.slice(0,4)]=pv[i];});
   const ys=Object.keys(yend).sort();
@@ -698,7 +700,7 @@ function metrics(pv,dates){
   let cand=rows.filter(r=>!r.partial); if(!cand.length) cand=rows;
   let bst=cand[0],wst=cand[0];
   cand.forEach(r=>{if(r.r>bst.r)bst=r; if(r.r<wst.r)wst=r;});
-  return{years,total,cagr,vol,sharpe,sortino,maxdd,
+  return{years,total,cagr,vol,sharpe,sortino,calmar,maxdd,
     best:bst.r,bestY:bst.y+(bst.partial?"*":""),worst:wst.r,worstY:wst.y+(wst.partial?"*":""),
     anyPartial:cand.some(r=>r.partial)};
 }
@@ -725,6 +727,7 @@ function renderResults(M,pv,bpv,bench,dates,tks,a,b,unbal,assetsPts,benchPt,limT
     card("Máx. caída",fmtPct(M.maxdd*100),"down","pico a valle")+
     card("Sharpe",fmt2(M.sharpe),M.sharpe>=1?"up":"","rentab./riesgo")+
     card("Sortino",fmt2(M.sortino),M.sortino>=1?"up":"","riesgo a la baja")+
+    card("Calmar",fmt2(M.calmar),M.calmar>=1?"up":"","rent./máx. caída")+
     card("Mejor año",fmtPct(M.best*100),M.best>=0?"up":"down",M.bestY)+
     card("Peor año",fmtPct(M.worst*100),M.worst>=0?"up":"down",M.worstY);
   drawCurve(pv,bpv,bench,dates);
@@ -1044,7 +1047,7 @@ function renderCompare(series,bench,bpv,benchM,dates,tks,a,b,assetsPts,benchPt,l
 }
 function drawCompareTable(series,benchM){
   const rows=series.slice().sort((x,y)=>y.M.cagr-x.M.cagr);   // mejor CAGR arriba
-  const head=`<tr><th>Fondo</th><th>Rent. total</th><th>CAGR</th><th>Volatilidad</th><th>Máx. caída</th><th>Sharpe</th><th>Mejor año</th><th>Peor año</th></tr>`;
+  const head=`<tr><th>Fondo</th><th>Rent. total</th><th>CAGR</th><th>Volatilidad</th><th>Máx. caída</th><th>Sharpe</th><th>Sortino</th><th>Calmar</th><th>Mejor año</th><th>Peor año</th></tr>`;
   const row=o=>{const M=o.M, mut='style="color:var(--mute);font-weight:400"';
     return `<tr${o.bench?' class="benchrow"':''}>`+
       `<td><span class="fname"><span class="fdot" style="background:${o.col}"></span>${shortOf(o.tk)}${o.bench?` <span class="ftag">índice</span>`:(notaOf(o.tk)?` <span class="ftag">${notaOf(o.tk)}</span>`:``)}</span></td>`+
@@ -1053,6 +1056,8 @@ function drawCompareTable(series,benchM){
       `<td>${(M.vol*100).toFixed(1).replace('.',',')}%</td>`+
       `<td class="down">${fmtPct(M.maxdd*100)}</td>`+
       `<td>${fmt2(M.sharpe)}</td>`+
+      `<td>${fmt2(M.sortino)}</td>`+
+      `<td>${fmt2(M.calmar)}</td>`+
       `<td class="${M.best>=0?'up':'down'}">${fmtPct(M.best*100)} <span ${mut}>${M.bestY}</span></td>`+
       `<td class="${M.worst>=0?'up':'down'}">${fmtPct(M.worst*100)} <span ${mut}>${M.worstY}</span></td></tr>`;};
   let h=`<table class="cmptb">${head}`;
