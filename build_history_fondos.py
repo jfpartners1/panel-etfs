@@ -23,6 +23,8 @@ FUNDS = [
     ("ES0165242001", "Myinvestor S&P500 Equiponderado FI", "Indexado", "", "S&P500 Equiponderado"),
     ("ES0184894006", "Myinvestor ACWI FI", "Indexado", "", "MSCI ACWI"),
     ("IE00BYX5NX33", "Fidelity MSCI World Index Fund EUR P Acc", "Indexado", "", "MSCI WORLD"),
+    ("IE0032126645", "Vanguard U.S. 500 Stock Index Fund EUR Acc", "Indexado", "", "S&P500 · 2002"),
+    ("IE00B03HD191", "Vanguard Global Stock Index Fund EUR Acc", "Indexado", "", "MSCI WORLD · 2002"),
     ("IE00B42W3S00", "Vanguard Global Small-Cap Index Fund Investor EUR Acc", "Indexado", "", "SMALL CAP GLOBAL"),
     ("IE0007281425", "Vanguard Japan Stock Index Fund Investor EUR Accumulation", "Indexado", "", "JAPÓN"),
     ("IE0007201266", "Vanguard Pacific ex-Japan Stock Index Fund EUR Acc", "Indexado", "", "PÁCIFICO Ex Japón"),
