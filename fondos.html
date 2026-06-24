@@ -380,6 +380,7 @@ const fmt2=n=>n.toFixed(2).replace(".",",");
 const eur=n=>Math.round(n).toLocaleString("es-ES");
 const MON=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
 function dlabel(iso){const[y,m]=iso.split("-");return MON[+m-1]+" "+y;}
+function dlabelDay(iso){const[y,m,d]=iso.split("-");return (+d)+" "+MON[+m-1]+" "+y;}
 function showTip(html,x,y){const t=$("#tip");t.innerHTML=html;t.style.opacity=1;
   t.style.left=Math.min(x,window.innerWidth-250)+"px";t.style.top=y+"px";}
 function hideTip(){$("#tip").style.opacity=0;}
@@ -666,11 +667,12 @@ function run(){
   let benchPt=null;
   if(bench){ benchPt={tk:bench,cagr:M.years?Math.pow(bpv[L-1]/bpv[0],1/years)-1:0,vol:weekVol(bpv,dates)}; }
   const limited = (a===a0) && limTk && limI>0;   // inicio por fondo joven (solo si el plazo no recortó antes)
-  // aviso si algún fondo dejó de publicar NAV antes del final global (limita el fin del periodo)
+  // aviso SOLO si un fondo deja de publicar NAV con retraso material (>15 días) respecto al dato más fresco del dataset; un retraso menor es publicación normal y no se avisa
   if(b < DATA.dates.length-1){
     let endTk=null;
     for(const t of tks){const px=DATA.funds[t].px;let li=-1;for(let i=0;i<px.length;i++)if(px[i]!=null)li=i;if(li===b){endTk=t;break;}}
-    if(endTk) periodMsg=(periodMsg?periodMsg+" ":"")+`El periodo termina en ${dlabel(DATA.dates[b])} porque <b>${shortOf(endTk)}</b> dejó de publicar valor liquidativo ahí.`;
+    const gapDias=(new Date(DATA.dates[DATA.dates.length-1])-new Date(DATA.dates[b]))/864e5;
+    if(endTk&&gapDias>15) periodMsg=(periodMsg?periodMsg+" ":"")+`El periodo termina el ${dlabelDay(DATA.dates[b])} porque <b>${shortOf(endTk)}</b> dejó de publicar valor liquidativo ahí.`;
   }
   renderResults(M,pv,bpv,bench,dates,tks,a,b,Math.abs(sw-100)>=0.5,assetsPts,benchPt,limited?limTk:null,periodMsg,benchMsg);
 }
@@ -1023,7 +1025,8 @@ function runCompare(){
   if(b < DATA.dates.length-1){
     let endTk=null;
     for(const t of tks){const px=DATA.funds[t].px;let li=-1;for(let i=0;i<px.length;i++)if(px[i]!=null)li=i;if(li===b){endTk=t;break;}}
-    if(endTk) periodMsg=(periodMsg?periodMsg+" ":"")+`El periodo termina en ${dlabel(DATA.dates[b])} porque <b>${shortOf(endTk)}</b> dejó de publicar valor liquidativo ahí.`;
+    const gapDias=(new Date(DATA.dates[DATA.dates.length-1])-new Date(DATA.dates[b]))/864e5;
+    if(endTk&&gapDias>15) periodMsg=(periodMsg?periodMsg+" ":"")+`El periodo termina el ${dlabelDay(DATA.dates[b])} porque <b>${shortOf(endTk)}</b> dejó de publicar valor liquidativo ahí.`;
   }
   renderCompare(series,bench,bpv,benchM,dates,tks,a,b,assetsPts,benchPt,limited?limTk:null,periodMsg,benchMsg);
 }
