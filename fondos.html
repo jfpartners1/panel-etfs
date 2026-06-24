@@ -238,7 +238,8 @@
     .panel{box-shadow:none;border:1px solid #DDE3EC;margin-bottom:12px}
     .cards{break-inside:avoid}
     .chart,.cor{break-inside:avoid}
-    .twocol{break-before:page;grid-template-columns:1fr 1fr}
+    .twocol{break-before:page;grid-template-columns:1fr}  /* en PDF apilados a todo el ancho: scatter grande + matriz legible con muchos fondos */
+    .twocol .panel:first-child .chart{max-width:148mm;margin:0 auto}  /* scatter centrado, grande pero sin ocupar la página entera */
     /* la tabla del comparador entera, sin recortes */
     .cmptable{overflow:visible!important}
     .cmptb{width:100%;font-size:7.6px;table-layout:fixed;border-spacing:0}
@@ -335,7 +336,7 @@
         <div class="corhint">Arriba-izquierda es lo ideal: <b>más rentabilidad con menos riesgo</b>. Cada punto es un fondo; en modo backtest, el cuadrado azul es tu cartera.</div>
       </div>
       <div class="panel">
-        <div class="ptitle"><h2>X-Ray · solapamiento entre fondos</h2><span class="sub">correlación de retornos diarios</span></div>
+        <div class="ptitle"><h2>Correlación entre fondos</h2><span class="sub">solapamiento de retornos diarios</span></div>
         <div class="cor" id="cor"></div>
         <div class="corhint">Cerca de <b>+1</b> (azul): los dos fondos se mueven casi igual — <b>se solapan</b> y diversificas poco aunque sean de gestoras distintas. Cerca de <b>0</b>: independientes. Negativo (rojo): se mueven al revés, lo que más diversifica.</div>
       </div>
