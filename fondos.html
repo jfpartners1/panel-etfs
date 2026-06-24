@@ -212,6 +212,7 @@
   .repbtn{display:inline-flex;align-items:center;gap:7px;font-weight:600;color:var(--ink-2)}
   .repbtn:hover{border-color:var(--blue);color:var(--blue)}
   .rephead,.repfoot{display:none}
+  .repwm{display:none}
   .repbrand{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:11px}
   .repbrandlogo{height:30px;width:auto}
   .repbrandweb{font-size:9px;color:#5B6675;font-family:"IBM Plex Mono",monospace;letter-spacing:.02em;text-align:right;white-space:nowrap}
@@ -248,11 +249,16 @@
     .cmptb th:first-child,.cmptb td:first-child{width:23%;white-space:normal}
     .cmptb .fname{font-size:7.6px}
     .cmptb .ftag,.cmptb .cyr{display:none}
+    .repwm{display:block;position:fixed;top:50%;left:50%;
+      transform:translate(-50%,-50%) rotate(-30deg);
+      font-family:"Inter",sans-serif;font-weight:800;font-size:68px;letter-spacing:.04em;
+      white-space:nowrap;color:#0D1B4B;opacity:.045;z-index:5;pointer-events:none}
     *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
 </style>
 </head>
 <body>
+<div class="repwm" aria-hidden="true">jfpartners.net</div>
 <div class="wrap">
   <div class="top">
     <a class="back" href="index.html">← Volver al panel</a>
