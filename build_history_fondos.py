@@ -73,7 +73,6 @@ FUNDS = [
     ("LU0329429897", "GAM Multistock Luxury Brands Equity EUR B", "Activo", "Consumo", "LUJO GLOBAL"),
     ("LU1162516717", "BlackRock Systematic Global Equity Absolute Return", "Activo", "Market Neutral", "MARKET NEUTRAL GLOBAL"),
     ("LU1429039461", "Schroder GAIA Two Sigma Diversified", "Activo", "Market Neutral", "MARKET NEUTRAL CUANTITATIVO"),
-    ("LU0705072006", "RAM European Market Neutral Equity", "Activo", "Market Neutral", "MARKET NEUTRAL EUROPEO"),
     ("LU1883342377", "Amundi Global Equity", "Activo", "Global", "RENTA VARIABLE GLOBAL"),
     ("LU0157178582", "JPM Global Select Equity", "Activo", "Global", "RENTA VARIABLE GLOBAL"),
     ("LU1984712320", "Janus Henderson Global Smaller Companies", "Activo", "Small Caps", "SMALL CAP GLOBAL"),
