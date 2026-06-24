@@ -18,6 +18,7 @@ import build_data as bd
 
 # (ISIN, nombre, bloque, subbloque, nota)
 FUNDS = [
+    # (ISIN, nombre, bloque, subbloque, nota)
     ("IE00BYX5MX67", "Fidelity S&P 500 Index Fund EUR P Acc", "Indexado", "", "S&P500"),
     ("ES0165242001", "Myinvestor S&P500 Equiponderado FI", "Indexado", "", "S&P500 Equiponderado"),
     ("ES0184894006", "Myinvestor ACWI FI", "Indexado", "", "MSCI ACWI"),
@@ -72,6 +73,26 @@ FUNDS = [
     ("LU0329429897", "GAM Multistock Luxury Brands Equity EUR B", "Activo", "Consumo", "LUJO GLOBAL"),
     ("LU1162516717", "BlackRock Systematic Global Equity Absolute Return", "Activo", "Market Neutral", "MARKET NEUTRAL GLOBAL"),
     ("LU1429039461", "Schroder GAIA Two Sigma Diversified", "Activo", "Market Neutral", "MARKET NEUTRAL CUANTITATIVO"),
+    ("LU0705072006", "RAM European Market Neutral Equity", "Activo", "Market Neutral", "MARKET NEUTRAL EUROPEO"),
+    ("LU1883342377", "Amundi Global Equity", "Activo", "Global", "RENTA VARIABLE GLOBAL"),
+    ("LU0157178582", "JPM Global Select Equity", "Activo", "Global", "RENTA VARIABLE GLOBAL"),
+    ("LU1984712320", "Janus Henderson Global Smaller Companies", "Activo", "Small Caps", "SMALL CAP GLOBAL"),
+    ("LU0918140210", "T. Rowe Price US Smlr Cm Eq A EUR", "Activo", "Small Caps", "SMALL CAP GLOBAL"),
+    ("LU0300834669", "Alken Small Cap Europe", "Activo", "Small Caps", "SMALL CAP EUROPA"),
+    ("LU0125944966", "MFS Meridian European Companies", "Activo", "Small Caps", "SMALL CAP EUROPA"),
+    ("LU0491217419", "Robeco Indian Equities D €", "Activo", "Asia", "RENTA VARIABLE INDIA"),
+    ("LU0329070915", "Jupiter India Select", "Activo", "Asia", "RENTA VARIABLE INDIA"),
+    ("LU0345361124", "Fidelity Funds - Asia Pacific Opportunities", "Activo", "Asia", "RENTA VARIABLE ASIA PACIFICO"),
+    ("LU0413543058", "Fidelity Japan Value A-Acc-EUR", "Activo", "Asia", "RENTA VARIABLE JAPÓN"),
+    ("LU2295319219", "Morgan Stanley Asia Opportunity", "Activo", "Asia", "RENTA VARIABLE ASIA"),
+    ("LU0922334643", "Fidelity Nordic A", "Activo", "Nórdico", "RENTA VARIABLE NÓRDICA"),
+    ("LU0273159177", "DWS Invest Gold and Prec Mtl Eqs LC", "Activo", "Alternativo", "RENTA VARIABLE ORO"),
+    ("LU0172157280", "Bgf World Mining A2 EUR", "Activo", "Alternativo", "RENTA VARIABLE ORO"),
+    ("LU0273158872", "DWS Invest Global Agribusiness LC", "Activo", "Alternativo", "RENTA VARIABLE AGRICULTURA"),
+    ("LU1165135440", "BNP Paribas Aqua C C", "Activo", "Alternativo", "RENTA VARIABLE AGUA"),
+    ("LU0415415636", "Vontobel Commodity H Hedged EUR", "Activo", "Alternativo", "MATERIAS PRIMAS"),
+    ("LU0714179727", "JPMorgan Investment Funds - Global Dividend Fund", "Activo", "Dividendo", "RENTA VARIABLE DIVIDENDO"),
+    ("IE00BDGV0183", "Guinness Global Equity Income C EUR Dist", "Activo", "Dividendo", "RENTA VARIABLE DIVIDENDO"),
     ("FR0013346079", "Groupama Ultra Short Term Bond", "Renta Fija", "Ultra Corto Plazo", "CRÉDITO ULTRACORTO"),
     ("FR001400CFA4", "OstrumSRI Credit Ultra Short", "Renta Fija", "Ultra Corto Plazo", "CRÉDITO ESG ULTRACORTO"),
     ("FR0011365212", "Amundi Ultra Short Term Bond", "Renta Fija", "Ultra Corto Plazo", "BONOS ULTRACORTOS"),
@@ -93,6 +114,9 @@ FUNDS = [
     ("IE000MI53C66", "MAN Global Investment Grade", "Renta Fija", "Medio Plazo", "CRÉDITO GLOBAL INVESTMENT GRADE"),
     ("IE00B246KL88", "Vanguard 20+ Year Euro Treasury Index Fund EUR Acc", "Renta Fija", "Largo Plazo", "DEUDA PÚBLICA EURO LARGA"),
     ("LU0241467587", "Pictet EUR Goverment Bonds", "Renta Fija", "Largo Plazo", "DEUDA PÚBLICA EURO"),
+    ("LU0849399786", "Schroder Isf Euro High Yield", "Renta Fija", "High Yield", "HIGH YIELD EUROPA"),
+    ("LU0658026512", "Axa Europe Short D High Yield", "Renta Fija", "High Yield", "HIGH YIELD EUROPA"),
+    ("LU0170291933", "Candriam Bonds Global High Yield C ACC", "Renta Fija", "High Yield", "HIGH YIELD GLOBAL"),
 ]
 
 
