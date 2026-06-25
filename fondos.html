@@ -225,6 +225,30 @@
   .atbnote{font-size:11px;color:var(--mute);padding:2px 16px 14px;line-height:1.5}
   .atbnote b{color:var(--ink-2)}
 
+  /* peores caídas (top 5) */
+  .ddtb{width:100%;border-collapse:collapse;font-size:12px}
+  .ddtb th{font-size:10px;text-transform:uppercase;letter-spacing:.03em;color:var(--mute);font-weight:600;
+    text-align:right;padding:7px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .ddtb th:first-child{text-align:left}
+  .ddtb td{padding:9px;border-bottom:1px solid var(--line-2);text-align:right;
+    font-family:"IBM Plex Mono",monospace;color:var(--ink-2);white-space:nowrap}
+  .ddtb td:first-child{text-align:left;color:var(--down);font-weight:600}
+  .ddtb .uw{color:var(--ink);font-weight:600}
+  .ddtb .nrec{color:var(--down);font-weight:600}
+  .ddtb .rk{display:inline-block;width:18px;height:18px;border-radius:5px;background:var(--line-2);
+    color:var(--ink-2);font-size:10px;font-weight:700;text-align:center;line-height:18px;margin-right:8px;font-family:"Inter",sans-serif}
+
+  /* heatmap mensual */
+  .heatwrap{padding:6px 16px 8px;overflow-x:auto}
+  .heattb{border-collapse:separate;border-spacing:3px;font-family:"IBM Plex Mono",monospace;width:100%}
+  .heattb th{font-size:10px;font-weight:600;color:var(--mute);padding:3px 4px;text-align:center}
+  .heattb th.yh{text-align:left}
+  .heattb td{text-align:center;font-size:10px;border-radius:5px;color:#1A2233;padding:6px 3px;min-width:34px}
+  .heattb td.yr{font-family:"Inter",sans-serif;font-weight:600;color:var(--ink-2);text-align:left;background:none;padding-left:2px}
+  .heattb td.tot{font-weight:700;border-left:2px solid var(--line)}
+  .heattb td.empty{background:var(--line-2);color:transparent}
+  .heattb .part{opacity:.55}
+
   .tip{position:fixed;pointer-events:none;background:#1A2233;color:#fff;font-size:11px;border-radius:7px;
     padding:7px 10px;opacity:0;transition:opacity .1s;z-index:50;max-width:240px;line-height:1.4}
   .tip b{font-family:"IBM Plex Mono",monospace}
@@ -263,6 +287,7 @@
     .chart,.cor{break-inside:avoid}
     #mainPanel{break-inside:avoid}  /* curva + caídas SIEMPRE juntas: evita que el gráfico de caídas quede huérfano al inicio de la página siguiente */
     #attribPanel{break-inside:avoid}
+    #ddtopPanel,#heatPanel{break-inside:avoid}
     #attribPanel .atb{font-size:9px}
     #attribPanel .bartrack{width:48px}
     .twocol{break-before:page;grid-template-columns:1fr}  /* en PDF apilados a todo el ancho: scatter grande + matriz legible con muchos fondos */
@@ -365,6 +390,16 @@
       <div class="ptitle"><h2>Contribución de cada fondo</h2><span class="sub" id="attribSub"></span></div>
       <div class="atbwrap"><table class="atb" id="attribtb"></table></div>
       <div class="atbnote" id="attribNote"></div>
+    </div>
+    <div class="panel hide" id="ddtopPanel">
+      <div class="ptitle"><h2>Tus peores caídas</h2><span class="sub">profundidad y cuánto tardaste en recuperar</span></div>
+      <div class="atbwrap"><table class="ddtb" id="ddtoptb"></table></div>
+      <div class="atbnote">El <b>tiempo bajo el agua</b> es lo que pasaste por debajo de tu máximo anterior, desde que empezó la caída hasta que la recuperaste del todo. Si pone <b>sin recuperar</b>, a fin del periodo aún estabas por debajo de aquel máximo.</div>
+    </div>
+    <div class="panel hide" id="heatPanel">
+      <div class="ptitle"><h2>Rentabilidad mes a mes</h2><span class="sub" id="heatSub"></span></div>
+      <div class="heatwrap"><table class="heattb" id="heattb"></table></div>
+      <div class="atbnote" id="heatNote">Cada celda es lo que ganó o perdió la cartera ese mes; la columna <b>Año</b> es el total del año natural. Verde gana, rojo pierde.</div>
     </div>
     <div class="twocol">
       <div class="panel">
@@ -714,7 +749,9 @@ function run(){
     if(endTk&&gapDias>15) periodMsg=(periodMsg?periodMsg+" ":"")+`El periodo termina el ${dlabelDay(DATA.dates[b])} porque <b>${shortOf(endTk)}</b> dejó de publicar valor liquidativo ahí.`;
   }
   const attrib = tks.length>=2 ? buildAttribution(sub,pv,dates,tks,wn,a,b) : null;
-  renderResults(M,pv,bpv,bench,dates,tks,a,b,Math.abs(sw-100)>=0.5,assetsPts,benchPt,limited?limTk:null,periodMsg,benchMsg,attrib);
+  const ddTop = drawdownEpisodes(pv,dates);
+  const heat = monthlyHeat(pv,dates);
+  renderResults(M,pv,bpv,bench,dates,tks,a,b,Math.abs(sw-100)>=0.5,assetsPts,benchPt,limited?limTk:null,periodMsg,benchMsg,attrib,ddTop,heat);
 }
 function metrics(pv,dates){
   const L=pv.length;
@@ -749,7 +786,7 @@ function metrics(pv,dates){
 }
 
 /* ---------- resultados ---------- */
-function renderResults(M,pv,bpv,bench,dates,tks,a,b,unbal,assetsPts,benchPt,limTk,periodMsg,benchMsg,attrib){
+function renderResults(M,pv,bpv,bench,dates,tks,a,b,unbal,assetsPts,benchPt,limTk,periodMsg,benchMsg,attrib,ddTop,heat){
   window.REPDATES=dates;
   $("#results").classList.remove("hide");
   $("#cards").style.display="grid";
@@ -778,6 +815,8 @@ function renderResults(M,pv,bpv,bench,dates,tks,a,b,unbal,assetsPts,benchPt,limT
   drawScatter(assetsPts,{cagr:M.cagr,vol:M.vol},benchPt);
   drawCor(tks,a,b);
   drawAttribution(attrib);
+  drawDDTop(ddTop);
+  drawHeat(heat);
 }
 function drawCurve(pv,bpv,bench,dates){
   const W=920,H=360,L=52,R=16,T=14,B=28, w=W-L-R, h=H-T-B;
@@ -911,6 +950,95 @@ function drawAttribution(A){
     : `quién pone la rentabilidad y el riesgo`;
   $("#attribNote").innerHTML =
     `Cada fila reparte el resultado de la cartera entre tus fondos. <b>A la rentabilidad</b> y <b>En la peor caída</b> van en puntos y suman exactamente el total de la cartera: así ves, p. ej., que de una caída del −10% un fondo puso −8 y el resto apenas se movieron (en verde, los que incluso amortiguaron). <b>% del riesgo</b> reparte la volatilidad teniendo en cuenta cuánto se solapa cada fondo con el resto, así que un fondo puede pesar poco y aun así aportar mucho riesgo —o diversificar y restarlo (en verde)—. Calculado con los pesos que fijaste; en compra y mantén el peso real va variando algo con el tiempo.`;
+}
+/* ---------- peores caídas (top 5) y heatmap mensual ----------
+   Ambas salen SOLO de la curva diaria de la cartera (pv). Sin benchmark ni API. */
+function durLabel(days){
+  if(days==null) return "—";
+  if(days<45) return days+" d";
+  const mo=days/30.44;
+  if(mo<12){const n=Math.round(mo); return n+" "+(n===1?"mes":"meses");}
+  return (days/365.25).toFixed(1).replace(".",",")+" años";
+}
+function drawdownEpisodes(pv,dates){
+  let peak=pv[0]; const dd=pv.map(v=>{if(v>peak)peak=v;return v/peak-1;});
+  const D=iso=>Date.parse(iso), L=pv.length, last=L-1;
+  const mk=(pi,ti,ri,mag)=>({mag,peak:dates[pi],trough:dates[ti],rec:ri==null?null:dates[ri],
+    underDays:Math.round((D(ri==null?dates[last]:dates[ri])-D(dates[pi]))/864e5),recovered:ri!=null});
+  const eps=[]; let inEp=false,pi=0,ti=0,tv=0;
+  for(let i=0;i<L;i++){
+    if(!inEp && dd[i]<0){ inEp=true; pi=i>0?i-1:0; ti=i; tv=dd[i]; }
+    else if(inEp){
+      if(dd[i]<tv){ tv=dd[i]; ti=i; }
+      if(dd[i]>=0){ eps.push(mk(pi,ti,i,tv)); inEp=false; }
+    }
+  }
+  if(inEp) eps.push(mk(pi,ti,null,tv));
+  eps.sort((x,y)=>x.mag-y.mag);          // la más profunda primero
+  return eps.slice(0,5);
+}
+function drawDDTop(eps){
+  const panel=$("#ddtopPanel");
+  if(!eps||!eps.length){ panel.classList.add("hide"); return; }
+  panel.classList.remove("hide");
+  let h=`<tr><th>Caída</th><th>Pico</th><th>Valle</th><th>Recuperación</th><th>Bajo el agua</th></tr>`;
+  eps.forEach((e,i)=>{
+    h+=`<tr>`+
+      `<td><span class="rk">${i+1}</span>${fmtPct(e.mag*100)}</td>`+
+      `<td>${dlabel(e.peak)}</td>`+
+      `<td>${dlabel(e.trough)}</td>`+
+      (e.recovered?`<td>${dlabel(e.rec)}</td>`:`<td class="nrec">sin recuperar</td>`)+
+      `<td class="uw">${durLabel(e.underDays)}${e.recovered?"":" y subiendo"}</td>`+
+    `</tr>`;
+  });
+  $("#ddtoptb").innerHTML=h;
+}
+function monthlyHeat(pv,dates){
+  const endIdx=new Map(); dates.forEach((d,i)=>endIdx.set(d.slice(0,7),i)); // último índice de cada mes
+  const keys=[...endIdx.keys()].sort();
+  const mEnd={}; keys.forEach(k=>mEnd[k]=pv[endIdx.get(k)]);
+  const data={}; let prev=pv[0];
+  keys.forEach((k,ki)=>{
+    const v=mEnd[k], y=+k.slice(0,4), m=+k.slice(5,7);
+    (data[y]=data[y]||{})[m]= (ki===0?pv[0]:prev) ? v/(ki===0?pv[0]:prev)-1 : 0;
+    prev=v;
+  });
+  const years=Object.keys(data).map(Number).sort((x,y)=>x-y);
+  const yearTot={};
+  years.forEach((y,yi)=>{
+    const ks=keys.filter(k=>+k.slice(0,4)===y);
+    const endV=mEnd[ks[ks.length-1]];
+    const base= yi===0 ? pv[0] : mEnd[keys.filter(k=>+k.slice(0,4)===years[yi-1]).pop()];
+    yearTot[y]= base? endV/base-1 : 0;
+  });
+  return {data,years,yearTot,
+    firstY:+keys[0].slice(0,4),firstM:+keys[0].slice(5,7),
+    lastY:+keys[keys.length-1].slice(0,4),lastM:+keys[keys.length-1].slice(5,7),
+    firstPartial:+dates[0].slice(8,10)>3, lastPartial:+dates[dates.length-1].slice(8,10)<26};
+}
+function drawHeat(H){
+  const panel=$("#heatPanel");
+  if(!H||!H.years.length){ panel.classList.add("hide"); return; }
+  panel.classList.remove("hide");
+  const cellBg=r=>{ const t=Math.max(-1,Math.min(1,r/0.06));
+    return t>=0?`rgba(21,168,107,${(0.10+0.5*t).toFixed(3)})`:`rgba(224,68,68,${(0.10+0.5*-t).toFixed(3)})`;};
+  const val=r=>{const x=r*100; if(Math.abs(x)<0.05) return "0,0"; return (x>0?"+":"−")+Math.abs(x).toFixed(1).replace(".",",");};
+  let h=`<tr><th class="yh">Año</th>`+MON.map(m=>`<th>${m[0].toUpperCase()}</th>`).join("")+`<th>Total</th></tr>`;
+  H.years.forEach(y=>{
+    h+=`<tr><td class="yr">${y}</td>`;
+    for(let m=1;m<=12;m++){
+      const r=H.data[y][m];
+      if(r==null){ h+=`<td class="empty">·</td>`; continue; }
+      const part=(y===H.firstY&&m===H.firstM&&H.firstPartial)||(y===H.lastY&&m===H.lastM&&H.lastPartial);
+      h+=`<td class="${part?'part':''}" style="background:${cellBg(r)}" title="${MON[m-1]} ${y}${part?' · mes parcial':''}">${val(r)}</td>`;
+    }
+    const yt=H.yearTot[y];
+    h+=`<td class="tot" style="background:${cellBg(yt)}">${val(yt)}</td></tr>`;
+  });
+  $("#heattb").innerHTML=h;
+  $("#heatSub").textContent=`${H.years[0]}–${H.years[H.years.length-1]} · en %`;
+  $("#heatNote").innerHTML=`Cada celda es lo que ganó o perdió la cartera ese mes; la columna <b>Año</b> es el total del año natural. Verde gana, rojo pierde.`+
+    ((H.firstPartial||H.lastPartial)?` Los meses más claros del inicio o el final son <b>parciales</b> (no es el mes entero).`:``);
 }
 function perAsset(tks,a,b,years){
   const wi=weeklyIdx(a,b,DATA.dates);
@@ -1158,6 +1286,8 @@ function renderCompare(series,bench,bpv,benchM,dates,tks,a,b,assetsPts,benchPt,l
   $("#cards").style.display="none";
   $("#cmptable").classList.remove("hide");
   $("#attribPanel").classList.add("hide");
+  $("#ddtopPanel").classList.add("hide");
+  $("#heatPanel").classList.add("hide");
   $("#curveTitle").textContent="Crecimiento de 10.000 € en cada fondo";
   const yrs=series[0].M.years;
   $("#periodNote").innerHTML=(periodMsg?`<span style="color:#B5851F">${periodMsg}</span> `:``)+
