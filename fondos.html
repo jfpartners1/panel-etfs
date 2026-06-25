@@ -6,23 +6,25 @@
 <title>Backtest de fondos · JFPartners</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#F3F5F8;--panel:#FFFFFF;--line:#E8ECF1;--line-2:#EEF1F5;
-    --ink:#1A2233;--ink-2:#5B6675;--mute:#8A95A5;
-    --up:#15A86B;--up-bg:#22B573;--down:#E04444;--blue:#2563EB;
-    --core:#2563EB;--sat:#7257D8;--real:#C0892E;--radius:14px;
+    --bg:#FAF8F8;--panel:#FFFFFF;--line:#ECE9E9;--line-2:#F3F1F1;
+    --ink:#20232A;--ink-2:#4D525C;--mute:#8C9099;
+    --up:#15A86B;--up-bg:#22B573;--down:#E04444;--blue:#030942;
+    --navy:#030942;--sky:#74BDFF;
+    --core:#030942;--sat:#7257D8;--real:#C0892E;--radius:14px;
+    --serif:"Newsreader",Georgia,"Times New Roman",serif;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);
-    font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+    font-family:"Manrope",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
   .num,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
   a{color:inherit}
   .wrap{max-width:1180px;margin:0 auto;padding:18px 20px 60px}
 
   /* top bar */
-  .top{display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:20;background:rgba(243,245,248,.86);
+  .top{display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:20;background:rgba(250,248,248,.86);
     backdrop-filter:blur(8px);padding:10px 0 12px;border-bottom:1px solid var(--line);margin-bottom:18px}
   .back{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);text-decoration:none;
     padding:6px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;white-space:nowrap}
@@ -31,9 +33,9 @@
   .brandlogo{height:34px;width:auto;display:block}
   .seclbl{font-size:12.5px;color:var(--ink-2);font-weight:500;padding-left:11px;border-left:1px solid var(--line);white-space:nowrap}
   @media(max-width:620px){.seclbl{display:none}.brandlogo{height:28px}}
-  .logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#1A2233,#39507E);
-    color:#fff;font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:12px;display:grid;place-items:center;flex:none}
-  .brand h1{font-size:15px;margin:0;font-weight:600;letter-spacing:-.01em}
+  .logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#030942,#74BDFF);
+    color:#fff;font-family:var(--serif);font-weight:700;font-size:14px;display:grid;place-items:center;flex:none}
+  .brand h1{font-family:var(--serif);font-size:17px;margin:0;font-weight:600;letter-spacing:0}
   .brand .sub{font-size:11px;color:var(--mute)}
   .asof{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--mute);white-space:nowrap}
   .smpl{margin-left:8px;font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
@@ -58,7 +60,7 @@
   .cmptb tr.benchrow td{color:var(--ink-2)}
   .cmptb tr.benchrow .fname{color:var(--ink-2);font-weight:500}
   .ptitle{display:flex;align-items:baseline;gap:9px;padding:14px 16px 0}
-  .ptitle h2{font-size:13px;font-weight:600;margin:0;letter-spacing:.01em}
+  .ptitle h2{font-family:var(--serif);font-size:16px;font-weight:600;margin:0;letter-spacing:0}
   .ptitle .sub{font-size:11px;color:var(--mute)}
 
   /* layout */
@@ -69,7 +71,7 @@
   .exchips{display:flex;gap:7px;flex-wrap:wrap}
   .exchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:20px;
     padding:5px 7px 5px 12px;cursor:pointer;transition:all .12s}
-  .exchip:hover{border-color:var(--blue);background:#F5F8FF}
+  .exchip:hover{border-color:var(--blue);background:#EFF6FF}
   .exname{font-size:12px;font-weight:600;color:var(--ink)}
   .exchip:hover .exname{color:var(--blue)}
 
@@ -98,7 +100,7 @@
   .grphd .chev{margin-left:auto;flex:none;display:grid;place-items:center;width:22px;height:22px;border-radius:6px;
     color:var(--ink-2);background:var(--line-2);transition:transform .18s ease,background .12s,color .12s}
   .grphd .chev svg{width:13px;height:13px;display:block}
-  .grp.block .grphd:hover .chev{background:#E6EDFA;color:var(--blue)}
+  .grp.block .grphd:hover .chev{background:#E3F1FF;color:var(--blue)}
   .grp.collapsed .grphd .chev{transform:rotate(-90deg)}
   .grp.block:not(.collapsed) .grpbody{border:1px solid var(--line);border-top:0;border-radius:0 0 10px 10px;
     padding:6px 13px 12px;margin-bottom:2px}
@@ -148,7 +150,7 @@
   .sumright{display:flex;align-items:center;gap:9px}
   .minibtn{border:1px solid var(--blue);background:#fff;color:var(--blue);border-radius:7px;padding:3px 9px;font-size:10.5px;
     font-weight:600;cursor:pointer;font-family:inherit}
-  .minibtn:hover{background:#F5F8FF}
+  .minibtn:hover{background:#EFF6FF}
   .sum-ok{color:var(--up)} .sum-warn{color:#B5851F}
   .pfacts{display:flex;gap:7px;padding:0 16px 14px;flex-wrap:wrap}
   .btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 12px;font-size:12px;font-weight:500;
@@ -178,7 +180,7 @@
   @media(max-width:860px){.twocol{grid-template-columns:1fr}}
   .card{background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 13px}
   .card .k{font-size:10.5px;color:var(--mute);text-transform:uppercase;letter-spacing:.03em}
-  .card .v{font-family:"IBM Plex Mono",monospace;font-size:20px;font-weight:600;margin-top:5px;letter-spacing:-.01em}
+  .card .v{font-family:var(--serif);font-size:24px;font-weight:600;margin-top:4px;letter-spacing:0;font-variant-numeric:tabular-nums}
   .card .s{font-size:10.5px;color:var(--mute);margin-top:2px}
   .v.up{color:var(--up)} .v.down{color:var(--down)}
 
@@ -264,7 +266,7 @@
   .repbrandweb{font-size:9px;color:#5B6675;font-family:"IBM Plex Mono",monospace;letter-spacing:.02em;text-align:right;white-space:nowrap}
   .rephd{display:flex;align-items:baseline;gap:14px;border-bottom:2px solid var(--ink);padding-bottom:10px}
   .repmeta{flex:1;min-width:0}
-  .reptitle{font-size:16px;font-weight:700;color:var(--ink);letter-spacing:-.01em}
+  .reptitle{font-family:var(--serif);font-size:19px;font-weight:600;color:var(--ink);letter-spacing:0}
   .repsub{font-size:11px;color:var(--ink-2);margin-top:2px}
   .repdate{font-size:11px;color:var(--mute);font-family:"IBM Plex Mono",monospace;white-space:nowrap}
   .repcomp{margin:11px 0 2px}
@@ -413,12 +415,12 @@
         <div class="corhint">Cerca de <b>+1</b> (azul): los dos fondos se mueven casi igual — <b>se solapan</b> y diversificas poco aunque sean de gestoras distintas. Cerca de <b>0</b>: independientes. Negativo (rojo): se mueven al revés, lo que más diversifica.</div>
       </div>
     </div>
-    <div class="repfoot" id="repfoot">Backtesting con el valor liquidativo (NAV) en euros · compra y mantén, sin rebalanceo · histórico de EODHD · Rentabilidad pasada no garantiza resultados futuros · Herramienta educativa, no constituye asesoramiento de inversión · jfpartners.net</div>
+    <div class="repfoot" id="repfoot">Backtesting con el valor liquidativo (NAV) en euros · compra y mantén, sin rebalanceo · Rentabilidad pasada no garantiza resultados futuros · Herramienta educativa, no constituye asesoramiento de inversión · jfpartners.net</div>
   </div>
 
   <footer>
     Backtesting con el valor liquidativo (NAV) de cada fondo, en euros · compra y mantén, sin rebalanceo ·
-    histórico de EODHD. Los fondos incluyen sus comisiones de gestión en el NAV. <b>Rentabilidad pasada no garantiza resultados futuros.</b>
+    Los fondos incluyen sus comisiones de gestión en el NAV. <b>Rentabilidad pasada no garantiza resultados futuros.</b>
     Herramienta educativa, no es asesoramiento de inversión.
   </footer>
 </div>
@@ -427,7 +429,7 @@
 <script>
 // Orden y color de bloques/subbloques. Los grupos se construyen desde los datos.
 const BLOCKS=[
-  {key:"Indexado",   label:"Indexados · réplica de un índice",          color:"#2563EB", subs:[""]},
+  {key:"Indexado",   label:"Indexados · réplica de un índice",          color:"#030942", subs:[""]},
   {key:"Activo",     label:"Fondos activos · gestión que busca batir",  color:"#7257D8",
      subs:["Value","Growth","Salud","Tecnología","Consumo","Market Neutral",
            "Global","Small Caps","Asia","Nórdico","Alternativo","Dividendo"]},
@@ -442,7 +444,7 @@ const SUBSHORT={"Ultra Corto Plazo":"Ultra corto","Corto Plazo":"Corto plazo",
 // Benchmarks seleccionables (ISIN -> nombre limpio del índice)
 const BENCH_LABEL={"IE00B03HD191":"MSCI World","IE0032126645":"S&P 500","ES0184894006":"MSCI ACWI","IE0007987690":"Europa"};
 
-const SERIES_COL=["#2563EB","#C0892E","#15A86B","#7257D8","#E0734E","#0E9BA8","#C0397B","#6B8E23","#5B6675","#D4A017"];
+const SERIES_COL=["#030942","#C0892E","#15A86B","#7257D8","#E0734E","#0E9BA8","#C0397B","#6B8E23","#5B6675","#D4A017"];
 
 let DATA=null, SAMPLE=false, PF=[], PERIOD="all", MODE="backtest";  // MODE: backtest | compare
 let SELF="todos";  // filtro del selector: Indexado | Activo | Renta Fija | todos
@@ -820,7 +822,7 @@ function renderResults(M,pv,bpv,bench,dates,tks,a,b,unbal,assetsPts,benchPt,limT
 }
 function drawCurve(pv,bpv,bench,dates){
   const W=920,H=360,L=52,R=16,T=14,B=28, w=W-L-R, h=H-T-B;
-  const series=[{name:"Cartera",col:"#2563EB",d:pv}]; if(bpv)series.push({name:bench,col:"#9AA5B3",d:bpv});
+  const series=[{name:"Cartera",col:"#030942",d:pv}]; if(bpv)series.push({name:bench,col:"#9AA5B3",d:bpv});
   let lo=Infinity,hi=-Infinity; series.forEach(s=>s.d.forEach(v=>{if(v<lo)lo=v;if(v>hi)hi=v;}));
   lo=Math.min(lo,10000)*0.985; hi*=1.015;
   const N=pv.length, x=i=>L+w*i/(N-1), y=v=>T+h*(1-(v-lo)/(hi-lo));
@@ -862,7 +864,7 @@ function drawCor(tks,a,b){
     c/=rets[i].length; return (sds[i]&&sds[j])?c/(sds[i]*sds[j]):0;};
   const cell=v=>{ // azul (+) / rojo (−)
     const t=Math.max(-1,Math.min(1,v));
-    const bg=t>=0?`rgba(37,99,235,${(0.10+0.55*t).toFixed(3)})`:`rgba(224,68,68,${(0.10+0.55*-t).toFixed(3)})`;
+    const bg=t>=0?`rgba(3,9,66,${(0.10+0.55*t).toFixed(3)})`:`rgba(224,68,68,${(0.10+0.55*-t).toFixed(3)})`;
     return `background:${bg};color:${Math.abs(t)>0.6?'#fff':'#1A2233'}`;};
   let h='<table class="cortb"><tr><th></th>'+tks.map(t=>`<th title="${nmOf(t)}">${shortOf(t)}</th>`).join("")+'</tr>';
   tks.forEach((ti,i)=>{ h+=`<tr><th class="rowh" title="${nmOf(ti)}">${shortOf(ti)}</th>`;
@@ -1076,7 +1078,7 @@ function drawScatter(pts,port,bench){
   // cartera (cuadrado azul) — solo en modo backtest
   if(port){const px=x(port.vol),py=y(port.cagr);
     g+=`<g class="spt" data-tip="Tu cartera · rent ${(port.cagr*100).toFixed(1).replace('.',',')}% · vol ${(port.vol*100).toFixed(1).replace('.',',')}%">`+
-    `<rect x="${(px-6).toFixed(1)}" y="${(py-6).toFixed(1)}" width="12" height="12" rx="2" fill="#2563EB" stroke="#fff" stroke-width="1.5"/></g>`;}
+    `<rect x="${(px-6).toFixed(1)}" y="${(py-6).toFixed(1)}" width="12" height="12" rx="2" fill="#030942" stroke="#fff" stroke-width="1.5"/></g>`;}
   $("#scatter").innerHTML=g;
   // hover
   $("#scatter").querySelectorAll(".spt").forEach(el=>{
