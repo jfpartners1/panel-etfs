@@ -203,6 +203,28 @@
   .cortb td{width:40px;height:30px;text-align:center;font-size:10.5px;border-radius:5px;color:#1A2233}
   .corhint{font-size:11px;color:var(--mute);padding:0 16px 14px}
 
+  /* contribución de cada fondo (atribución) */
+  .atbwrap{padding:6px 16px 8px;overflow-x:auto}
+  .atb{width:100%;border-collapse:collapse;font-size:12px}
+  .atb th{font-size:10px;text-transform:uppercase;letter-spacing:.03em;color:var(--mute);font-weight:600;
+    text-align:right;padding:7px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .atb th:first-child{text-align:left}
+  .atb td{padding:9px;border-bottom:1px solid var(--line-2);text-align:right;
+    font-family:"IBM Plex Mono",monospace;color:var(--ink-2);vertical-align:middle}
+  .atb td.name{text-align:left;font-family:"Inter",sans-serif;font-weight:600;color:var(--ink)}
+  .atb .nmin{display:flex;align-items:center;gap:8px;min-width:0}
+  .atb .dot{width:9px;height:9px;border-radius:3px;flex:none}
+  .atb .nmtx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .atb .cell{display:flex;align-items:center;justify-content:flex-end;gap:9px}
+  .atb .cell .num{min-width:52px;text-align:right}
+  .atb .up{color:var(--up)} .atb .down{color:var(--down)}
+  .atb .bartrack{width:62px;height:7px;background:var(--line-2);border-radius:4px;overflow:hidden;flex:none}
+  .atb .barpos{height:100%;border-radius:4px}
+  .atb tr.totrow td{border-top:1.5px solid var(--line);border-bottom:none;font-weight:700;color:var(--ink);padding-top:10px}
+  .atb tr.totrow .cell .num{font-weight:700;color:var(--ink)}
+  .atbnote{font-size:11px;color:var(--mute);padding:2px 16px 14px;line-height:1.5}
+  .atbnote b{color:var(--ink-2)}
+
   .tip{position:fixed;pointer-events:none;background:#1A2233;color:#fff;font-size:11px;border-radius:7px;
     padding:7px 10px;opacity:0;transition:opacity .1s;z-index:50;max-width:240px;line-height:1.4}
   .tip b{font-family:"IBM Plex Mono",monospace}
@@ -239,6 +261,9 @@
     .panel{box-shadow:none;border:1px solid #DDE3EC;margin-bottom:12px}
     .cards{break-inside:avoid}
     .chart,.cor{break-inside:avoid}
+    #attribPanel{break-inside:avoid}
+    #attribPanel .atb{font-size:9px}
+    #attribPanel .bartrack{width:48px}
     .twocol{break-before:page;grid-template-columns:1fr}  /* en PDF apilados a todo el ancho: scatter grande + matriz legible con muchos fondos */
     .twocol .panel:first-child .chart{max-width:148mm;margin:0 auto}  /* scatter centrado, grande pero sin ocupar la página entera */
     /* la tabla del comparador entera, sin recortes */
@@ -334,6 +359,11 @@
         <div class="ddlabel"><span>Caídas desde máximos <span class="ddsub">· cuánto estabas por debajo de tu mejor momento</span></span><span class="ddleg" id="ddleg"></span></div>
         <div class="chart"><svg id="dd" viewBox="0 0 920 150" preserveAspectRatio="xMidYMid meet"></svg></div>
       </div>
+    </div>
+    <div class="panel hide" id="attribPanel">
+      <div class="ptitle"><h2>Contribución de cada fondo</h2><span class="sub" id="attribSub"></span></div>
+      <div class="atbwrap"><table class="atb" id="attribtb"></table></div>
+      <div class="atbnote" id="attribNote"></div>
     </div>
     <div class="twocol">
       <div class="panel">
@@ -656,10 +686,11 @@ function run(){
   let limTk=tks[0],limI=-1;
   tks.forEach(t=>{const f=DATA.funds[t].px.findIndex(x=>x!=null); if(f>limI){limI=f;limTk=t;}});
   const dates=DATA.dates.slice(a,b+1), L=dates.length;
-  // curva cartera (compra y mantén, 10.000 €)
+  // curva cartera (compra y mantén, 10.000 €). sub[k][i] = € que vale el fondo k en i;
+  // la cartera es la SUMA exacta de esos botes, así que el reparto sale aditivo.
   const base=tks.map(t=>DATA.funds[t].px[a]);
-  const pv=new Array(L);
-  for(let i=0;i<L;i++){let s=0; tks.forEach((t,k)=>{s+=wn[k]*DATA.funds[t].px[a+i]/base[k];}); pv[i]=10000*s;}
+  const pv=new Array(L), sub=tks.map(()=>new Array(L));
+  for(let i=0;i<L;i++){let s=0; tks.forEach((t,k)=>{const v=10000*wn[k]*DATA.funds[t].px[a+i]/base[k]; sub[k][i]=v; s+=v;}); pv[i]=s;}
   // benchmark (índice en EUR seleccionable); solo se dibuja si cubre todo el periodo
   const bmk=$("#bench").value; let bench=null,bpv=null,benchMsg="";
   if(bmk&&DATA.funds[bmk]){
@@ -681,7 +712,8 @@ function run(){
     const gapDias=(new Date(DATA.dates[DATA.dates.length-1])-new Date(DATA.dates[b]))/864e5;
     if(endTk&&gapDias>15) periodMsg=(periodMsg?periodMsg+" ":"")+`El periodo termina el ${dlabelDay(DATA.dates[b])} porque <b>${shortOf(endTk)}</b> dejó de publicar valor liquidativo ahí.`;
   }
-  renderResults(M,pv,bpv,bench,dates,tks,a,b,Math.abs(sw-100)>=0.5,assetsPts,benchPt,limited?limTk:null,periodMsg,benchMsg);
+  const attrib = tks.length>=2 ? buildAttribution(sub,pv,dates,tks,wn,a,b) : null;
+  renderResults(M,pv,bpv,bench,dates,tks,a,b,Math.abs(sw-100)>=0.5,assetsPts,benchPt,limited?limTk:null,periodMsg,benchMsg,attrib);
 }
 function metrics(pv,dates){
   const L=pv.length;
@@ -716,7 +748,7 @@ function metrics(pv,dates){
 }
 
 /* ---------- resultados ---------- */
-function renderResults(M,pv,bpv,bench,dates,tks,a,b,unbal,assetsPts,benchPt,limTk,periodMsg,benchMsg){
+function renderResults(M,pv,bpv,bench,dates,tks,a,b,unbal,assetsPts,benchPt,limTk,periodMsg,benchMsg,attrib){
   window.REPDATES=dates;
   $("#results").classList.remove("hide");
   $("#cards").style.display="grid";
@@ -744,6 +776,7 @@ function renderResults(M,pv,bpv,bench,dates,tks,a,b,unbal,assetsPts,benchPt,limT
   drawDrawdown(pv,dates,bpv,bench);
   drawScatter(assetsPts,{cagr:M.cagr,vol:M.vol},benchPt);
   drawCor(tks,a,b);
+  drawAttribution(attrib);
 }
 function drawCurve(pv,bpv,bench,dates){
   const W=920,H=360,L=52,R=16,T=14,B=28, w=W-L-R, h=H-T-B;
@@ -796,6 +829,87 @@ function drawCor(tks,a,b){
     tks.forEach((tj,j)=>{const v=i===j?1:corr(i,j); h+=`<td style="${cell(v)}">${i===j?'1':fmt2(v)}</td>`;});
     h+='</tr>'; });
   h+='</table>'; $("#cor").innerHTML=h;
+}
+/* ---------- contribución de cada fondo (atribución) ----------
+   Rentabilidad y caída se reparten por el VALOR en € de cada fondo (exacto y
+   aditivo: las columnas suman justo el total de la cartera). El riesgo se
+   reparte por covarianzas (descomposición de Euler) con los pesos fijados. */
+function buildAttribution(sub,pv,dates,tks,wn,a,b){
+  const L=pv.length;
+  // aportación a la rentabilidad total (fracción del total de la cartera)
+  const ret=sub.map(s=>(s[L-1]-s[0])/pv[0]);
+  // retorno propio del fondo (standalone), por contexto
+  const own=sub.map(s=>s[0]?s[L-1]/s[0]-1:0);
+  // ventana de la peor caída de la cartera (pico -> valle)
+  let peak=pv[0],pk=0,dd=0,ddPk=0,ddTr=0;
+  for(let i=0;i<L;i++){ if(pv[i]>peak){peak=pv[i];pk=i;} const d=pv[i]/peak-1; if(d<dd){dd=d;ddPk=pk;ddTr=i;} }
+  const ddc=sub.map(s=>(s[ddTr]-s[ddPk])/pv[ddPk]); // fracción de la caída; +/- (algunos amortiguan)
+  // reparto del riesgo (volatilidad) por covarianzas
+  const wi=weeklyIdx(a,b,DATA.dates);
+  const rets=tks.map(t=>weeklyRets(DATA.funds[t].px,wi));
+  const risk=riskShares(rets,wn);
+  const rows=tks.map((t,k)=>({tk:t,col:COLOR_OF[t]||"#5B6675",w:wn[k],ret:ret[k],own:own[k],dd:ddc[k],risk:risk[k]}));
+  rows.sort((x,y)=>y.ret-x.ret); // mayor aportación a rentabilidad arriba
+  return {rows,total:pv[L-1]/pv[0]-1,maxdd:dd,ddFrom:dates[ddPk],ddTo:dates[ddTr]};
+}
+// Reparto del riesgo: %RC_i = w_i·(Σw)_i / (w'Σw). Suma 1. Negativo = el fondo
+// resta riesgo (diversifica). Σ = covarianza de retornos semanales.
+function riskShares(rets,w){
+  const m=rets.length; let n=Infinity; rets.forEach(r=>{n=Math.min(n,r.length);});
+  if(!isFinite(n)||n<2) return w.map(()=>0);
+  const ms=rets.map(r=>{let s=0;for(let t=0;t<n;t++)s+=r[t];return s/n;});
+  const cov=(i,j)=>{let c=0;for(let t=0;t<n;t++)c+=(rets[i][t]-ms[i])*(rets[j][t]-ms[j]);return c/n;};
+  const Sw=w.map((_,i)=>{let s=0;for(let j=0;j<m;j++)s+=cov(i,j)*w[j];return s;});
+  const varP=w.reduce((s,wi2,i)=>s+wi2*Sw[i],0);
+  if(varP<=0) return w.slice();
+  return w.map((wi2,i)=>wi2*Sw[i]/varP);
+}
+function drawAttribution(A){
+  const panel=$("#attribPanel");
+  if(!A){ panel.classList.add("hide"); return; }
+  panel.classList.remove("hide");
+  const rows=A.rows, hasDD=Math.abs(A.maxdd)>1e-4;
+  const mR=Math.max(1e-9,...rows.map(r=>Math.abs(r.ret)));
+  const mD=Math.max(1e-9,...rows.map(r=>Math.abs(r.dd)));
+  const mK=Math.max(1e-9,...rows.map(r=>Math.abs(r.risk)));
+  const pp=x=>{const v=x*100;return (v>0?"+":(v<0?"−":""))+Math.abs(v).toFixed(1).replace(".",",");};
+  const sl="#9AA5B3"; // barra neutra para el riesgo
+  const cell=(txt,frac,max,mode)=>{ // mode: 'ret' | 'dd' | 'risk'
+    const w=Math.min(100,Math.abs(frac)/max*100);
+    let bar=sl, cls="";
+    if(mode==="risk"){ bar=frac<0?"var(--up)":"#9AA5B3"; }
+    else{ const pos=frac>=0; cls=pos?"up":"down"; bar=pos?"var(--up)":"var(--down)"; }
+    return `<td><div class="cell"><span class="num ${cls}">${txt}</span>`+
+           `<div class="bartrack"><div class="barpos" style="width:${w.toFixed(0)}%;background:${bar}"></div></div></div></td>`;
+  };
+  const head=`<tr><th>Fondo</th><th>Peso</th><th>A la rentabilidad</th><th>En la peor caída</th><th>% del riesgo</th></tr>`;
+  let body="";
+  rows.forEach(r=>{
+    const ddCell = hasDD ? cell(pp(r.dd)+" pp",r.dd,mD,"dd")
+                         : `<td><span class="num" style="color:var(--mute)">—</span></td>`;
+    body+=`<tr>`+
+      `<td class="name" title="${nmOf(r.tk)}"><div class="nmin"><span class="dot" style="background:${r.col}"></span><span class="nmtx">${shortOf(r.tk)}</span></div></td>`+
+      `<td>${Math.round(r.w*100)}%</td>`+
+      cell(pp(r.ret)+" pp",r.ret,mR,"ret")+
+      ddCell+
+      cell(Math.round(r.risk*100)+"%",r.risk,mK,"risk")+
+    `</tr>`;
+  });
+  const totDD = hasDD ? `<td><div class="cell"><span class="num down">${pp(A.maxdd)} pp</span></div></td>`
+                      : `<td><span class="num" style="color:var(--mute)">—</span></td>`;
+  body+=`<tr class="totrow">`+
+    `<td class="name">Cartera</td>`+
+    `<td>100%</td>`+
+    `<td><div class="cell"><span class="num ${A.total>=0?'up':'down'}">${pp(A.total)} pp</span></div></td>`+
+    totDD+
+    `<td><div class="cell"><span class="num">100%</span></div></td>`+
+  `</tr>`;
+  $("#attribtb").innerHTML=head+body;
+  $("#attribSub").textContent = hasDD
+    ? `peor caída analizada: ${dlabel(A.ddFrom)} → ${dlabel(A.ddTo)} (${pp(A.maxdd)}%)`
+    : `quién pone la rentabilidad y el riesgo`;
+  $("#attribNote").innerHTML =
+    `Cada fila reparte el resultado de la cartera entre tus fondos. <b>A la rentabilidad</b> y <b>En la peor caída</b> van en puntos y suman exactamente el total de la cartera: así ves, p. ej., que de una caída del −10% un fondo puso −8 y el resto apenas se movieron (en verde, los que incluso amortiguaron). <b>% del riesgo</b> reparte la volatilidad teniendo en cuenta cuánto se solapa cada fondo con el resto, así que un fondo puede pesar poco y aun así aportar mucho riesgo —o diversificar y restarlo (en verde)—. Calculado con los pesos que fijaste; en compra y mantén el peso real va variando algo con el tiempo.`;
 }
 function perAsset(tks,a,b,years){
   const wi=weeklyIdx(a,b,DATA.dates);
@@ -1042,6 +1156,7 @@ function renderCompare(series,bench,bpv,benchM,dates,tks,a,b,assetsPts,benchPt,l
   $("#results").classList.remove("hide");
   $("#cards").style.display="none";
   $("#cmptable").classList.remove("hide");
+  $("#attribPanel").classList.add("hide");
   $("#curveTitle").textContent="Crecimiento de 10.000 € en cada fondo";
   const yrs=series[0].M.years;
   $("#periodNote").innerHTML=(periodMsg?`<span style="color:#B5851F">${periodMsg}</span> `:``)+
