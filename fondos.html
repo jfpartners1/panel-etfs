@@ -259,8 +259,9 @@
     .rephead{margin-bottom:14px}
     .repfoot{margin-top:12px;border-top:1px solid #DDE3EC;padding-top:7px;font-size:8.5px;color:#8A95A5;line-height:1.5}
     .panel{box-shadow:none;border:1px solid #DDE3EC;margin-bottom:12px}
-    .cards{break-inside:avoid}
+    .cards{break-inside:avoid;grid-template-columns:repeat(3,1fr)}  /* 9 métricas en rejilla 3×3, sin tarjeta suelta */
     .chart,.cor{break-inside:avoid}
+    #mainPanel{break-inside:avoid}  /* curva + caídas SIEMPRE juntas: evita que el gráfico de caídas quede huérfano al inicio de la página siguiente */
     #attribPanel{break-inside:avoid}
     #attribPanel .atb{font-size:9px}
     #attribPanel .bartrack{width:48px}
@@ -351,7 +352,7 @@
     <div class="note" id="periodNote"></div>
     <div class="cards" id="cards"></div>
     <div class="cmptable hide" id="cmptable"></div>
-    <div class="panel">
+    <div class="panel" id="mainPanel">
       <div class="ptitle"><h2 id="curveTitle">Crecimiento de 10.000 €</h2><span class="sub" id="chartSub"></span></div>
       <div class="leg" id="leg"></div>
       <div class="chart"><svg id="curve" viewBox="0 0 920 360" preserveAspectRatio="xMidYMid meet"></svg></div>
