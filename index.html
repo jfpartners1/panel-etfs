@@ -6,16 +6,17 @@
 <title>Resumen de mercado · ETFs</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#F3F5F8;--panel:#FFFFFF;--line:#E8ECF1;--line-2:#EEF1F5;
-    --ink:#1A2233;--ink-2:#5B6675;--mute:#8A95A5;
-    --up:#15A86B;--up-bg:#22B573;--down:#E04444;--down-bg:#EF5350;--blue:#2563EB;--radius:14px;
+    --bg:#FAF8F8;--panel:#FFFFFF;--line:#ECE9E9;--line-2:#F3F1F1;
+    --ink:#20232A;--ink-2:#4D525C;--mute:#8C9099;
+    --up:#15A86B;--up-bg:#22B573;--down:#E04444;--down-bg:#EF5350;--blue:#030942;--radius:14px;
+    --navy:#030942;--sky:#74BDFF;--serif:"Newsreader",Georgia,"Times New Roman",serif;
   }
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--bg);color:var(--ink);
-    font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+    font-family:"Manrope",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
   .num{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
   .wrap{max-width:1440px;margin:0 auto;padding:20px 20px 56px}
 
@@ -24,9 +25,9 @@
   .brand{display:flex;align-items:center;gap:11px;min-width:0}
   .brandlogo{height:34px;width:auto;display:block}
   .seclbl{font-size:12.5px;color:var(--ink-2);font-weight:500;border-left:1px solid var(--line);padding-left:11px;white-space:nowrap}
-  .logo{width:26px;height:26px;border-radius:7px;background:var(--ink);color:#fff;
-    font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:11.5px;display:grid;place-items:center;flex:none}
-  .bname{font-weight:700;font-size:15px;letter-spacing:-.01em;color:var(--ink)}
+  .logo{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#030942,#74BDFF);color:#fff;
+    font-family:var(--serif);font-weight:700;font-size:13px;display:grid;place-items:center;flex:none}
+  .bname{font-family:var(--serif);font-weight:600;font-size:17px;letter-spacing:0;color:var(--ink)}
   .bsub{font-size:12px;color:var(--mute);border-left:1px solid var(--line);padding-left:11px;white-space:nowrap}
   @media(max-width:560px){.bsub{display:none}.seclbl{display:none}.brandlogo{height:28px}}
   .head{display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap}
@@ -35,7 +36,7 @@
   .badge{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;border-radius:20px;padding:3px 10px;margin-left:10px}
   .navlinks{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
   .navlink{font-size:12.5px;font-weight:500;color:var(--ink-2);text-decoration:none;padding:6px 12px;border:1px solid var(--line);border-radius:9px;white-space:nowrap;transition:all .12s}
-  .navlink:hover{color:var(--blue);border-color:var(--blue);background:#F5F8FF}
+  .navlink:hover{color:var(--blue);border-color:var(--blue);background:#EFF6FF}
   .badge.demo{color:#B5862B;background:#FBF3E2;border:1px solid #F0DEB4}
   .badge.live{color:#15803D;background:#E9F8F0;border:1px solid #BDEBD2}
 
@@ -61,7 +62,7 @@
 
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
   .ptitle{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:14px 16px 0}
-  .ptitle h2{font-size:14px;font-weight:600;margin:0}
+  .ptitle h2{font-family:var(--serif);font-size:16px;font-weight:600;margin:0;letter-spacing:0}
   .ptitle .sub{font-size:11.5px;color:var(--mute)}
 
   .top{display:grid;grid-template-columns:300px 1fr 300px;gap:16px;align-items:stretch}
@@ -124,10 +125,10 @@
   .scard{padding:16px}
   .row2{display:flex;gap:26px;flex-wrap:wrap}
   .kpi .lbl{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--mute)}
-  .kpi .big{font-size:26px;font-weight:700;margin-top:4px;letter-spacing:-.01em}
+  .kpi .big{font-family:var(--serif);font-size:28px;font-weight:600;margin-top:3px;letter-spacing:0;font-variant-numeric:tabular-nums}
   .kpi .big.up{color:var(--up)} .kpi small{font-size:14px;font-weight:600}
   .updown b{color:var(--up)} .updown i{color:var(--down);font-style:normal}
-  .range{height:9px;border-radius:6px;margin:10px 0 6px;background:linear-gradient(90deg,#2563EB,#15A86B,#E0A92E,#E04444)}
+  .range{height:9px;border-radius:6px;margin:10px 0 6px;background:linear-gradient(90deg,#030942,#15A86B,#E0A92E,#E04444)}
   .range-lbls{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-2)}
 
   /* reacciones al hover */
@@ -188,7 +189,7 @@
   /* panel momentum */
   .mm{margin-top:16px;padding:16px}
   .phead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px}
-  .phead h2{font-size:14px;font-weight:600;margin:0}
+  .phead h2{font-family:var(--serif);font-size:16px;font-weight:600;margin:0}
   .phead .sub{font-size:11.5px;color:var(--mute)}
   .mtable{overflow-x:auto}
   .mhdr,.mrow{display:grid;grid-template-columns:26px minmax(150px,1fr) 48px 34px 34px 34px 34px 50px 50px 50px 50px 54px 50px;align-items:center;gap:7px;min-width:880px}
@@ -262,7 +263,7 @@
   .rtag{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;padding:1px 4px;border-radius:5px;background:#EAEEF3;color:#5B6675;white-space:nowrap;line-height:1.5}
   .rnone{color:var(--mute);font-size:11px}
 
-  footer{margin-top:26px;color:var(--mute);font-size:11.5px;font-family:"IBM Plex Mono",monospace;border-top:1px solid var(--line);padding-top:14px}
+  footer{margin-top:26px;color:var(--mute);font-size:11.5px;font-family:"Manrope",sans-serif;border-top:1px solid var(--line);padding-top:14px}
 </style>
 </head>
 <body>
@@ -602,7 +603,7 @@ function renderWaterfall(){const W=760,H=430,padX=14,padTop=104,padBot=30,base=p
 })();
 
 /* ---- curvas: recorte por periodo + rebase a 100 ---- */
-const PAL=['#2563EB','#E04444','#15A86B','#0EA5C7','#E08A1E','#8B5CF6','#EC4899','#14B8A6',
+const PAL=['#030942','#E04444','#15A86B','#0EA5C7','#E08A1E','#8B5CF6','#EC4899','#14B8A6',
   '#F97316','#3B82F6','#A855F7','#CA8A04','#0D9488','#DB2777','#65A30D','#0891B2','#9333EA','#DC2626'];
 const HIDDEN={assets:new Set(),themes:new Set(),momz:new Set()}, CHART_INFO={};
 const CORE={assets:new Set(["S&P 500","Nasdaq 100","Bonos 20Y","Oro","Bitcoin"]),
