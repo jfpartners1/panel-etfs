@@ -224,6 +224,20 @@
   .sqv.tight{color:var(--up)} .sqv.mid{color:var(--ink-2)} .sqv.loose{color:var(--mute)}
   .mrow .sub-cell .fl{position:absolute;left:0;top:0;bottom:0;background:#BFD2F2}
   .mrow .sub-cell span{position:absolute;inset:0;display:grid;place-items:center;font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:600;color:#1A2233}
+  .schdr,.scrow{display:grid;grid-template-columns:minmax(150px,1fr) 48px 60px 52px 52px 52px 54px 56px 56px 118px;align-items:center;gap:7px;min-width:760px}
+  .schdr{padding:0 7px 8px;border-bottom:1px solid var(--line);font-size:10px;letter-spacing:.03em;text-transform:uppercase;color:var(--mute)}
+  .schdr .rt{text-align:center}
+  .schdr [data-sort]{cursor:pointer;user-select:none}
+  .schdr [data-sort]:hover{color:var(--ink)}
+  .schdr [data-sort].on{color:var(--blue)}
+  .scrow{padding:8px 7px;border-radius:9px;cursor:pointer;transition:background .12s}
+  .scrow:hover{background:#F6F8FB}
+  .scrow .mid2{min-width:0;display:flex;align-items:center;gap:8px}
+  .scrow .tk{font-size:12.5px;font-weight:600;color:var(--blue)}
+  .scrow .nm{font-size:11px;color:var(--ink-2);font-family:"IBM Plex Mono",monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .scrow .rawv{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;text-align:center}
+  .scrow .rawv.up{color:var(--up)} .scrow .rawv.down{color:var(--down)} .scrow .rawv.mut{color:var(--ink-2)}
+  .scrow .sc{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:700;text-align:center;border-radius:8px;padding:5px 0}
 
   .wf{padding:6px 12px 14px}.wf svg{width:100%;height:auto;display:block}
 
@@ -315,7 +329,7 @@
       <div class="lst" id="best"></div>
     </div>
     <div class="panel breadth">
-      <div class="ptitle"><h2>Amplitud del mercado</h2><span class="sub">clic en una métrica para ver los ETFs</span></div>
+      <div class="ptitle"><h2>Amplitud del mercado <span style="font-family:'Manrope',sans-serif;font-size:11px;font-weight:500;color:var(--mute)">(diario)</span></h2><span class="sub">clic en una métrica para ver los ETFs</span></div>
       <div class="brd" id="breadth"></div>
       <div class="brdpop" id="brdPop" hidden></div>
     </div>
@@ -353,7 +367,27 @@
     </div>
   </div>
 
-  <section class="panel rspanel">
+  <section class="panel mm" style="margin-top:16px">
+    <div class="phead"><h2>Sectores · Cap-weight vs Equal-weight</h2>
+      <span class="sub">SPDR (XL*) frente a Invesco equipond. (RSP*) · spread &gt;0 = rally estrecho en megacaps · clic en cabecera para ordenar</span></div>
+    <div class="mtable">
+      <div class="schdr" id="schdr">
+        <span>Sector</span>
+        <span class="rt" data-sort="rs" title="Fuerza relativa: percentil dentro de los 11 sectores (equal-weight)">Fuerza</span>
+        <span class="rt" data-sort="last" title="Último cierre del equal-weight">Último</span>
+        <span class="rt" data-sort="d">%1D</span>
+        <span class="rt" data-sort="w">%1S</span>
+        <span class="rt" data-sort="m">%1M</span>
+        <span class="rt" data-sort="ytd">YTD</span>
+        <span class="rt" data-sort="stD" title="Sesiones consecutivas al alza (▲) o baja (▼) del equal-weight">Racha D</span>
+        <span class="rt" data-sort="stW" title="Semanas consecutivas al alza (▲) o baja (▼) del equal-weight">Racha S</span>
+        <span class="rt" data-sort="sp" title="Cap-weight menos equal-weight a 1 mes. >0: el cap-weight lidera (rally concentrado en megacaps, estrecho). <0: el equal-weight lidera (participación amplia, sano).">Spread CW−EW</span>
+      </div>
+      <div id="sectors"></div>
+    </div>
+  </section>
+
+  <section class="panel rspanel" style="margin-top:16px">
     <div class="ptitle"><h2>Fuerza relativa</h2>
       <span class="sub">ratio A ÷ B · la línea sube = A lidera · baja = B lidera</span></div>
     <div class="rsbar">
@@ -372,7 +406,7 @@
       <label class="rsmm"><input type="checkbox" id="rsMM"> media móvil</label>
     </div>
     <div class="rsread" id="rsRead"></div>
-    <div class="chart"><svg id="chRS" viewBox="0 0 720 320"></svg></div>
+    <div class="chart"><svg id="chRS" viewBox="0 0 720 232"></svg></div>
   </section>
 
   <section class="panel mm">
@@ -542,9 +576,19 @@ function buildSample(){
   const wdates=[];{const wd=new Date();wd.setDate(wd.getDate()-260*7);for(let i=0;i<260;i++){wdates.push(wd.toISOString().slice(0,10));wd.setDate(wd.getDate()+7);}}
   const rsPx={}; BASE.forEach(([tk],i)=>{rsPx[tk]=rawSeries(700+i*53,260,40+((i*37)%220));});
   const rs={dates:wdates,px:rsPx,freq:"w"};
+  const SEC_PAIRS=[["RSPT","XLK","Tecnología"],["RSPH","XLV","Salud"],["RSPN","XLI","Industria"],
+    ["RSPS","XLP","Cons. básico"],["RSPU","XLU","Utilities"],["RSPM","XLB","Materiales"],
+    ["RSPR","XLRE","Inmobiliario"],["RSPF","XLF","Financieras"],["RSPC","XLC","Comunicación"],
+    ["RSPG","XLE","Energía"],["RSPD","XLY","Cons. discrec."]];
+  const sectors=SEC_PAIRS.map(([ew,cw,sec])=>{
+    const rp=k=>Math.round((r()*k*2-k*0.5)*10)/10;
+    const ewR={d:rp(1.5),w:rp(4),m:rp(10),ytd:rp(22)},cwR={d:rp(1.5),w:rp(4),m:rp(10),ytd:rp(22)};
+    return {sec,cwSym:cw,ewSym:ew,last:Math.round((30+r()*80)*100)/100,cwR,ewR,
+      stD:Math.round(r()*8-4),stW:Math.round(r()*6-3),
+      spM:Math.round((cwR.m-ewR.m)*10)/10,rs:Math.round(r()*100)};}).sort((a,b)=>b.rs-a.rs);
   return {asOf:"datos de muestra",live:false,
     stats:{spx:"7.431,46",spxChg:"+0,6%",lo52:"5.802,82",hi52:"7.609,78"},
-    universe, assets:mk(ASSET_LBL,11), themes:mk(THEME_LBL,53), momentum:mom, momentumZ:momz, pulse, breakouts, squeeze, factors, breadth, radar, rs, ucits};
+    universe, assets:mk(ASSET_LBL,11), themes:mk(THEME_LBL,53), momentum:mom, momentumZ:momz, pulse, breakouts, squeeze, factors, breadth, radar, rs, sectors, ucits};
 }
 
 /* ---- estado ---- */
@@ -738,7 +782,7 @@ function rsChart(){
   // media móvil opcional (10 semanas ≈ 2,5 meses) sobre el ratio rebasado
   let mm=null;
   if(RS_MM){const k=10;mm=ratio.map((_,i)=>{if(i<k-1)return null;let s=0,c=0;for(let j=i-k+1;j<=i;j++){if(ratio[j]!=null){s+=ratio[j];c++;}}return c?s/c:null;});}
-  const W=720,H=320,L=42,R=12,T=14,B=42;
+  const W=720,H=232,L=42,R=12,T=14,B=42;
   const flat=ratio.filter(v=>v!=null).concat(mm?mm.filter(v=>v!=null):[]);
   if(!flat.length){sv.innerHTML="";$("#rsRead").innerHTML="";return;}
   let mn=Math.min(...flat,100),mx=Math.max(...flat,100); if(mn===mx){mn-=1;mx+=1;}
@@ -822,6 +866,40 @@ function renderSqueeze(){const m=DATA.squeeze||[];
       <span class="sqv ${sq}">${ratio==null?"—":ratio.toFixed(2).replace(".",",")}</span>
       <span class="rawv ${rvClass(rvol)}">${rvolFmt(rvol)}</span></div>`;}).join("")
     :'<div style="color:var(--mute);font-size:12px;padding:10px 7px">Sin bases apretadas claras ahora mismo.</div>';}
+
+/* ---- sectores: cap-weight vs equal-weight ---- */
+let SEC_SORT={key:"rs",dir:-1};
+const SEC_KEYS={rs:r=>r.rs,last:r=>r.last,d:r=>r.ewR.d,w:r=>r.ewR.w,m:r=>r.ewR.m,
+  ytd:r=>r.ewR.ytd,stD:r=>r.stD,stW:r=>r.stW,sp:r=>r.spM};
+function streakTag(n){
+  if(n==null||n===0)return '<span class="rawv mut">—</span>';
+  const up=n>0;return `<span class="rawv ${up?"up":"down"}">${Math.abs(n)}${up?"▲":"▼"}</span>`;}
+function renderSectors(){
+  const el=document.getElementById("sectors");if(!el)return;
+  const s=(DATA.sectors||[]).slice();
+  if(!s.length){el.innerHTML='<div style="color:var(--mute);font-size:12px;padding:10px 7px">Sin datos de sectores.</div>';return;}
+  const get=SEC_KEYS[SEC_SORT.key]||SEC_KEYS.rs;
+  s.sort((a,b)=>{const va=get(a),vb=get(b);
+    if(va==null)return 1;if(vb==null)return -1;return (va-vb)*SEC_SORT.dir;});
+  const ret=v=>`<span class="rawv ${v>=0?"up":"down"}">${v==null?"—":fmtPct(v)}</span>`;
+  el.innerHTML=s.map(r=>{
+    const sc=scoreColor(r.rs==null?50:r.rs);
+    let spCls="mut",spTag="";
+    if(r.spM!=null){
+      if(r.spM>0.5){spCls="down";spTag='<small class="vtag down">estrecho</small>';}
+      else if(r.spM<-0.5){spCls="up";spTag='<small class="vtag up">amplio</small>';}}
+    const last=r.last==null?"—":r.last.toFixed(2).replace(".",",");
+    const spv=r.spM==null?"—":(r.spM>0?"+":"")+r.spM.toFixed(1).replace(".",",")+"%";
+    return `<div class="scrow" data-tk="${r.ewSym}" data-nm="${esc(r.sec)} equal-weight (${r.ewSym})">
+      <span class="mid2"><span class="chip" style="width:22px;height:22px;background:${CATS.IND.color}">${r.ewSym.slice(0,2)}</span>
+        <span style="min-width:0"><span class="tk">${esc(r.sec)}</span> <span class="nm">${r.ewSym} · ${r.cwSym}</span></span></span>
+      <span class="sc" style="background:${sc.bg};color:${sc.fg}">${r.rs==null?"—":r.rs}</span>
+      <span class="rawv mut">${last}</span>
+      ${ret(r.ewR.d)}${ret(r.ewR.w)}${ret(r.ewR.m)}${ret(r.ewR.ytd)}
+      ${streakTag(r.stD)}${streakTag(r.stW)}
+      <span class="rawv ${spCls}">${spv}${spTag}</span></div>`;}).join("");
+  [...document.querySelectorAll("#schdr [data-sort]")].forEach(h=>
+    h.classList.toggle("on",h.dataset.sort===SEC_SORT.key));}
 
 /* ---- pulso de mercado (estilo IBD) ---- */
 const PULSE_LBL={green:"Tendencia confirmada",yellow:"Tendencia bajo presión",red:"Mercado en corrección"};
@@ -927,7 +1005,7 @@ function renderBottom(){lineChart("chAssets","lgAssets",DATA.assets,"assets");li
 function renderAll(){
   U=DATA.universe.map(([tk,nm,cat,rets,key,rvol])=>({tk,nm,cat,rets,key:!!key,rvol:rvol==null?null:rvol}));
   initHidden();
-  renderTop();renderBottom();renderMom();momZChart();renderBreakouts();renderSqueeze();renderRS();
+  renderTop();renderBottom();renderMom();momZChart();renderBreakouts();renderSqueeze();renderSectors();renderRS();
   const live=!!DATA.live,badge=$("#badge");
   badge.textContent=live?("Actualizado "+DATA.asOf):"Datos de muestra";
   badge.className="badge "+(live?"live":"demo");
@@ -997,8 +1075,12 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeChart();});
   const li=e.target.closest(".li");if(li)openChart(li.dataset.tk,li.dataset.nm);}));
 document.querySelector(".wf").addEventListener("click",e=>{const t=e.target;
   if(t.classList&&t.classList.contains("hit")){const b=WF_BARS[+t.getAttribute("data-i")];if(b)openChart(b.tk,b.nm);}});
-["#mom","#breakouts","#squeeze","#factors","#radar"].forEach(sel=>document.querySelector(sel).addEventListener("click",e=>{
+["#mom","#breakouts","#squeeze","#factors","#radar","#sectors"].forEach(sel=>document.querySelector(sel).addEventListener("click",e=>{
   const el=e.target.closest("[data-tk]");if(el)openChart(el.dataset.tk,el.dataset.nm);}));
+document.getElementById("schdr").addEventListener("click",e=>{
+  const h=e.target.closest("[data-sort]");if(!h)return;const k=h.dataset.sort;
+  if(SEC_SORT.key===k)SEC_SORT.dir*=-1;else SEC_SORT={key:k,dir:-1};
+  renderSectors();});
 document.getElementById("breadth").addEventListener("click",e=>{
   const r=e.target.closest("[data-bkey]");if(r)openBreadthPop(r.dataset.bkey);});
 document.getElementById("brdPop").addEventListener("click",e=>{
