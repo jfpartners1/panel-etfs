@@ -78,6 +78,17 @@ FACTORS = [("IWD","L","V"),("IWB","L","C"),("IWF","L","G"),
            ("IWN","S","V"),("IWM","S","C"),("IWO","S","G")]
 FACTOR_NM = {"L":"Grande","M":"Media","S":"Pequeña","V":"Value","C":"Core","G":"Growth"}
 
+# Sectores GICS: cap-weight (SPDR, ya en UNIVERSE) emparejado con su equal-weight (Invesco RSP).
+# Lista aparte (como FACTORS): NO entra en el universo principal para no contaminar
+# breadth/momentum/radar con casi-duplicados. Solo alimenta el bloque `sectors`.
+# (ew, cw, nombre). Los RSP* son los antiguos RYT/RYH/RGI/... renombrados por Invesco en 2023.
+EW_SECTORS = [
+    ("RSPT","XLK","Tecnología"),("RSPH","XLV","Salud"),("RSPN","XLI","Industria"),
+    ("RSPS","XLP","Cons. básico"),("RSPU","XLU","Utilities"),("RSPM","XLB","Materiales"),
+    ("RSPR","XLRE","Inmobiliario"),("RSPF","XLF","Financieras"),("RSPC","XLC","Comunicación"),
+    ("RSPG","XLE","Energía"),("RSPD","XLY","Cons. discrec."),
+]
+
 def eod_sym(tk): return tk + ".US"
 
 # ----------------------------------------------------------------------
@@ -384,6 +395,57 @@ def factor_block(hist, live):
         out.append([tk, row, col, rets])
     return out
 
+def _streak(cl):
+    """Racha de cierres consecutivos al alza (+n) o a la baja (-n) desde el final."""
+    if len(cl) < 2: return 0
+    up = cl[-1] >= cl[-2]
+    n = 0
+    for i in range(len(cl) - 1, 0, -1):
+        if (cl[i] >= cl[i-1]) == up: n += 1
+        else: break
+    return n if up else -n
+
+def _weekly_closes(closes):
+    """Último cierre de cada semana ISO. `closes` = [(date, close)] ascendente."""
+    wk = {}
+    for d, c in closes:
+        iso = d.isocalendar()
+        wk[(iso[0], iso[1])] = c
+    return [wk[k] for k in sorted(wk)]
+
+def sectors_block(hist, live):
+    """Comparativa Cap-weight (SPDR XL*) vs Equal-weight (Invesco RSP*) por sector GICS.
+    Para cada sector: retornos D/S/M/YTD de ambos, racha diaria/semanal del equal-weight,
+    fuerza relativa (percentil dentro de los 11 sectores) y spread CW-EW a 1 mes
+    (>0 = el cap-weight lidera -> rally concentrado en megacaps, estrecho; <0 = amplio).
+    Cero llamadas extra: usa el histórico ya descargado."""
+    rows = []
+    for ew, cw, sec in EW_SECTORS:
+        ewrows = hist.get(eod_sym(ew)); cwrows = hist.get(eod_sym(cw))
+        if not ewrows or not cwrows: continue
+        ewcl = unified_closes(ewrows, live.get(eod_sym(ew)))
+        cwcl = unified_closes(cwrows, live.get(eod_sym(cw)))
+        ewR = returns(ewcl, ewrows); cwR = returns(cwcl, cwrows)
+        cle = [c for _, c in ewcl]
+        if not cle: continue
+        r21, r63, r126 = _ret(cle, 21), _ret(cle, 63), _ret(cle, 126)
+        r252 = _ret(cle, 252) if len(cle) >= 253 else None
+        wr = [(w, v) for w, v in ((0.10, r21), (0.25, r63), (0.30, r126), (0.35, r252)) if v is not None]
+        trend = sum(w*v for w, v in wr) / sum(w for w, _ in wr) if wr else None
+        spM = (cwR["m"] - ewR["m"]) if (cwR["m"] is not None and ewR["m"] is not None) else None
+        rows.append({"sec": sec, "cwSym": cw, "ewSym": ew,
+                     "last": round(cle[-1], 2),
+                     "cwR": cwR, "ewR": ewR,
+                     "stD": _streak(cle), "stW": _streak(_weekly_closes(ewcl)),
+                     "spM": round(spM, 1) if spM is not None else None,
+                     "_t": trend})
+    T = sorted(r["_t"] for r in rows if r["_t"] is not None)
+    for r in rows:
+        t = r.pop("_t")
+        r["rs"] = round(bisect.bisect_right(T, t) / len(T) * 100) if (t is not None and T) else None
+    rows.sort(key=lambda r: -(r["rs"] or 0))
+    return rows
+
 def breadth_block(universe_def, hist, live):
     """Amplitud del mercado: % sobre media 50/200, nuevos máx/mín, % en positivo, con la lista de ETFs de cada grupo."""
     n = d200 = 0
@@ -553,6 +615,20 @@ def main():
         except Exception as e:
             print(f"  · error EOD factor {s}: {e}", file=sys.stderr)
 
+    # 1c) ETFs sectoriales equal-weight (Invesco RSP*) para la tabla CW vs EW.
+    #     Se omiten en --dev para no quemar la cuota gratuita (11 llamadas).
+    if not args.dev:
+        for ew, *_ in EW_SECTORS:
+            s = eod_sym(ew)
+            if s in hist: continue
+            try:
+                raw = get_eod(s)
+                if raw:
+                    hist[s] = [(d, c) for d, c, _ in raw]
+                    volh[s] = [(d, v) for d, _, v in raw]
+            except Exception as e:
+                print(f"  · error EOD sector EW {s}: {e}", file=sys.stderr)
+
     # 2) Precios en vivo (solo plan de pago)
     live = {}
     if use_live:
@@ -601,6 +677,7 @@ def main():
             "pulse": market_pulse(hist, volh),
             "breakouts": bo, "squeeze": sq,
             "factors": factor_block(hist, live), "breadth": breadth_block(universe_def, hist, live),
+            "sectors": sectors_block(hist, live),
             "radar": radar_block(universe_def, hist, live),
             "rs": rs_block(universe_def, hist, [d for d, _ in spy]),
             "ucits": load_ucits()}
