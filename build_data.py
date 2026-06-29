@@ -9,7 +9,7 @@ API key por variable de entorno EODHD_API_KEY (NUNCA en el código ni en el nave
 
 Modos:
     python build_data.py --dev      # DESARROLLO: 12 ETFs, sin tiempo real, con caché
-    python build_data.py            # completo: 74 ETFs + tiempo real (plan de pago)
+    python build_data.py            # completo: 77 ETFs + tiempo real (plan de pago)
     python build_data.py --no-live  # completo solo cierre
     python build_data.py --demo     # sin red, datos sintéticos
     python build_data.py --refresh  # ignora la caché y vuelve a descargar
@@ -36,12 +36,15 @@ UNIVERSE = [
     ("EEM","Emergentes","IDX",True),("VGK","Europa","IDX",False),("EWJ","Japón","IDX",False),
     ("FXI","China","IDX",True),("INDA","India","IDX",False),("EWZ","Brasil","IDX",False),
     ("RSP","S&P 500 Equipond.","IDX",True),("MTUM","Momentum EE.UU.","IDX",True),("USMV","Mín. volatilidad","IDX",False),
-    ("TLT","Treasuries 20Y","ACT",True),("IEF","Treasuries 7-10Y","ACT",False),("LQD","Crédito IG","ACT",False),
-    ("HYG","High Yield","ACT",False),("TIP","Ligados inflación","ACT",False),("GLD","Oro","ACT",True),
+    ("AGG","Bono agregado","ACT",False),("SHY","Treasuries 1-3Y","ACT",False),
+    ("IEF","Treasuries 7-10Y","ACT",False),("TLT","Treasuries 20Y","ACT",True),
+    ("LQD","Crédito IG","ACT",False),("HYG","High Yield","ACT",False),("TIP","Ligados inflación","ACT",False),
+    ("BNDX","Bonos internac.","ACT",False),("EMB","Bonos emergentes","ACT",False),
+    ("GLD","Oro","ACT",True),
     ("SLV","Plata","ACT",False),("DBC","Materias primas","ACT",True),("USO","Petróleo","ACT",True),
     ("UNG","Gas natural","ACT",True),("DBA","Agricultura","ACT",False),("VNQ","Inmobiliario","ACT",False),
     ("IBIT","Bitcoin","ACT",True),("DBB","Metales base","ACT",False),
-    ("ETHA","Ethereum","ACT",True),("BND","Bono agregado","ACT",False),
+    ("ETHA","Ethereum","ACT",True),
     ("XLK","Tecnología","IND",True),("XLF","Financieras","IND",False),("XLV","Salud","IND",False),
     ("XLE","Energía","IND",True),("XLI","Industria","IND",False),("XLY","Cons. discrec.","IND",False),
     ("XLP","Cons. básico","IND",False),("XLU","Utilities","IND",False),("XLB","Materiales","IND",False),
