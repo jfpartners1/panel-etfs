@@ -665,12 +665,12 @@ $("#run").onclick=run;
 
 /* ---------- carteras de ejemplo ---------- */
 const PRESETS=[
-  {name:"60/40", desc:"La cartera de referencia clásica: 60% bolsa de EE. UU. y 40% bonos del Tesoro a largo plazo.",
-   w:[["SPY",60],["TLT",40]]},
+  {name:"60/40", desc:"La cartera de referencia clásica: 60% bolsa de EE. UU. y 40% bonos (índice agregado de EE. UU., grado de inversión y duración intermedia).",
+   w:[["SPY",60],["AGG",40]]},
   {name:"All Weather", desc:"De Ray Dalio. Pensada para aguantar cualquier entorno económico repartiendo entre bolsa, bonos largos y medios, oro y materias primas.",
    w:[["VTI",30],["TLT",40],["IEF",15],["GLD",8],["DBC",7]]},
-  {name:"Permanent Portfolio", desc:"De Harry Browne. Cuatro partes iguales: bolsa, bonos largos, oro y bonos cortos (aquí aproximados con IEF).",
-   w:[["VTI",25],["TLT",25],["GLD",25],["IEF",25]]},
+  {name:"Permanent Portfolio", desc:"De Harry Browne. Cuatro partes iguales: bolsa, bonos largos, oro y bonos cortos (liquidez).",
+   w:[["VTI",25],["TLT",25],["GLD",25],["SHY",25]]},
   {name:"Golden Butterfly", desc:"Cinco partes iguales: bolsa grande y pequeña, bonos largos y medios, y oro. Equilibrio entre crecer y aguantar caídas.",
    w:[["VTI",20],["IWM",20],["TLT",20],["IEF",20],["GLD",20]]},
   {name:"Bogleheads (3 fondos)", desc:"La cartera sencilla 'tres fondos': bolsa de EE. UU., bolsa internacional y bonos.",
