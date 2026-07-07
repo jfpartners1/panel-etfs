@@ -118,6 +118,48 @@ FUNDS = [
     ("LU0849399786", "Schroder Isf Euro High Yield", "Renta Fija", "High Yield", "HIGH YIELD EUROPA"),
     ("LU0658026512", "Axa Europe Short D High Yield", "Renta Fija", "High Yield", "HIGH YIELD EUROPA"),
     ("LU0170291933", "Candriam Bonds Global High Yield C ACC", "Renta Fija", "High Yield", "HIGH YIELD GLOBAL"),
+    # --- Ampliación julio 2026 (31 fondos) ---
+    # Activo / Global
+    ("LU0218171717", "JPMorgan - US Select Equity A (EUR)", "Activo", "Global", "RENTA VARIABLE GLOBAL"),
+    # Activo / Growth (multiactivo y megatendencias)
+    ("LU1966822956", "Cartesio Funds Income R", "Activo", "Growth", "MULTIACTIVO GLOBAL FLEXIBLE"),
+    ("LU1481479811", "Olea Neutral FI A", "Activo", "Growth", "MULTIACTIVO GLOBAL FLEXIBLE"),
+    ("FR0011253624", "R Co Valor", "Activo", "Growth", "MULTIACTIVO GLOBAL FLEXIBLE"),
+    ("LU0395794307", "JP Morgan Global Income", "Activo", "Growth", "MULTIACTIVO GLOBAL"),
+    ("LU1239090977", "Aberdeen Diversified Income (EUR Hedge)", "Activo", "Growth", "MULTIACTIVO GLOBAL"),
+    ("LU0270904781", "Pictet-Security P EUR", "Activo", "Growth", "MEGATENDENCIAS GLOBALES"),
+    # Activo / Asia
+    ("LU0318931192", "Fidelity China Focus", "Activo", "Asia", "CHINA"),
+    ("LU0329355670", "Robeco Emerging Markets", "Activo", "Asia", "EMERGENTES"),
+    ("LU1670618690", "M&G Emerging Markets", "Activo", "Asia", "EMERGENTES"),
+    ("IE00BTC1N590", "Man Emerging Markets", "Activo", "Asia", "EMERGENTES"),
+    # Activo / Alternativo (oro)
+    ("LU0171305526", "BGF World Gold", "Activo", "Alternativo", "RENTA VARIABLE ORO"),
+    ("IE00BYVJR916", "OFI Precious Metals", "Activo", "Alternativo", "RENTA VARIABLE ORO"),
+    # Activo / Dividendo
+    ("LU0731782404", "Fidelity Global Dividend A-QInc(G)-EUR", "Activo", "Dividendo", "RENTA VARIABLE DIVIDENDO"),
+    # Activo / Nórdico
+    ("LU0083425479", "DNB Nordic Equities", "Activo", "Nórdico", "RENTA VARIABLE NÓRDICA"),
+    # Activo / Salud
+    ("LU0261952419", "Fidelity Sust Glb Hlthcare A-Acc-EUR", "Activo", "Salud", "SALUD GLOBAL DIVERSIFICADA"),
+    ("LU1477743386", "Bellevue (Lux) Bellevue HC Stgy B EUR", "Activo", "Salud", "SALUD GLOBAL DIVERSIFICADA"),
+    ("LU0880062913", "JPMorgan Funds - Global Healthcare Fund", "Activo", "Salud", "SALUD GLOBAL DIVERSIFICADA"),
+    ("LU1120766388", "Candriam Equities Biotechnology", "Activo", "Salud", "BIOTECNOLOGÍA GLOBAL"),
+    # Activo / Tecnología
+    ("LU0332192961", "GS Smart Conectivity", "Activo", "Tecnología", "INNOVACIÓN TECH"),
+    ("LU0159052710", "JPM US Technology A (acc) EUR", "Activo", "Tecnología", "TECH GROWTH"),
+    ("LU0444972557", "Threadneedle (Lux) Global Tech AEH EUR", "Activo", "Tecnología", "TECNOLOGÍA GLOBAL"),
+    ("LU1793345429", "BlueBox Global Technology", "Activo", "Tecnología", "TECNOLOGÍA GLOBAL"),
+    # Activo / Small Caps
+    ("LU0570870567", "Threadneedle Glb Smlr Coms", "Activo", "Small Caps", "SMALL CAP GLOBAL"),
+    ("LU1878469607", "Threadneedle Amer Smlr Com", "Activo", "Small Caps", "SMALL CAP GLOBAL"),
+    # Renta Fija
+    ("FR0013231453", "Ostrum SRI Crédit Ultra Short Plus I (100K)", "Renta Fija", "Ultra Corto Plazo", "CRÉDITO ESG ULTRACORTO"),
+    ("LU1835818565", "Goldman Sachs AAA", "Renta Fija", "Ultra Corto Plazo", "BONOS ULTRACORTOS"),
+    ("IE00BNG2T811", "Neuberger Short Duration", "Renta Fija", "Corto Plazo", "RENTA FIJA DE BAJA DURACIÓN"),
+    ("IE000Z9YV312", "Montlake Alpha", "Renta Fija", "Medio Plazo", "CRÉDITO GLOBAL FLEXIBLE"),
+    ("LU0113257694", "Schroder Euro Corporate Bond", "Renta Fija", "Medio Plazo", "CRÉDITO GLOBAL INVESTMENT GRADE"),
+    ("LU1694789451", "DNCA Invest Alpha bonds A", "Renta Fija", "Medio Plazo", "BONOS FLEXIBLES RETORNO ABSOLUTO"),
 ]
 
 
