@@ -1,0 +1,528 @@
+{
+ "asOf": "2026-07-16",
+ "encontrados": 0,
+ "total": 130,
+ "faltan": [
+  {
+   "isin": "IE00BYX5MX67",
+   "nombre": "Fidelity S&P 500 Index Fund EUR P Acc"
+  },
+  {
+   "isin": "ES0165242001",
+   "nombre": "Myinvestor S&P500 Equiponderado FI"
+  },
+  {
+   "isin": "ES0184894006",
+   "nombre": "Myinvestor ACWI FI"
+  },
+  {
+   "isin": "IE00BYX5NX33",
+   "nombre": "Fidelity MSCI World Index Fund EUR P Acc"
+  },
+  {
+   "isin": "IE0032126645",
+   "nombre": "Vanguard U.S. 500 Stock Index Fund EUR Acc"
+  },
+  {
+   "isin": "IE00B03HD191",
+   "nombre": "Vanguard Global Stock Index Fund EUR Acc"
+  },
+  {
+   "isin": "IE00B42W3S00",
+   "nombre": "Vanguard Global Small-Cap Index Fund Investor EUR Acc"
+  },
+  {
+   "isin": "IE0007281425",
+   "nombre": "Vanguard Japan Stock Index Fund Investor EUR Accumulation"
+  },
+  {
+   "isin": "IE0007201266",
+   "nombre": "Vanguard Pacific ex-Japan Stock Index Fund EUR Acc"
+  },
+  {
+   "isin": "IE0031786142",
+   "nombre": "Vanguard Emerging Markets Stock Index Fund Investor EUR Acc"
+  },
+  {
+   "isin": "IE0007987690",
+   "nombre": "Vanguard European Stock Index Fund Investor EUR Accumulation"
+  },
+  {
+   "isin": "ES0114105036",
+   "nombre": "Bankinter EE.UU. Nasdaq 100 R FI"
+  },
+  {
+   "isin": "LU0625737910",
+   "nombre": "Pictet-China Index P EUR"
+  },
+  {
+   "isin": "ES0152741031",
+   "nombre": "ING Direct Fondo Naranja Ibex 35 FI"
+  },
+  {
+   "isin": "ES0159201013",
+   "nombre": "Magallanes Iberian Equity M FI"
+  },
+  {
+   "isin": "ES0112616000",
+   "nombre": "Azvalor Iberia FI"
+  },
+  {
+   "isin": "ES0175902008",
+   "nombre": "Sigma Internacional FI"
+  },
+  {
+   "isin": "ES0146309002",
+   "nombre": "Horos Value Internacional FI"
+  },
+  {
+   "isin": "ES0156673008",
+   "nombre": "Japan Deep Value Fund FI"
+  },
+  {
+   "isin": "ES0124037005",
+   "nombre": "Cobas Selección C FI"
+  },
+  {
+   "isin": "ES0113728002",
+   "nombre": "Cobas Grandes Compañías C FI"
+  },
+  {
+   "isin": "ES0119199000",
+   "nombre": "Cobas Internacional C FI"
+  },
+  {
+   "isin": "ES0165243009",
+   "nombre": "Myinvestor Value A FI"
+  },
+  {
+   "isin": "LU0203975437",
+   "nombre": "Robeco BP Global Premium Equities D EUR"
+  },
+  {
+   "isin": "ES0112611001",
+   "nombre": "Azvalor Internacional FI"
+  },
+  {
+   "isin": "ES0141116030",
+   "nombre": "Hamco Global Value Fund R FI"
+  },
+  {
+   "isin": "ES0112609005",
+   "nombre": "Azvalor Blue Chips FI"
+  },
+  {
+   "isin": "LU1278917452",
+   "nombre": "DWS Invest CROCI Sectors Plus LC"
+  },
+  {
+   "isin": "LU0094560744",
+   "nombre": "MFS Meridian Funds - Global Equity Fund A1 EUR"
+  },
+  {
+   "isin": "LU0360477987",
+   "nombre": "Morgan Stanley Investment Funds – US Growth Fund ZH EUR"
+  },
+  {
+   "isin": "LU0552385535",
+   "nombre": "Morgan Stanley Investment Funds – Global Opportunity Fund Z USD"
+  },
+  {
+   "isin": "ES0173311079",
+   "nombre": "Renta 4 Multigestión Andrómeda Value Capital FI"
+  },
+  {
+   "isin": "ES0168799064",
+   "nombre": "Gestión Boutique IV Only Compounders FI"
+  },
+  {
+   "isin": "LU0974293671",
+   "nombre": "Robeco Global Multi-Thematic D EUR"
+  },
+  {
+   "isin": "LU0690375182",
+   "nombre": "Fundsmith Equity Fund Sicav T EUR Acc"
+  },
+  {
+   "isin": "IE00BZ0X9T58",
+   "nombre": "Comgest Growth Europe Opportunities EUR Z Acc"
+  },
+  {
+   "isin": "IE00BJM0B969",
+   "nombre": "Blue Whale Growth Fund EUR R"
+  },
+  {
+   "isin": "ES0137768000",
+   "nombre": "Baelo Dividendo Creciente A FI"
+  },
+  {
+   "isin": "ES0147897005",
+   "nombre": "Impassive Wealth FI"
+  },
+  {
+   "isin": "ES0156572002",
+   "nombre": "MyInvestor Cartera Permanente FI"
+  },
+  {
+   "isin": "ES0116848005",
+   "nombre": "Global Allocation R FI"
+  },
+  {
+   "isin": "LU0171307068",
+   "nombre": "BGF World Healthscience A2"
+  },
+  {
+   "isin": "LU2441282899",
+   "nombre": "Janus Henderson Biotechnology"
+  },
+  {
+   "isin": "IE00B3NLSS43",
+   "nombre": "Polar Capital Healthcare"
+  },
+  {
+   "isin": "LU0415391431",
+   "nombre": "Bellevue (Lux) Bellevue Md & Svc B EUR"
+  },
+  {
+   "isin": "LU0251853072",
+   "nombre": "AB International HC A EUR"
+  },
+  {
+   "isin": "LU1213836080",
+   "nombre": "Fidelity Global Technology"
+  },
+  {
+   "isin": "LU0260870158",
+   "nombre": "Franklin Technology"
+  },
+  {
+   "isin": "LU0171310443",
+   "nombre": "BGF World Technology"
+  },
+  {
+   "isin": "LU0302296495",
+   "nombre": "DNB Fund - Technology"
+  },
+  {
+   "isin": "IE00B4468526",
+   "nombre": "Polar Capital Global Technology Fund"
+  },
+  {
+   "isin": "LU0187079347",
+   "nombre": "Robeco Global Consumer Trends D €"
+  },
+  {
+   "isin": "LU2295319300",
+   "nombre": "MS INVF Global Brands A EUR"
+  },
+  {
+   "isin": "LU0329429897",
+   "nombre": "GAM Multistock Luxury Brands Equity EUR B"
+  },
+  {
+   "isin": "LU1162516717",
+   "nombre": "BlackRock Systematic Global Equity Absolute Return"
+  },
+  {
+   "isin": "LU1429039461",
+   "nombre": "Schroder GAIA Two Sigma Diversified"
+  },
+  {
+   "isin": "LU1883342377",
+   "nombre": "Amundi Global Equity"
+  },
+  {
+   "isin": "LU0157178582",
+   "nombre": "JPM Global Select Equity"
+  },
+  {
+   "isin": "LU1984712320",
+   "nombre": "Janus Henderson Global Smaller Companies"
+  },
+  {
+   "isin": "LU0918140210",
+   "nombre": "T. Rowe Price US Smlr Cm Eq A EUR"
+  },
+  {
+   "isin": "LU0300834669",
+   "nombre": "Alken Small Cap Europe"
+  },
+  {
+   "isin": "LU0125944966",
+   "nombre": "MFS Meridian European Companies"
+  },
+  {
+   "isin": "LU0491217419",
+   "nombre": "Robeco Indian Equities D €"
+  },
+  {
+   "isin": "LU0329070915",
+   "nombre": "Jupiter India Select"
+  },
+  {
+   "isin": "LU0345361124",
+   "nombre": "Fidelity Funds - Asia Pacific Opportunities"
+  },
+  {
+   "isin": "LU0413543058",
+   "nombre": "Fidelity Japan Value A-Acc-EUR"
+  },
+  {
+   "isin": "LU2295319219",
+   "nombre": "Morgan Stanley Asia Opportunity"
+  },
+  {
+   "isin": "LU0922334643",
+   "nombre": "Fidelity Nordic A"
+  },
+  {
+   "isin": "LU0273159177",
+   "nombre": "DWS Invest Gold and Prec Mtl Eqs LC"
+  },
+  {
+   "isin": "LU0172157280",
+   "nombre": "Bgf World Mining A2 EUR"
+  },
+  {
+   "isin": "LU0273158872",
+   "nombre": "DWS Invest Global Agribusiness LC"
+  },
+  {
+   "isin": "LU1165135440",
+   "nombre": "BNP Paribas Aqua C C"
+  },
+  {
+   "isin": "LU0415415636",
+   "nombre": "Vontobel Commodity H Hedged EUR"
+  },
+  {
+   "isin": "LU0714179727",
+   "nombre": "JPMorgan Investment Funds - Global Dividend Fund"
+  },
+  {
+   "isin": "IE00BDGV0183",
+   "nombre": "Guinness Global Equity Income C EUR Dist"
+  },
+  {
+   "isin": "FR0013346079",
+   "nombre": "Groupama Ultra Short Term Bond"
+  },
+  {
+   "isin": "FR001400CFA4",
+   "nombre": "OstrumSRI Credit Ultra Short"
+  },
+  {
+   "isin": "FR0011365212",
+   "nombre": "Amundi Ultra Short Term Bond"
+  },
+  {
+   "isin": "LU0080237943",
+   "nombre": "DWS Euro Ultra Short Fixed"
+  },
+  {
+   "isin": "LU1585265066",
+   "nombre": "Tikehau Short Duration*"
+  },
+  {
+   "isin": "FR0010149120",
+   "nombre": "Carmignac Securité"
+  },
+  {
+   "isin": "LU1706854152",
+   "nombre": "Amundi Diversified Short-Term"
+  },
+  {
+   "isin": "FR0010116343",
+   "nombre": "BNP PARIBAS Tresorerie"
+  },
+  {
+   "isin": "FI0008800511",
+   "nombre": "Evli Short Corporate Bond"
+  },
+  {
+   "isin": "LU0346393613",
+   "nombre": "Fidelity Funds - Euro Short Term"
+  },
+  {
+   "isin": "FR0010829697",
+   "nombre": "Amundi Enhanced Ultra Short Term Bond"
+  },
+  {
+   "isin": "LU1882441907",
+   "nombre": "Amundi US Short Term Bond"
+  },
+  {
+   "isin": "IE00BDT57V65",
+   "nombre": "PIMCO Low Duration Income"
+  },
+  {
+   "isin": "LU1623762843",
+   "nombre": "Carmignac Pf Credit"
+  },
+  {
+   "isin": "LU0694238766",
+   "nombre": "MS - Global Fixed Income"
+  },
+  {
+   "isin": "IE00B84J9L26",
+   "nombre": "PIMCO GIS Income E EUR Hedged"
+  },
+  {
+   "isin": "LU1984948874",
+   "nombre": "DNCA Invest Alpha Bonds B EUR"
+  },
+  {
+   "isin": "LU0942882589",
+   "nombre": "BrightGate Global Income"
+  },
+  {
+   "isin": "IE000MI53C66",
+   "nombre": "MAN Global Investment Grade"
+  },
+  {
+   "isin": "IE00B246KL88",
+   "nombre": "Vanguard 20+ Year Euro Treasury Index Fund EUR Acc"
+  },
+  {
+   "isin": "LU0241467587",
+   "nombre": "Pictet EUR Goverment Bonds"
+  },
+  {
+   "isin": "LU0849399786",
+   "nombre": "Schroder Isf Euro High Yield"
+  },
+  {
+   "isin": "LU0658026512",
+   "nombre": "Axa Europe Short D High Yield"
+  },
+  {
+   "isin": "LU0170291933",
+   "nombre": "Candriam Bonds Global High Yield C ACC"
+  },
+  {
+   "isin": "LU0218171717",
+   "nombre": "JPMorgan - US Select Equity A (EUR)"
+  },
+  {
+   "isin": "LU1966822956",
+   "nombre": "Cartesio Funds Income R"
+  },
+  {
+   "isin": "LU1481479811",
+   "nombre": "Olea Neutral FI A"
+  },
+  {
+   "isin": "FR0011253624",
+   "nombre": "R Co Valor"
+  },
+  {
+   "isin": "LU0395794307",
+   "nombre": "JP Morgan Global Income"
+  },
+  {
+   "isin": "LU1239090977",
+   "nombre": "Aberdeen Diversified Income (EUR Hedge)"
+  },
+  {
+   "isin": "LU0270904781",
+   "nombre": "Pictet-Security P EUR"
+  },
+  {
+   "isin": "LU0318931192",
+   "nombre": "Fidelity China Focus"
+  },
+  {
+   "isin": "LU0329355670",
+   "nombre": "Robeco Emerging Markets"
+  },
+  {
+   "isin": "LU1670618690",
+   "nombre": "M&G Emerging Markets"
+  },
+  {
+   "isin": "IE00BTC1N590",
+   "nombre": "Man Emerging Markets"
+  },
+  {
+   "isin": "LU0171305526",
+   "nombre": "BGF World Gold"
+  },
+  {
+   "isin": "IE00BYVJR916",
+   "nombre": "OFI Precious Metals"
+  },
+  {
+   "isin": "LU0731782404",
+   "nombre": "Fidelity Global Dividend A-QInc(G)-EUR"
+  },
+  {
+   "isin": "LU0083425479",
+   "nombre": "DNB Nordic Equities"
+  },
+  {
+   "isin": "LU0261952419",
+   "nombre": "Fidelity Sust Glb Hlthcare A-Acc-EUR"
+  },
+  {
+   "isin": "LU1477743386",
+   "nombre": "Bellevue (Lux) Bellevue HC Stgy B EUR"
+  },
+  {
+   "isin": "LU0880062913",
+   "nombre": "JPMorgan Funds - Global Healthcare Fund"
+  },
+  {
+   "isin": "LU1120766388",
+   "nombre": "Candriam Equities Biotechnology"
+  },
+  {
+   "isin": "LU0332192961",
+   "nombre": "GS Smart Conectivity"
+  },
+  {
+   "isin": "LU0159052710",
+   "nombre": "JPM US Technology A (acc) EUR"
+  },
+  {
+   "isin": "LU0444972557",
+   "nombre": "Threadneedle (Lux) Global Tech AEH EUR"
+  },
+  {
+   "isin": "LU1793345429",
+   "nombre": "BlueBox Global Technology"
+  },
+  {
+   "isin": "LU0570870567",
+   "nombre": "Threadneedle Glb Smlr Coms"
+  },
+  {
+   "isin": "LU1878469607",
+   "nombre": "Threadneedle Amer Smlr Com"
+  },
+  {
+   "isin": "FR0013231453",
+   "nombre": "Ostrum SRI Crédit Ultra Short Plus I (100K)"
+  },
+  {
+   "isin": "LU1835818565",
+   "nombre": "Goldman Sachs AAA"
+  },
+  {
+   "isin": "IE00BNG2T811",
+   "nombre": "Neuberger Short Duration"
+  },
+  {
+   "isin": "IE000Z9YV312",
+   "nombre": "Montlake Alpha"
+  },
+  {
+   "isin": "LU0113257694",
+   "nombre": "Schroder Euro Corporate Bond"
+  },
+  {
+   "isin": "LU1694789451",
+   "nombre": "DNCA Invest Alpha bonds A"
+  }
+ ],
+ "map": {}
+}
