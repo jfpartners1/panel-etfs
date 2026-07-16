@@ -430,20 +430,22 @@
     <div class="panel hide" id="frontierPanel">
       <div class="ptitle"><h2>Frontera eficiente</h2><span class="sub" id="frontSub"></span></div>
       <div class="fcapbar">
-        <span class="fcapctl">Peso máximo por fondo en las carteras sugeridas:
-          <select id="fcap"><option value="0.25">25%</option><option value="0.4" selected>40%</option><option value="0.6">60%</option><option value="1">sin límite</option></select>
+        <span class="fcapctl">Peso por fondo en las carteras sugeridas:
+          <select id="fmin"><option value="0">mín. 0%</option><option value="0.05" selected>mín. 5%</option><option value="0.1">mín. 10%</option></select>
+          <select id="fcap"><option value="0.25">máx. 25%</option><option value="0.4" selected>máx. 40%</option><option value="0.6">máx. 60%</option><option value="1">sin máximo</option></select>
         </span>
         <span class="fleg">
           <span class="fk"><i style="background:#C4CBD6"></i>carteras posibles</span>
           <span class="fk"><i style="background:#030942;border-radius:2px"></i>tu cartera</span>
           <span class="fk"><i style="background:#15A86B"></i>mínima volatilidad</span>
           <span class="fk"><i style="background:#C0892E"></i>máximo Sharpe</span>
+          <span class="fk"><i style="background:#7257D8"></i>mínimo drawdown</span>
         </span>
       </div>
       <div class="chart"><svg id="frontier" viewBox="0 0 920 420" preserveAspectRatio="xMidYMid meet"></svg></div>
       <div class="fmsg" id="frontMsg"></div>
       <div class="atbwrap"><table class="atb" id="fronttb"></table></div>
-      <div class="atbnote">Cada punto gris es una combinación distinta de pesos de <b>estos mismos fondos</b>; la línea azul es la <b>frontera eficiente</b>: lo máximo que se pudo obtener por cada nivel de riesgo. Si tu cartera queda dentro de la nube, reajustar pesos habría mejorado el resultado <b>sin añadir riesgo</b> — la "diversificación gratis" de Markowitz. A partir de la frontera ya no hay nada gratis: reducir riesgo implica ceder retorno (eso no es diversificar, es asignar). Ojo: todo está calculado <b>sobre el pasado</b>; la cartera de máximo Sharpe tiende a concentrarse en lo que mejor fue y es poco robusta, la de mínima volatilidad depende solo de las covarianzas y suele ser más estable. El retorno de este panel es la <b>media anual</b> de retornos semanales, por eso puede diferir un poco del CAGR de las tarjetas.</div>
+      <div class="atbnote">Cada punto gris es una combinación distinta de pesos de <b>estos mismos fondos</b>; la línea azul es la <b>frontera eficiente</b>: lo máximo que se pudo obtener por cada nivel de riesgo. Si tu cartera queda dentro de la nube, reajustar pesos habría mejorado el resultado <b>sin añadir riesgo</b> — la "diversificación gratis" de Markowitz. A partir de la frontera ya no hay nada gratis: reducir riesgo implica ceder retorno (eso no es diversificar, es asignar). Ojo: todo está calculado <b>sobre el pasado</b>; la cartera de máximo Sharpe tiende a concentrarse en lo que mejor fue y es poco robusta, la de mínima volatilidad depende solo de las covarianzas y suele ser más estable, y la de <b>mínimo drawdown</b> busca los pesos que menor caída pico-valle sufrieron en el periodo (a menudo dominada por un solo episodio, como 2008 o 2020). El retorno de este panel es la <b>media anual</b> de retornos semanales, por eso puede diferir un poco del CAGR de las tarjetas.</div>
     </div>
     <div class="repfoot" id="repfoot">Backtesting con el valor liquidativo (NAV) en euros · compra y mantén, sin rebalanceo · Rentabilidad pasada no garantiza resultados futuros · Herramienta educativa, no constituye asesoramiento de inversión · jfpartners.net</div>
   </div>
@@ -1138,38 +1140,45 @@ function pStats(w,mu,C){
   for(let i=0;i<n;i++){ r+=w[i]*mu[i]; for(let j=0;j<n;j++) v+=w[i]*w[j]*C[i][j]; }
   return [r,Math.sqrt(Math.max(v,0))];
 }
-// pesos aleatorios (Dirichlet plano) proyectados EXACTAMENTE al tope por activo:
-// en cada pasada se reescala la masa libre al presupuesto restante y se fijan al tope
-// los que lo superan; termina en ≤ n pasadas con suma exacta 1 (requiere cap ≥ 1/n).
-function randW(n,cap){
+// pesos aleatorios (Dirichlet plano) con suelo y tope por activo:
+// se reserva minW a cada fondo y la masa libre se reparte con proyección
+// exacta al tope reescalado; termina en ≤ n pasadas con suma exacta 1.
+// Requiere minW ≤ 1/n ≤ cap y minW ≤ cap (lo garantiza el llamador).
+function randW(n,cap,minW){
+  minW=minW||0;
+  const F=1-n*minW;
+  if(F<=1e-9) return new Array(n).fill(1/n);
+  const cap2=Math.min(1,(cap-minW)/F);
   let w=Array.from({length:n},()=>-Math.log(1-Math.random()));
   const s=w.reduce((a,b)=>a+b,0); w=w.map(x=>x/s);
-  if(cap>=1) return w;
-  const cl=new Array(n).fill(false);
-  for(let pass=0;pass<n;pass++){
-    let rem=1; const free=[];
-    for(let i=0;i<n;i++){ if(cl[i]) rem-=cap; else free.push(i); }
-    if(!free.length||rem<=0) break;
-    const fs=free.reduce((a,i)=>a+w[i],0);
-    if(fs<=0){ free.forEach(i=>w[i]=rem/free.length); }
-    else free.forEach(i=>{ w[i]=w[i]*rem/fs; });
-    let over=false;
-    free.forEach(i=>{ if(w[i]>cap){ w[i]=cap; cl[i]=true; over=true; } });
-    if(!over) break;
+  if(cap2<1){
+    const cl=new Array(n).fill(false);
+    for(let pass=0;pass<n;pass++){
+      let rem=1; const free=[];
+      for(let i=0;i<n;i++){ if(cl[i]) rem-=cap2; else free.push(i); }
+      if(!free.length||rem<=0) break;
+      const fs=free.reduce((a,i)=>a+w[i],0);
+      if(fs<=0){ free.forEach(i=>w[i]=rem/free.length); }
+      else free.forEach(i=>{ w[i]=w[i]*rem/fs; });
+      let over=false;
+      free.forEach(i=>{ if(w[i]>cap2){ w[i]=cap2; cl[i]=true; over=true; } });
+      if(!over) break;
+    }
   }
-  return w;
+  return minW>0 ? w.map(x=>minW+F*x) : w;
 }
-// mejora local: mueve masa entre pares de activos si sube la puntuación
-function refine(w0,mu,C,cap,score,iters){
+// mejora local: mueve masa entre pares de activos si sube la puntuación scoreW(w),
+// respetando suelo y tope
+function refine(w0,cap,minW,scoreW,iters){
   let w=w0.slice(); const n=w.length;
-  let best=score(...pStats(w,mu,C));
+  let best=scoreW(w);
   for(let it=0;it<iters;it++){
     const i=Math.floor(Math.random()*n), j=Math.floor(Math.random()*n);
     if(i===j) continue;
-    const d=Math.min(w[i], cap-w[j], Math.random()*0.05);
+    const d=Math.min(w[i]-minW, cap-w[j], Math.random()*0.05);
     if(d<=1e-9) continue;
     w[i]-=d; w[j]+=d;
-    const sc=score(...pStats(w,mu,C));
+    const sc=scoreW(w);
     if(sc>best+1e-12) best=sc; else { w[i]+=d; w[j]-=d; }
   }
   return w;
@@ -1185,34 +1194,54 @@ function drawFrontier(tks,a,b){
   rets=rets.map(r=>r.slice(r.length-T));
   const {mu,C}=covMatrix(rets);
   const n=tks.length;
-  const capSel=parseFloat($("#fcap").value);
-  const cap=Math.max(capSel,1/n+1e-6);
+  const capSel=parseFloat($("#fcap").value), minSel=parseFloat($("#fmin").value);
+  const minW=Math.min(minSel,1/n);                 // suelo factible: n·min no puede pasar de 100%
+  const minRelaxed=minW<minSel-1e-9;
+  const cap=Math.max(capSel,1/n+1e-6,minW+1e-6);   // tope factible: n·cap ≥ 100% y cap ≥ suelo
   const capRelaxed=cap>capSel+1e-9;
   // cartera actual (PF y tks comparten orden: tks=PF.map(p=>p.tk))
   const swT=PF.reduce((s,p)=>s+p.w,0)||1;
   const wCur=PF.map(p=>p.w/swT);
   const [curR,curV]=pStats(wCur,mu,C);
-  // nube: combinaciones SIN tope (todo lo alcanzable con estos fondos)
+  // nube: combinaciones SIN restricciones (todo lo alcanzable con estos fondos)
   const cloud=[];
-  for(let i=0;i<2400;i++) cloud.push(pStats(randW(n,1),mu,C));
+  for(let i=0;i<2400;i++) cloud.push(pStats(randW(n,1,0),mu,C));
   tks.forEach((t,k)=>{ const w=new Array(n).fill(0); w[k]=1; cloud.push(pStats(w,mu,C)); });
   // candidatas CON tope para las carteras sugeridas
-  let wMin=null,wShp=null,vMinB=Infinity,shpB=-Infinity;
+  const sVol=w=>{const[,v]=pStats(w,mu,C);return -v;};
+  const sShp=w=>{const[r,v]=pStats(w,mu,C);return v?r/v:-1e9;};
+  // trayectoria semanal normalizada de cada fondo (para medir drawdown real de cada candidata)
+  const wiT=wi.slice(wi.length-(T+1));                     // T retornos ⇒ T+1 cierres
+  const NP=tks.map(t=>{const px=DATA.funds[t].px,b0=px[wiT[0]];return wiT.map(ix=>px[ix]/b0);});
+  const pathDD=w=>{ let peak=0,dd=0;
+    for(let t=0;t<wiT.length;t++){ let v=0; for(let k=0;k<n;k++)v+=w[k]*NP[k][t];
+      if(v>peak)peak=v; const d=v/peak-1; if(d<dd)dd=d; }
+    return dd; };
+  const sDD=w=>pathDD(w);                                   // maximizar dd (que es ≤0) = minimizar caída
+  let wMin=null,wShp=null,wDD=null,vMinB=Infinity,shpB=-Infinity,ddB=-Infinity;
+  const pool=[];
   const consider=w=>{ const [r,v]=pStats(w,mu,C);
     if(v<vMinB){vMinB=v;wMin=w;}
-    const s=v?r/v:0; if(s>shpB){shpB=s;wShp=w;} };
-  for(let i=0;i<8000;i++) consider(randW(n,cap));
+    const s=v?r/v:0; if(s>shpB){shpB=s;wShp=w;}
+    pool.push(w); };
+  for(let i=0;i<8000;i++) consider(randW(n,cap,minW));
   consider(new Array(n).fill(1/n));
-  if(wCur.every(x=>x<=cap+1e-9)) consider(wCur.slice());
-  wMin=refine(wMin,mu,C,cap,(r,v)=>-v,4000);
-  wShp=refine(wShp,mu,C,cap,(r,v)=>v?r/v:-1e9,4000);
-  const [minR,minV]=pStats(wMin,mu,C), [shpR,shpV]=pStats(wShp,mu,C);
-  // frontera SIN tope: máx de (retorno − λ·varianza) para varios λ + mínima varianza global
+  if(wCur.every(x=>x<=cap+1e-9&&x>=minW-1e-9)) consider(wCur.slice());
+  wMin=refine(wMin,cap,minW,sVol,4000);
+  wShp=refine(wShp,cap,minW,sShp,4000);
+  // mínimo drawdown: evalúa la caída real en una submuestra + las notables, y refina
+  const step=Math.max(1,Math.floor(pool.length/2500));
+  for(let i=0;i<pool.length;i+=step){ const d=pathDD(pool[i]); if(d>ddB){ddB=d;wDD=pool[i];} }
+  [wMin,wShp].forEach(w=>{ const d=pathDD(w); if(d>ddB){ddB=d;wDD=w;} });
+  wDD=refine(wDD,cap,minW,sDD,2000);
+  const [minR,minV]=pStats(wMin,mu,C), [shpR,shpV]=pStats(wShp,mu,C), [ddR,ddV]=pStats(wDD,mu,C);
+  const ddOfCol=[pathDD(wCur),pathDD(wMin),pathDD(wShp),pathDD(wDD)];
+  // frontera SIN restricciones: máx de (retorno − λ·varianza) para varios λ + mínima varianza global
   const fr=[];
-  let wg=refine(randW(n,1),mu,C,1,(r,v)=>-v,5000);
+  let wg=refine(randW(n,1,0),1,0,sVol,5000);
   fr.push(pStats(wg,mu,C));
   [0,0.5,1,2,4,8,16,32,64,128].forEach(l=>{
-    const w=refine(wg.slice(),mu,C,1,(r,v)=>r-l*v*v,4000);
+    const w=refine(wg.slice(),1,0,w2=>{const[r,v]=pStats(w2,mu,C);return r-l*v*v;},4000);
     fr.push(pStats(w,mu,C));
   });
   fr.sort((p,q)=>p[1]-q[1]);
@@ -1232,15 +1261,18 @@ function drawFrontier(tks,a,b){
   const delta=frontAt(curV)-curR;
   // ---- dibujo ----
   const W=920,H=420,Lp=56,Rp=18,Tp=16,Bp=36, w2=W-Lp-Rp, h2=H-Tp-Bp;
-  const pts=cloud.concat(env,[[curR,curV],[minR,minV],[shpR,shpV]]);
-  let vmax=Math.max(...pts.map(p=>p[1]))*1.08||0.1;
+  const pts=cloud.concat(env,[[curR,curV],[minR,minV],[shpR,shpV],[ddR,ddV]]);
+  // eje X ajustado al rango real de la nube (sin espacio muerto a la izquierda)
+  let vlo=Math.min(...pts.map(p=>p[1])), vmax=Math.max(...pts.map(p=>p[1]));
+  const vpad=(vmax-vlo)*0.07||0.01; vlo=Math.max(0,vlo-vpad); vmax+=vpad;
   let ymin=Math.min(...pts.map(p=>p[0])), ymax=Math.max(...pts.map(p=>p[0]));
   const pad=(ymax-ymin)*0.1||0.05; ymin-=pad; ymax+=pad;
-  const X=v=>Lp+w2*v/vmax, Y=v=>Tp+h2*(1-(v-ymin)/(ymax-ymin));
+  const X=v=>Lp+w2*(v-vlo)/(vmax-vlo), Y=v=>Tp+h2*(1-(v-ymin)/(ymax-ymin));
+  const tick=(vmax-vlo)*100>6?1:0;   // decimales de las marcas X según el rango
   let g="";
-  for(let k=0;k<=4;k++){const vv=vmax*k/4,xx=X(vv);
+  for(let k=0;k<=4;k++){const vv=vlo+(vmax-vlo)*k/4,xx=X(vv);
     g+=`<line class="cgrid" x1="${xx.toFixed(1)}" y1="${Tp}" x2="${xx.toFixed(1)}" y2="${Tp+h2}"/>`+
-       `<text class="clbl" x="${xx.toFixed(1)}" y="${H-16}" text-anchor="middle">${(vv*100).toFixed(0)}%</text>`;}
+       `<text class="clbl" x="${xx.toFixed(1)}" y="${H-16}" text-anchor="middle">${(vv*100).toFixed(tick?0:1).replace(".",",")}%</text>`;}
   for(let k=0;k<=4;k++){const vv=ymin+(ymax-ymin)*k/4,yy=Y(vv);
     g+=`<line class="cgrid" x1="${Lp}" y1="${yy.toFixed(1)}" x2="${W-Rp}" y2="${yy.toFixed(1)}"/>`+
        `<text class="clbl" x="${Lp-6}" y="${(yy+3).toFixed(1)}" text-anchor="end">${(vv*100).toFixed(0)}%</text>`;}
@@ -1254,15 +1286,16 @@ function drawFrontier(tks,a,b){
   // línea vertical del free lunch (tu cartera → frontera)
   if(delta>0.004) g+=`<line x1="${X(curV).toFixed(1)}" y1="${Y(curR).toFixed(1)}" x2="${X(curV).toFixed(1)}" y2="${Y(frontAt(curV)).toFixed(1)}" stroke="#15A86B" stroke-width="1.6" stroke-dasharray="4 3"/>`;
   const fpct=x=>(x*100).toFixed(1).replace(".",",");
-  const mark=(r,v,shape,col,tip)=>{
+  const mark=(r,v,shape,col,tip,dd)=>{
     const px=X(v),py=Y(r);
     let s= shape==="sq" ? `<rect x="${(px-6).toFixed(1)}" y="${(py-6).toFixed(1)}" width="12" height="12" rx="2" fill="${col}" stroke="#fff" stroke-width="1.5"/>`
                         : `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="6.5" fill="${col}" stroke="#fff" stroke-width="1.5"/>`;
-    return `<g class="spt" data-tip="${tip} · rent ${fpct(r)}% · vol ${fpct(v)}%">${s}</g>`;
+    return `<g class="spt" data-tip="${tip} · rent ${fpct(r)}% · vol ${fpct(v)}% · máx. caída ${fpct(dd)}%">${s}</g>`;
   };
-  g+=mark(minR,minV,"c","#15A86B","Mínima volatilidad");
-  g+=mark(shpR,shpV,"c","#C0892E","Máximo Sharpe");
-  g+=mark(curR,curV,"sq","#030942","Tu cartera");
+  g+=mark(minR,minV,"c","#15A86B","Mínima volatilidad",ddOfCol[1]);
+  g+=mark(shpR,shpV,"c","#C0892E","Máximo Sharpe",ddOfCol[2]);
+  g+=mark(ddR,ddV,"c","#7257D8","Mínimo drawdown",ddOfCol[3]);
+  g+=mark(curR,curV,"sq","#030942","Tu cartera",ddOfCol[0]);
   const svg=$("#frontier"); svg.innerHTML=g;
   svg.querySelectorAll(".spt").forEach(el=>{
     el.style.cursor="pointer";
@@ -1280,20 +1313,25 @@ function drawFrontier(tks,a,b){
     msg=`Tu cartera está <b>prácticamente sobre la frontera eficiente</b>: con estos fondos y este nivel de riesgo, apenas había margen de mejora reajustando pesos. A partir de aquí, reducir riesgo implica ceder retorno — y eso ya no es diversificar, es <b>asignar</b>.`;
   }
   if(capRelaxed) msg+=` <span style="color:#B5851F">Con ${n} fondos el tope del ${Math.round(capSel*100)}% no es alcanzable; se ha usado el mínimo posible (${Math.round(cap*100)}%).</span>`;
+  if(minRelaxed) msg+=` <span style="color:#B5851F">Con ${n} fondos el suelo del ${Math.round(minSel*100)}% suma más del 100%; se ha usado el máximo posible (${(minW*100).toFixed(1).replace(".",",")}%).</span>`;
   $("#frontMsg").innerHTML=msg;
   $("#frontSub").textContent=`${(cloud.length).toLocaleString("es-ES")} combinaciones de tus ${n} fondos · retornos semanales · ${dlabel(DATA.dates[a])} → ${dlabel(DATA.dates[b])}`;
   // ---- tabla de pesos ----
-  const wMinP=to100(wMin.map(x=>x*100)), wShpP=to100(wShp.map(x=>x*100)), wCurP=to100(wCur.map(x=>x*100));
-  FRONTW={min:wMinP,shp:wShpP};
+  const toP=w=>to100(w.map(x=>Math.max(x,minW)*100));   // blinda el suelo frente a error flotante
+  const wMinP=toP(wMin), wShpP=toP(wShp), wDDP=toP(wDD), wCurP=to100(wCur.map(x=>x*100));
+  FRONTW={min:wMinP,shp:wShpP,dd:wDDP};
   const rows=tks.map((t,k)=>`<tr><td style="text-align:left"><span class="dotc" style="background:${COLOR_OF[t]||'#999'};display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px"></span>${shortOf(t)}</td>`+
-    `<td>${wCurP[k]}%</td><td>${wMinP[k]}%</td><td>${wShpP[k]}%</td></tr>`).join("");
-  const sum=(lbl,f)=>`<tr style="border-top:1px solid var(--line)"><td style="text-align:left;color:var(--mute)">${lbl}</td><td><b>${f(curR,curV)}</b></td><td><b>${f(minR,minV)}</b></td><td><b>${f(shpR,shpV)}</b></td></tr>`;
+    `<td>${wCurP[k]}%</td><td>${wMinP[k]}%</td><td>${wShpP[k]}%</td><td>${wDDP[k]}%</td></tr>`).join("");
+  const cols=[[curR,curV,ddOfCol[0]],[minR,minV,ddOfCol[1]],[shpR,shpV,ddOfCol[2]],[ddR,ddV,ddOfCol[3]]];
+  const sum=(lbl,f)=>`<tr style="border-top:1px solid var(--line)"><td style="text-align:left;color:var(--mute)">${lbl}</td>`+
+    cols.map(c=>`<td><b>${f(...c)}</b></td>`).join("")+`</tr>`;
   $("#fronttb").innerHTML=
-    `<tr><th style="text-align:left">Fondo</th><th>Tu cartera</th><th>Mín. volatilidad</th><th>Máx. Sharpe</th></tr>`+rows+
-    sum("Retorno medio anual",(r,v)=>fpct(r)+"%")+
-    sum("Volatilidad",(r,v)=>fpct(v)+"%")+
-    sum("Sharpe",(r,v)=>v?fmt2(r/v):"—")+
-    `<tr><td></td><td></td><td><button class="fapply" data-w="min">Aplicar pesos</button></td><td><button class="fapply" data-w="shp">Aplicar pesos</button></td></tr>`;
+    `<tr><th style="text-align:left">Fondo</th><th>Tu cartera</th><th>Mín. volatilidad</th><th>Máx. Sharpe</th><th>Mín. drawdown</th></tr>`+rows+
+    sum("Retorno medio anual",(r,v,d)=>fpct(r)+"%")+
+    sum("Volatilidad",(r,v,d)=>fpct(v)+"%")+
+    sum("Máx. caída",(r,v,d)=>fpct(d)+"%")+
+    sum("Sharpe",(r,v,d)=>v?fmt2(r/v):"—")+
+    `<tr><td></td><td></td><td><button class="fapply" data-w="min">Aplicar pesos</button></td><td><button class="fapply" data-w="shp">Aplicar pesos</button></td><td><button class="fapply" data-w="dd">Aplicar pesos</button></td></tr>`;
   $("#fronttb").querySelectorAll(".fapply").forEach(btn=>btn.onclick=()=>{
     const W2=FRONTW[btn.dataset.w]; if(!W2) return;
     PF.forEach((p,i)=>p.w=W2[i]);
@@ -1302,6 +1340,7 @@ function drawFrontier(tks,a,b){
   panel.classList.remove("hide");
 }
 $("#fcap").addEventListener("change",()=>{ if(FRONTARGS) drawFrontier(...FRONTARGS); });
+$("#fmin").addEventListener("change",()=>{ if(FRONTARGS) drawFrontier(...FRONTARGS); });
 function drawDrawdown(pv,dates,bpv,bench){
   const W=920,H=150,L=52,R=16,T=10,B=24, w=W-L-R, h=H-T-B, N=pv.length;
   const ddOf=arr=>{let pk=arr[0];return arr.map(v=>{if(v>pk)pk=v;return v/pk-1;});};
