@@ -204,6 +204,16 @@
   .cortb th.rowh{text-align:right}
   .cortb td{width:40px;height:30px;text-align:center;font-size:10.5px;border-radius:5px;color:#1A2233}
   .corhint{font-size:11px;color:var(--mute);padding:0 16px 14px}
+  /* frontera eficiente */
+  .fcapbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);margin:2px 0 10px}
+  .fcapbar select{font:600 12.5px Manrope,sans-serif;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:4px 8px;background:#fff;cursor:pointer}
+  .fleg{display:flex;gap:12px;flex-wrap:wrap;margin-left:auto;font-size:11.5px;color:var(--mute)}
+  .fk{display:inline-flex;align-items:center;gap:5px}
+  .fk i{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .fmsg{font-size:13px;line-height:1.55;color:var(--ink-2);background:var(--line-2);border-radius:10px;padding:10px 14px;margin:10px 0 12px}
+  .fmsg b{color:var(--ink)}
+  .fapply{font:700 11px Manrope,sans-serif;color:#fff;background:var(--navy);border:0;border-radius:7px;padding:5px 10px;cursor:pointer}
+  .fapply:hover{opacity:.88}
 
   /* contribución de cada fondo (atribución) */
   .atbwrap{padding:6px 16px 8px;overflow-x:auto}
@@ -290,6 +300,8 @@
     #mainPanel{break-inside:avoid}  /* curva + caídas SIEMPRE juntas: evita que el gráfico de caídas quede huérfano al inicio de la página siguiente */
     #attribPanel{break-inside:avoid}
     #ddtopPanel,#heatPanel{break-inside:avoid}
+    #frontierPanel{break-inside:avoid}
+    #frontierPanel .fcapctl,#frontierPanel .fapply{display:none!important}
     #attribPanel .atb{font-size:9px}
     #attribPanel .bartrack{width:48px}
     .twocol{break-before:page;grid-template-columns:1fr}  /* en PDF apilados a todo el ancho: scatter grande + matriz legible con muchos fondos */
@@ -414,6 +426,24 @@
         <div class="cor" id="cor"></div>
         <div class="corhint">Cerca de <b>+1</b> (azul): los dos fondos se mueven casi igual — <b>se solapan</b> y diversificas poco aunque sean de gestoras distintas. Cerca de <b>0</b>: independientes. Negativo (rojo): se mueven al revés, lo que más diversifica.</div>
       </div>
+    </div>
+    <div class="panel hide" id="frontierPanel">
+      <div class="ptitle"><h2>Frontera eficiente</h2><span class="sub" id="frontSub"></span></div>
+      <div class="fcapbar">
+        <span class="fcapctl">Peso máximo por fondo en las carteras sugeridas:
+          <select id="fcap"><option value="0.25">25%</option><option value="0.4" selected>40%</option><option value="0.6">60%</option><option value="1">sin límite</option></select>
+        </span>
+        <span class="fleg">
+          <span class="fk"><i style="background:#C4CBD6"></i>carteras posibles</span>
+          <span class="fk"><i style="background:#030942;border-radius:2px"></i>tu cartera</span>
+          <span class="fk"><i style="background:#15A86B"></i>mínima volatilidad</span>
+          <span class="fk"><i style="background:#C0892E"></i>máximo Sharpe</span>
+        </span>
+      </div>
+      <div class="chart"><svg id="frontier" viewBox="0 0 920 420" preserveAspectRatio="xMidYMid meet"></svg></div>
+      <div class="fmsg" id="frontMsg"></div>
+      <div class="atbwrap"><table class="atb" id="fronttb"></table></div>
+      <div class="atbnote">Cada punto gris es una combinación distinta de pesos de <b>estos mismos fondos</b>; la línea azul es la <b>frontera eficiente</b>: lo máximo que se pudo obtener por cada nivel de riesgo. Si tu cartera queda dentro de la nube, reajustar pesos habría mejorado el resultado <b>sin añadir riesgo</b> — la "diversificación gratis" de Markowitz. A partir de la frontera ya no hay nada gratis: reducir riesgo implica ceder retorno (eso no es diversificar, es asignar). Ojo: todo está calculado <b>sobre el pasado</b>; la cartera de máximo Sharpe tiende a concentrarse en lo que mejor fue y es poco robusta, la de mínima volatilidad depende solo de las covarianzas y suele ser más estable. El retorno de este panel es la <b>media anual</b> de retornos semanales, por eso puede diferir un poco del CAGR de las tarjetas.</div>
     </div>
     <div class="repfoot" id="repfoot">Backtesting con el valor liquidativo (NAV) en euros · compra y mantén, sin rebalanceo · Rentabilidad pasada no garantiza resultados futuros · Herramienta educativa, no constituye asesoramiento de inversión · jfpartners.net</div>
   </div>
@@ -819,6 +849,7 @@ function renderResults(M,pv,bpv,bench,dates,tks,a,b,unbal,assetsPts,benchPt,limT
   drawAttribution(attrib);
   drawDDTop(ddTop);
   drawHeat(heat);
+  drawFrontier(tks,a,b);
 }
 function drawCurve(pv,bpv,bench,dates){
   const W=920,H=360,L=52,R=16,T=14,B=28, w=W-L-R, h=H-T-B;
@@ -1090,6 +1121,187 @@ function drawScatter(pts,port,bench){
     el.addEventListener("click",e=>{e.stopPropagation();showTip(tipHtml(),e.clientX+12,e.clientY-10);clearTimeout(window._st);window._st=setTimeout(hideTip,2800);});
   });
 }
+/* ---------- frontera eficiente (Markowitz sobre retornos semanales, anualizados ×52) ---------- */
+let FRONTARGS=null, FRONTW=null;
+function covMatrix(rets){
+  const n=rets.length, T=rets[0].length;
+  const m=rets.map(r=>r.reduce((a,b)=>a+b,0)/T);
+  const C=Array.from({length:n},()=>new Array(n).fill(0));
+  for(let j=0;j<n;j++)for(let k=j;k<n;k++){
+    let s=0; for(let t=0;t<T;t++) s+=(rets[j][t]-m[j])*(rets[k][t]-m[k]);
+    C[j][k]=C[k][j]=s/(T-1)*52;
+  }
+  return {mu:m.map(x=>x*52), C};
+}
+function pStats(w,mu,C){
+  const n=w.length; let r=0,v=0;
+  for(let i=0;i<n;i++){ r+=w[i]*mu[i]; for(let j=0;j<n;j++) v+=w[i]*w[j]*C[i][j]; }
+  return [r,Math.sqrt(Math.max(v,0))];
+}
+// pesos aleatorios (Dirichlet plano) proyectados EXACTAMENTE al tope por activo:
+// en cada pasada se reescala la masa libre al presupuesto restante y se fijan al tope
+// los que lo superan; termina en ≤ n pasadas con suma exacta 1 (requiere cap ≥ 1/n).
+function randW(n,cap){
+  let w=Array.from({length:n},()=>-Math.log(1-Math.random()));
+  const s=w.reduce((a,b)=>a+b,0); w=w.map(x=>x/s);
+  if(cap>=1) return w;
+  const cl=new Array(n).fill(false);
+  for(let pass=0;pass<n;pass++){
+    let rem=1; const free=[];
+    for(let i=0;i<n;i++){ if(cl[i]) rem-=cap; else free.push(i); }
+    if(!free.length||rem<=0) break;
+    const fs=free.reduce((a,i)=>a+w[i],0);
+    if(fs<=0){ free.forEach(i=>w[i]=rem/free.length); }
+    else free.forEach(i=>{ w[i]=w[i]*rem/fs; });
+    let over=false;
+    free.forEach(i=>{ if(w[i]>cap){ w[i]=cap; cl[i]=true; over=true; } });
+    if(!over) break;
+  }
+  return w;
+}
+// mejora local: mueve masa entre pares de activos si sube la puntuación
+function refine(w0,mu,C,cap,score,iters){
+  let w=w0.slice(); const n=w.length;
+  let best=score(...pStats(w,mu,C));
+  for(let it=0;it<iters;it++){
+    const i=Math.floor(Math.random()*n), j=Math.floor(Math.random()*n);
+    if(i===j) continue;
+    const d=Math.min(w[i], cap-w[j], Math.random()*0.05);
+    if(d<=1e-9) continue;
+    w[i]-=d; w[j]+=d;
+    const sc=score(...pStats(w,mu,C));
+    if(sc>best+1e-12) best=sc; else { w[i]+=d; w[j]-=d; }
+  }
+  return w;
+}
+function drawFrontier(tks,a,b){
+  const panel=$("#frontierPanel");
+  if(MODE!=="backtest"||tks.length<2){ panel.classList.add("hide"); return; }
+  FRONTARGS=[tks,a,b];
+  const wi=weeklyIdx(a,b,DATA.dates);
+  let rets=tks.map(t=>weeklyRets(DATA.funds[t].px,wi));
+  const T=Math.min(...rets.map(r=>r.length));
+  if(T<26){ panel.classList.add("hide"); return; }   // menos de ~medio año de semanas: sin base estadística
+  rets=rets.map(r=>r.slice(r.length-T));
+  const {mu,C}=covMatrix(rets);
+  const n=tks.length;
+  const capSel=parseFloat($("#fcap").value);
+  const cap=Math.max(capSel,1/n+1e-6);
+  const capRelaxed=cap>capSel+1e-9;
+  // cartera actual (PF y tks comparten orden: tks=PF.map(p=>p.tk))
+  const swT=PF.reduce((s,p)=>s+p.w,0)||1;
+  const wCur=PF.map(p=>p.w/swT);
+  const [curR,curV]=pStats(wCur,mu,C);
+  // nube: combinaciones SIN tope (todo lo alcanzable con estos fondos)
+  const cloud=[];
+  for(let i=0;i<2400;i++) cloud.push(pStats(randW(n,1),mu,C));
+  tks.forEach((t,k)=>{ const w=new Array(n).fill(0); w[k]=1; cloud.push(pStats(w,mu,C)); });
+  // candidatas CON tope para las carteras sugeridas
+  let wMin=null,wShp=null,vMinB=Infinity,shpB=-Infinity;
+  const consider=w=>{ const [r,v]=pStats(w,mu,C);
+    if(v<vMinB){vMinB=v;wMin=w;}
+    const s=v?r/v:0; if(s>shpB){shpB=s;wShp=w;} };
+  for(let i=0;i<8000;i++) consider(randW(n,cap));
+  consider(new Array(n).fill(1/n));
+  if(wCur.every(x=>x<=cap+1e-9)) consider(wCur.slice());
+  wMin=refine(wMin,mu,C,cap,(r,v)=>-v,4000);
+  wShp=refine(wShp,mu,C,cap,(r,v)=>v?r/v:-1e9,4000);
+  const [minR,minV]=pStats(wMin,mu,C), [shpR,shpV]=pStats(wShp,mu,C);
+  // frontera SIN tope: máx de (retorno − λ·varianza) para varios λ + mínima varianza global
+  const fr=[];
+  let wg=refine(randW(n,1),mu,C,1,(r,v)=>-v,5000);
+  fr.push(pStats(wg,mu,C));
+  [0,0.5,1,2,4,8,16,32,64,128].forEach(l=>{
+    const w=refine(wg.slice(),mu,C,1,(r,v)=>r-l*v*v,4000);
+    fr.push(pStats(w,mu,C));
+  });
+  fr.sort((p,q)=>p[1]-q[1]);
+  const env=[]; let rmax=-Infinity;
+  fr.forEach(([r,v])=>{ if(r>rmax){rmax=r;env.push([r,v]);} });
+  // free lunch: retorno de la frontera a la volatilidad de tu cartera
+  const frontAt=v=>{
+    if(!env.length) return curR;
+    if(v<=env[0][1]) return env[0][0];
+    if(v>=env[env.length-1][1]) return env[env.length-1][0];
+    for(let i=1;i<env.length;i++) if(v<=env[i][1]){
+      const [r0,v0]=env[i-1],[r1,v1]=env[i];
+      return r0+(r1-r0)*(v-v0)/(v1-v0+1e-12);
+    }
+    return env[env.length-1][0];
+  };
+  const delta=frontAt(curV)-curR;
+  // ---- dibujo ----
+  const W=920,H=420,Lp=56,Rp=18,Tp=16,Bp=36, w2=W-Lp-Rp, h2=H-Tp-Bp;
+  const pts=cloud.concat(env,[[curR,curV],[minR,minV],[shpR,shpV]]);
+  let vmax=Math.max(...pts.map(p=>p[1]))*1.08||0.1;
+  let ymin=Math.min(...pts.map(p=>p[0])), ymax=Math.max(...pts.map(p=>p[0]));
+  const pad=(ymax-ymin)*0.1||0.05; ymin-=pad; ymax+=pad;
+  const X=v=>Lp+w2*v/vmax, Y=v=>Tp+h2*(1-(v-ymin)/(ymax-ymin));
+  let g="";
+  for(let k=0;k<=4;k++){const vv=vmax*k/4,xx=X(vv);
+    g+=`<line class="cgrid" x1="${xx.toFixed(1)}" y1="${Tp}" x2="${xx.toFixed(1)}" y2="${Tp+h2}"/>`+
+       `<text class="clbl" x="${xx.toFixed(1)}" y="${H-16}" text-anchor="middle">${(vv*100).toFixed(0)}%</text>`;}
+  for(let k=0;k<=4;k++){const vv=ymin+(ymax-ymin)*k/4,yy=Y(vv);
+    g+=`<line class="cgrid" x1="${Lp}" y1="${yy.toFixed(1)}" x2="${W-Rp}" y2="${yy.toFixed(1)}"/>`+
+       `<text class="clbl" x="${Lp-6}" y="${(yy+3).toFixed(1)}" text-anchor="end">${(vv*100).toFixed(0)}%</text>`;}
+  if(ymin<0&&ymax>0){const y0=Y(0);g+=`<line x1="${Lp}" y1="${y0.toFixed(1)}" x2="${W-Rp}" y2="${y0.toFixed(1)}" stroke="#C9D3E0" stroke-width="1.2"/>`;}
+  g+=`<text class="clbl" x="${Lp+w2/2}" y="${H-2}" text-anchor="middle">Volatilidad anual →</text>`;
+  g+=`<text class="clbl" x="12" y="${Tp+h2/2}" text-anchor="middle" transform="rotate(-90 12 ${Tp+h2/2})">Retorno medio anual →</text>`;
+  // nube
+  cloud.forEach(([r,v])=>{ g+=`<circle cx="${X(v).toFixed(1)}" cy="${Y(r).toFixed(1)}" r="2" fill="#C4CBD6" fill-opacity="0.45"/>`; });
+  // frontera
+  if(env.length>1) g+=`<path d="${env.map(([r,v],i)=>(i?"L":"M")+X(v).toFixed(1)+" "+Y(r).toFixed(1)).join(" ")}" fill="none" stroke="#030942" stroke-width="2.4" stroke-linecap="round"/>`;
+  // línea vertical del free lunch (tu cartera → frontera)
+  if(delta>0.004) g+=`<line x1="${X(curV).toFixed(1)}" y1="${Y(curR).toFixed(1)}" x2="${X(curV).toFixed(1)}" y2="${Y(frontAt(curV)).toFixed(1)}" stroke="#15A86B" stroke-width="1.6" stroke-dasharray="4 3"/>`;
+  const fpct=x=>(x*100).toFixed(1).replace(".",",");
+  const mark=(r,v,shape,col,tip)=>{
+    const px=X(v),py=Y(r);
+    let s= shape==="sq" ? `<rect x="${(px-6).toFixed(1)}" y="${(py-6).toFixed(1)}" width="12" height="12" rx="2" fill="${col}" stroke="#fff" stroke-width="1.5"/>`
+                        : `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="6.5" fill="${col}" stroke="#fff" stroke-width="1.5"/>`;
+    return `<g class="spt" data-tip="${tip} · rent ${fpct(r)}% · vol ${fpct(v)}%">${s}</g>`;
+  };
+  g+=mark(minR,minV,"c","#15A86B","Mínima volatilidad");
+  g+=mark(shpR,shpV,"c","#C0892E","Máximo Sharpe");
+  g+=mark(curR,curV,"sq","#030942","Tu cartera");
+  const svg=$("#frontier"); svg.innerHTML=g;
+  svg.querySelectorAll(".spt").forEach(el=>{
+    el.style.cursor="pointer";
+    const tipHtml=()=>el.dataset.tip.replace(/·/g,"<br>").replace(/^(.*?)<br>/,"<b>$1<\/b><br>");
+    el.addEventListener("mouseenter",e=>showTip(tipHtml(),e.clientX+12,e.clientY-10));
+    el.addEventListener("mousemove",e=>{const t=$("#tip");t.style.left=(e.clientX+12)+"px";t.style.top=(e.clientY-10)+"px";});
+    el.addEventListener("mouseleave",hideTip);
+    el.addEventListener("click",e=>{e.stopPropagation();showTip(tipHtml(),e.clientX+12,e.clientY-10);clearTimeout(window._st);window._st=setTimeout(hideTip,2800);});
+  });
+  // ---- mensaje ----
+  let msg;
+  if(delta>0.004){
+    msg=`<b>Hay free lunch:</b> con estos mismos fondos y tu misma volatilidad (${fpct(curV)}%), reajustar pesos permitía llegar a un retorno medio de <b>~${fpct(frontAt(curV))}% anual</b>, unos <b>+${fpct(delta).replace("+","")} puntos</b> más que tu cartera — <b>sin asumir más riesgo</b>. Eso es diversificar a lo Markowitz: corregir una combinación ineficiente.`;
+  }else{
+    msg=`Tu cartera está <b>prácticamente sobre la frontera eficiente</b>: con estos fondos y este nivel de riesgo, apenas había margen de mejora reajustando pesos. A partir de aquí, reducir riesgo implica ceder retorno — y eso ya no es diversificar, es <b>asignar</b>.`;
+  }
+  if(capRelaxed) msg+=` <span style="color:#B5851F">Con ${n} fondos el tope del ${Math.round(capSel*100)}% no es alcanzable; se ha usado el mínimo posible (${Math.round(cap*100)}%).</span>`;
+  $("#frontMsg").innerHTML=msg;
+  $("#frontSub").textContent=`${(cloud.length).toLocaleString("es-ES")} combinaciones de tus ${n} fondos · retornos semanales · ${dlabel(DATA.dates[a])} → ${dlabel(DATA.dates[b])}`;
+  // ---- tabla de pesos ----
+  const wMinP=to100(wMin.map(x=>x*100)), wShpP=to100(wShp.map(x=>x*100)), wCurP=to100(wCur.map(x=>x*100));
+  FRONTW={min:wMinP,shp:wShpP};
+  const rows=tks.map((t,k)=>`<tr><td style="text-align:left"><span class="dotc" style="background:${COLOR_OF[t]||'#999'};display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px"></span>${shortOf(t)}</td>`+
+    `<td>${wCurP[k]}%</td><td>${wMinP[k]}%</td><td>${wShpP[k]}%</td></tr>`).join("");
+  const sum=(lbl,f)=>`<tr style="border-top:1px solid var(--line)"><td style="text-align:left;color:var(--mute)">${lbl}</td><td><b>${f(curR,curV)}</b></td><td><b>${f(minR,minV)}</b></td><td><b>${f(shpR,shpV)}</b></td></tr>`;
+  $("#fronttb").innerHTML=
+    `<tr><th style="text-align:left">Fondo</th><th>Tu cartera</th><th>Mín. volatilidad</th><th>Máx. Sharpe</th></tr>`+rows+
+    sum("Retorno medio anual",(r,v)=>fpct(r)+"%")+
+    sum("Volatilidad",(r,v)=>fpct(v)+"%")+
+    sum("Sharpe",(r,v)=>v?fmt2(r/v):"—")+
+    `<tr><td></td><td></td><td><button class="fapply" data-w="min">Aplicar pesos</button></td><td><button class="fapply" data-w="shp">Aplicar pesos</button></td></tr>`;
+  $("#fronttb").querySelectorAll(".fapply").forEach(btn=>btn.onclick=()=>{
+    const W2=FRONTW[btn.dataset.w]; if(!W2) return;
+    PF.forEach((p,i)=>p.w=W2[i]);
+    renderPF(); run();
+  });
+  panel.classList.remove("hide");
+}
+$("#fcap").addEventListener("change",()=>{ if(FRONTARGS) drawFrontier(...FRONTARGS); });
 function drawDrawdown(pv,dates,bpv,bench){
   const W=920,H=150,L=52,R=16,T=10,B=24, w=W-L-R, h=H-T-B, N=pv.length;
   const ddOf=arr=>{let pk=arr[0];return arr.map(v=>{if(v>pk)pk=v;return v/pk-1;});};
@@ -1290,6 +1502,7 @@ function renderCompare(series,bench,bpv,benchM,dates,tks,a,b,assetsPts,benchPt,l
   $("#attribPanel").classList.add("hide");
   $("#ddtopPanel").classList.add("hide");
   $("#heatPanel").classList.add("hide");
+  $("#frontierPanel").classList.add("hide");
   $("#curveTitle").textContent="Crecimiento de 10.000 € en cada fondo";
   const yrs=series[0].M.years;
   $("#periodNote").innerHTML=(periodMsg?`<span style="color:#B5851F">${periodMsg}</span> `:``)+
