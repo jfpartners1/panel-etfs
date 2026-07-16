@@ -386,6 +386,7 @@
   <div class="results hide" id="results">
     <div class="repbar" id="repbar">
       <button class="btn repbtn" id="exportpdf"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>Exportar PDF</button>
+      <button class="btn repbtn" id="exportxray" title="Abre el análisis X-Ray de Morningstar con esta cartera"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>X-Ray Morningstar</button>
     </div>
     <div class="rephead" id="rephead"></div>
     <div class="note" id="periodNote"></div>
@@ -468,6 +469,43 @@ const BLOCKS=[
   {key:"Renta Fija", label:"Renta fija · bonos por duración",           color:"#C0892E",
      subs:["Ultra Corto Plazo","Corto Plazo","Medio Plazo","Largo Plazo","High Yield"]},
 ];
+/* Mapa ISIN -> SecId de Morningstar (exportar X-Ray). Generado por buscar_msid.py el 2026-07-16. */
+const MSID={
+"IE00BYX5MX67":"F00001019G","ES0165242001":"F00001836E","ES0184894006":"F00001836D","IE00BYX5NX33":"F00001019E",
+"IE0032126645":"F0GBR04UOL","IE00B03HD191":"F0GBR052TN","IE00B42W3S00":"F00000T1HQ","IE0007281425":"F0GBR061V3",
+"IE0007201266":"F00000T1I9","IE0031786142":"F0GBR06TSA","IE0007987690":"F0GBR04SKF","ES0114105036":"F0GBR04K3Q",
+"LU0625737910":"F00000MO6Y","ES0152741031":"F0GBR04MYG","ES0159201013":"F00000V7MQ","ES0112616000":"F00000WI0C",
+"ES0175902008":"F000016XFO","ES0146309002":"F000010KY6","ES0156673008":"F00000XJRM","ES0124037005":"F00000XX1F",
+"ES0113728002":"F00000YN5P","ES0119199000":"F00000YN5R","ES0165243009":"F00001CVXR","LU0203975437":"F0GBR05VCE",
+"ES0112611001":"F00000WI0D","ES0141116030":"0P0001IK36","ES0112609005":"F00000YGYC","LU1278917452":"F00000WL2C",
+"LU0094560744":"F0GBR04E6R","LU0360477987":"F000002OYS","LU0552385535":"F00000LNTV","ES0173311079":"F00000VYOI",
+"ES0168799064":"F00001DNFE","LU0974293671":"F00000QSD9","LU0690375182":"F00000OHVY","IE00BZ0X9T58":"F00000ZD3G",
+"IE00BJM0B969":"F000014JM5","ES0137768000":"F00001FTCH","ES0147897005":"F00001155A","ES0156572002":"F00000ZJ1W",
+"ES0116848005":"F00000LICF","LU0171307068":"0P0000VHO6","LU2441282899":"F00001DIF1","IE00B3NLSS43":"0P0000OMT9",
+"LU0415391431":"F0000045T6","LU0251853072":"F00001DIZQ","LU1213836080":"F00000VKNA","LU0260870158":"FOGBR05JFY",
+"LU0171310443":"0P0001FJIH","LU0302296495":"F000000JQ3","IE00B4468526":"0P0000OMTD","LU0187079347":"F0GBR04BXI",
+"LU2295319300":"F000016ENJ","LU0329429897":"F000000RTP","LU1162516717":"F00000V7G7","LU1429039461":"F00000XP0L",
+"LU1883342377":"F0GBR04KMJ","LU0157178582":"F00000T0WB","LU1984712320":"F000013W45","LU0918140210":"F00000Q3SH",
+"LU0300834669":"F000000RDD","LU0125944966":"F0GBR04UGX","LU0491217419":"F00000JQCY","LU0329070915":"F00000MHIV",
+"LU0345361124":"F000000RLV","LU0413543058":"F000002LNX","LU2295319219":"F000016ENI","LU0922334643":"F00000PWXJ",
+"LU0273159177":"F0000009DR","LU0172157280":"0P0000RZ3H","LU0273158872":"F0000006PG","LU1165135440":"F00000W3HJ",
+"LU0415415636":"F000002PZZ","LU0714179727":"F00000NFCB","IE00BDGV0183":"F00000YHKN","FR0013346079":"F0000124T2",
+"FR001400CFA4":"F00001F6LE","FR0011365212":"F00000P8QN","LU0080237943":"F0GBR04AW6","LU1585265066":"F000015L77",
+"FR0010149120":"F0GBR04F94","LU1706854152":"F000010AFA","FR0010116343":"F0GBR056TO","FI0008800511":"F0GBR04MTF",
+"LU0346393613":"F000001V2N","FR0010829697":"F00000J3PX","LU1882441907":"F0GBR04TND","IE00BDT57V65":"F000010EWZ",
+"LU1623762843":"F000011ROH","LU0694238766":"F00000NBTX","IE00B84J9L26":"F00000OZ46","LU1984948874":"F000013S4E",
+"LU0942882589":"F00000QTPH","IE000MI53C66":"F00001FEQO","IE00B246KL88":"F000001GFI","LU0241467587":"F0GBR06SVF",
+"LU0849399786":"F00000P15I","LU0658026512":"F00000N86D","LU0170291933":"F0GBR04HRR","LU0218171717":"F0000020LZ",
+"LU1966822956":"F000014SJ5","LU1481479811":"F000010MKJ","FR0011253624":"F00000X3BN","LU0395794307":"F000002HFH",
+"LU1239090977":"F00000WG1O","LU0270904781":"F0000000LF","LU0318931192":"F000000R2N","LU0329355670":"F000000RB9",
+"LU1670618690":"F000010L92","IE00BTC1N590":"F00000XIB5","LU0171305526":"0P0000VHO0","IE00BYVJR916":"F00000WWH2",
+"LU0731782404":"F00000NO6P","LU0083425479":"F0GBR04GFH","LU0261952419":"FOGBR05KLW","LU1477743386":"F00000YLRZ",
+"LU0880062913":"F00000PIIR","LU1120766388":"F00000W08U","LU0332192961":"F000002EUR","LU0159052710":"F00000ITO1",
+"LU0444972557":"F00000GX0V","LU1793345429":"F00001CE4Q","LU0570870567":"F00000M1MH","LU1878469607":"F000011D4U",
+"FR0013231453":"F00000YYWR","LU1835818565":"F000011DRB","IE00BNG2T811":"F000017L4O","IE000Z9YV312":"F00001LHAK",
+"LU0113257694":"F0GBR04DV6","LU1694789451":"F00000ZY7L"
+};
+
 
 let GROUPS=[];           // se rellena en buildGroups() con los ISIN reales
 const COLOR_OF={};       // ISIN -> color del bloque
@@ -1454,6 +1492,20 @@ function buildReportHead(){
       <div class="repchips">${comp}</div></div>`;
 }
 $("#exportpdf").addEventListener("click",()=>{ buildReportHead(); window.print(); });
+/* ---------- exportar X-Ray de Morningstar ---------- */
+$("#exportxray").addEventListener("click",()=>{
+  const con=PF.filter(p=>MSID[p.tk]), sin=PF.filter(p=>!MSID[p.tk]);
+  if(!con.length){ alert("Ninguno de los fondos seleccionados tiene todav\u00eda ID de Morningstar, no se puede generar el X-Ray."); return; }
+  if(sin.length) alert("Estos fondos a\u00fan no tienen ID de Morningstar y se excluyen del X-Ray:\n\u00b7 "+sin.map(p=>nmOf(p.tk)).join("\n\u00b7 "));
+  // en el comparador no hay pesos: se reparte a partes iguales
+  const ws = MODE==="compare" ? con.map(()=>1) : con.map(p=>p.w);
+  const s = ws.reduce((a,b)=>a+b,0)||1;
+  const vals = ws.map(w=>String(Math.round(w/s*10000)/10000).replace(".",","));
+  const toks = con.map(p=>MSID[p.tk]+"]2]0]FOESP$$ALL_1340");
+  const url = "https://lt.morningstar.com/j2uwuwirpv/xraypdf/default.aspx?LanguageId=es-ES&PortfolioType=2"
+            + "&SecurityTokenList="+toks.join("|") + "&values="+vals.join("|");
+  window.open(url,"_blank");
+});
 
 /* ---------- selector de plazo ---------- */
 function setActivePeriod(){ document.querySelectorAll("#period button").forEach(b=>b.classList.toggle("on",b.dataset.p===PERIOD)); }
