@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-buscar_msid.py - HERRAMIENTA DE UN SOLO USO.
+buscar_msid.py (v2) - HERRAMIENTA DE UN SOLO USO.
 
 Lee los ISINs de la lista FUNDS de build_history_fondos.py y busca el SecId
-de Morningstar (tipo F0GBR04UOL) de cada fondo usando el buscador publico
-de morningstar.es. Vuelca el resultado en msid.json.
+de Morningstar (tipo F0GBR04UOL) de cada fondo. Vuelca el mapa en msid.json.
 
-Ese mapa ISIN -> SecId se usara luego en fondos.html para construir la URL
-de exportacion del X-Ray de Morningstar. Cero dependencias externas (stdlib).
+v2: usa el screener JSON de lt.morningstar.com (la misma infraestructura que
+la URL del X-Ray, universo FOESP$$ALL) como via principal, con fallbacks y
+diagnostico de respuestas crudas en el log.
 
-Uso:  python3 buscar_msid.py            (lee build_history_fondos.py del directorio actual)
+Uso:  python3 buscar_msid.py            (todos los fondos)
       python3 buscar_msid.py --limit 5  (solo los 5 primeros, para probar)
 """
 import argparse
@@ -25,21 +25,22 @@ from datetime import date
 FUENTE = "build_history_fondos.py"
 SALIDA = "msid.json"
 
-ENDPOINTS = [
-    "https://www.morningstar.es/es/util/SecuritySearch.ashx",
-    "https://www.morningstar.co.uk/uk/util/SecuritySearch.ashx",
-]
-
 HEADERS = {
     "User-Agent": ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
                    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"),
-    "Accept": "*/*",
+    "Accept": "application/json, text/plain, */*",
     "Accept-Language": "es-ES,es;q=0.9",
+    "Referer": "https://www.morningstar.es/",
 }
 
 # ISIN: 2 letras + 9 alfanumericos + 1 digito de control
 RE_TUPLA = re.compile(r'\(\s*"([A-Z]{2}[A-Z0-9]{9}[0-9])"\s*,\s*"([^"]+)"')
-RE_SECID = re.compile(r'"i"\s*:\s*"([^"]+)"')
+
+SCREENER = "https://lt.morningstar.com/api/rest.svc/klr5zyak8x/security/screener"
+# Universos a probar, en orden: fondos vendidos en Espana, y sin filtro
+UNIVERSOS = ["FOESP$$ALL", ""]
+
+_diagnosticos = 0  # cuantas respuestas crudas hemos volcado ya al log
 
 
 def leer_isins(ruta):
@@ -47,7 +48,6 @@ def leer_isins(ruta):
     with open(ruta, encoding="utf-8") as f:
         texto = f.read()
     pares = RE_TUPLA.findall(texto)
-    # dedup conservando orden
     vistos, out = set(), []
     for isin, nombre in pares:
         if isin not in vistos:
@@ -56,33 +56,97 @@ def leer_isins(ruta):
     return out
 
 
-def consultar(isin):
-    """Devuelve (secid, nombre_ms) o (None, None). Prueba varios endpoints con reintentos."""
-    for base in ENDPOINTS:
-        url = base + "?" + urllib.parse.urlencode({"q": isin, "limit": 5})
+def _get(url):
+    req = urllib.request.Request(url, headers=HEADERS)
+    with urllib.request.urlopen(req, timeout=20) as r:
+        return r.read().decode("utf-8", errors="replace")
+
+
+def _diagnostico(etiqueta, isin, cuerpo):
+    """Vuelca al log un trozo de respuesta cruda (solo las 3 primeras veces)."""
+    global _diagnosticos
+    if _diagnosticos < 3:
+        _diagnosticos += 1
+        recorte = cuerpo[:400].replace("\n", " ")
+        print(f"    [diag {etiqueta}] {isin}: {recorte!r}", flush=True)
+
+
+def via_screener(isin):
+    """Screener JSON de lt.morningstar.com. Devuelve (secid, nombre_ms) o (None, None)."""
+    for uni in UNIVERSOS:
+        params = {
+            "page": "1",
+            "pageSize": "10",
+            "sortOrder": "LegalName asc",
+            "outputType": "json",
+            "version": "1",
+            "languageId": "es-ES",
+            "currencyId": "EUR",
+            "securityDataPoints": "SecId|Name|LegalName|isin",
+            "term": isin,
+        }
+        if uni:
+            params["universeIds"] = uni
+        url = SCREENER + "?" + urllib.parse.urlencode(params)
         for intento in range(3):
             try:
-                req = urllib.request.Request(url, headers=HEADERS)
-                with urllib.request.urlopen(req, timeout=20) as r:
-                    cuerpo = r.read().decode("utf-8", errors="replace").strip()
-                if not cuerpo:
-                    break  # respuesta vacia: prueba el siguiente endpoint
-                # Formato tipico: una linea por resultado ->  NOMBRE|{"i":"F0GBR04UOL",...}
-                primera = cuerpo.splitlines()[0]
-                m = RE_SECID.search(primera)
-                if m:
-                    nombre_ms = primera.split("|", 1)[0].strip()
-                    return m.group(1), nombre_ms
-                # Sin campo "i": intenta cualquier SecId reconocible en la respuesta
-                m2 = re.search(r'\b(F[0-9A-Z]{9}|0P[0-9A-Z]{8})\b', cuerpo)
-                if m2:
-                    return m2.group(1), ""
-                break  # respondio pero sin resultados: siguiente endpoint
+                cuerpo = _get(url)
+                datos = json.loads(cuerpo)
+                filas = datos.get("rows") or []
+                if not filas:
+                    _diagnostico(f"screener uni={uni or 'todos'}", isin, cuerpo)
+                    break  # prueba el siguiente universo
+                # Preferir la fila cuyo isin coincida exactamente
+                fila = next((f_ for f_ in filas
+                             if str(f_.get("isin", "")).upper() == isin), filas[0])
+                secid = fila.get("SecId")
+                nombre_ms = fila.get("Name") or fila.get("LegalName") or ""
+                if secid:
+                    return secid, nombre_ms
+                break
+            except json.JSONDecodeError:
+                _diagnostico("screener no-json", isin, cuerpo)
+                break
             except Exception as e:
                 espera = 2 * (intento + 1)
-                print(f"    aviso {isin}: {e} (reintento en {espera}s)", flush=True)
+                print(f"    aviso screener {isin}: {e} (reintento en {espera}s)", flush=True)
                 time.sleep(espera)
     return None, None
+
+
+def via_ashx(isin):
+    """Fallback: buscador clasico SecuritySearch.ashx con parametros completos."""
+    for base in ("https://www.morningstar.es/es/util/SecuritySearch.ashx",
+                 "https://www.morningstar.co.uk/uk/util/SecuritySearch.ashx"):
+        params = {"q": isin, "limit": "10", "preferedList": "",
+                  "source": "nav", "moduleId": "6", "ifIncludeAds": "False",
+                  "usrtType": "v"}
+        url = base + "?" + urllib.parse.urlencode(params)
+        try:
+            cuerpo = _get(url).strip()
+            if not cuerpo:
+                continue
+            m = re.search(r'"i"\s*:\s*"([^"]+)"', cuerpo)
+            if m:
+                nombre_ms = cuerpo.splitlines()[0].split("|", 1)[0].strip()
+                return m.group(1), nombre_ms
+            m2 = re.search(r'\b(F[0-9A-Z]{9}|0P[0-9A-Z]{8})\b', cuerpo)
+            if m2:
+                return m2.group(1), ""
+            _diagnostico("ashx", isin, cuerpo)
+        except Exception as e:
+            print(f"    aviso ashx {isin}: {e}", flush=True)
+    return None, None
+
+
+def consultar(isin):
+    secid, nombre = via_screener(isin)
+    if secid:
+        return secid, nombre, "screener"
+    secid, nombre = via_ashx(isin)
+    if secid:
+        return secid, nombre, "ashx"
+    return None, None, ""
 
 
 def main():
@@ -98,10 +162,10 @@ def main():
 
     mapa, faltan = {}, []
     for i, (isin, nombre) in enumerate(fondos, 1):
-        secid, nombre_ms = consultar(isin)
+        secid, nombre_ms, via = consultar(isin)
         if secid:
             mapa[isin] = {"msid": secid, "nombre": nombre, "nombre_ms": nombre_ms}
-            print(f"[{i}/{total}] OK  {isin} -> {secid}  ({nombre})", flush=True)
+            print(f"[{i}/{total}] OK  {isin} -> {secid}  ({nombre}) [{via}]", flush=True)
         else:
             faltan.append({"isin": isin, "nombre": nombre})
             print(f"[{i}/{total}] --  {isin} SIN RESULTADO  ({nombre})", flush=True)
@@ -123,7 +187,6 @@ def main():
         print("Sin resultado (habra que buscarlos a mano):", flush=True)
         for f_ in faltan:
             print(f"  - {f_['isin']}  {f_['nombre']}", flush=True)
-    # Salir con 0 aunque falten algunos: el JSON parcial ya es util
     return 0
 
 
