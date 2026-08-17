@@ -397,7 +397,7 @@
     <div class="panel hide" id="yearlyPanel">
       <div class="ptitle"><h2>Rentabilidad por año natural</h2><span class="sub" id="yearlySub"></span></div>
       <div class="atbwrap" id="yearlytb"></div>
-      <div class="atbnote">Cada celda es lo que ganó o perdió el fondo ese año natural. El año con <b>*</b> es parcial (no cubre de enero a diciembre completo). En <b>negrita</b>, el mejor fondo de cada año.</div>
+      <div class="atbnote">Cada celda es lo que ganó o perdió el fondo ese año natural completo. Solo se muestran años enteros; el año en curso aparece como <b>YTD</b> (lo que lleva hasta la fecha). En <b>negrita</b>, el mejor fondo de cada año.</div>
     </div>
     <div class="panel" id="mainPanel">
       <div class="ptitle"><h2 id="curveTitle">Crecimiento de 10.000 €</h2><span class="sub" id="chartSub"></span></div>
@@ -1643,16 +1643,20 @@ function drawYearlyTable(series,benchM){
   const all=benchM?rows.concat([{tk:benchM.tk,col:"#9AA5B3",M:benchM.M,bench:true}]):rows;
   // unión de años, del más reciente al más antiguo
   const yset=new Set(); all.forEach(o=>o.M.yearly.forEach(r=>yset.add(r.y)));
-  const ys=[...yset].sort().reverse();
-  const partial={}; all.forEach(o=>o.M.yearly.forEach(r=>{if(r.partial)partial[r.y]=true;}));
+  let ys=[...yset].sort().reverse();
+  const lastY=ys[0];   // año en curso del periodo: se muestra como YTD aunque sea parcial
+  // valor visible de cada celda: los años parciales NO se muestran, salvo el año en curso (YTD)
+  const cell=(o,y)=>{const r=o.M.yearly.find(q=>q.y===y); return (r&&(!r.partial||y===lastY))?r:null;};
+  // quitar columnas de años sin ningún dato completo (p. ej. el primer año si empieza a mitad)
+  ys=ys.filter(y=>all.some(o=>cell(o,y)));
   // mejor fondo de cada año (solo entre los fondos, no el benchmark)
   const best={};
-  ys.forEach(y=>{let bv=-Infinity;rows.forEach(o=>{const r=o.M.yearly.find(q=>q.y===y);if(r&&r.r>bv)bv=r.r;});best[y]=bv;});
-  const head=`<tr><th>Fondo</th>`+ys.map(y=>`<th>${y}${partial[y]?"*":""}</th>`).join("")+`</tr>`;
+  ys.forEach(y=>{let bv=-Infinity;rows.forEach(o=>{const r=cell(o,y);if(r&&r.r>bv)bv=r.r;});best[y]=bv;});
+  const head=`<tr><th>Fondo</th>`+ys.map(y=>`<th>${y}${y===lastY&&all.some(o=>{const r=o.M.yearly.find(q=>q.y===y);return r&&r.partial;})?" YTD":""}</th>`).join("")+`</tr>`;
   let h=`<table class="cmptb">${head}`;
   all.forEach(o=>{
     h+=`<tr${o.bench?' class="benchrow"':''}><td><span class="fname"><span class="fdot" style="background:${o.col}"></span>${shortOf(o.tk)}${o.bench?` <span class="ftag">índice</span>`:``}</span></td>`;
-    ys.forEach(y=>{const r=o.M.yearly.find(q=>q.y===y);
+    ys.forEach(y=>{const r=cell(o,y);
       if(!r){h+=`<td class="na">—</td>`;return;}
       const isBest=!o.bench&&rows.length>1&&r.r===best[y];
       h+=`<td class="${r.r>=0?'up':'down'}${isBest?' ybest':''}">${fmtPct(r.r*100)}</td>`;});
