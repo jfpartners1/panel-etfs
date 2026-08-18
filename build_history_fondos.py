@@ -166,13 +166,13 @@ FUNDS = [
     ("IE000ZYRH0Q7", "iShares Developed World Index clase S", "Indexado", "", "MSCI WORLD"),
     ("IE00BYX5MD61", "Fidelity MSCI Europe Index Fund EUR P Acc", "Indexado", "", "EUROPA"),
     # Activo / Global
-    ("LU0168577939", "Sifter Fund - Global R EUR", "Activo", "Global", "GLOBAL CALIDAD"),
+    ("LU0168736675", "Sifter Fund - Global PA EUR", "Activo", "Global", "GLOBAL CALIDAD"),
     # Activo / Value
     ("LU1935059029", "Palm Harbour Global Value F EUR Acc", "Activo", "Value", "VALUE SMALL CAPS"),
     # Activo / Market Neutral
     ("LU1433232854", "Pictet TR - Atlas P EUR", "Activo", "Market Neutral", "LONG/SHORT GLOBAL"),
     ("IE00BLP5S460", "Jupiter Merian Global Equity Absolute Return", "Activo", "Market Neutral", "LONG/SHORT GLOBAL"),
-    ("LU1662506093", "AQR Style Premia UCITS RAE EUR Acc", "Activo", "Market Neutral", "LONG/SHORT MULTIASSET FACTOR"),
+    ("LU1103258783", "AQR Style Premia UCITS B EUR Hedged Acc", "Activo", "Market Neutral", "LONG/SHORT MULTIASSET FACTOR"),
     # Activo / Energia
     ("IE0006TUI4G7", "Polar Capital Smart Energy R Acc", "Activo", "Energia", "RENTA VARIABLE ENERGÍA"),
     # Activo / Asia
