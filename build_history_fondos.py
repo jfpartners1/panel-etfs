@@ -166,7 +166,7 @@ FUNDS = [
     ("IE000ZYRH0Q7", "iShares Developed World Index clase S", "Indexado", "", "MSCI WORLD"),
     ("IE00BYX5MD61", "Fidelity MSCI Europe Index Fund EUR P Acc", "Indexado", "", "EUROPA"),
     # Activo / Global
-    ("LU0168736675", "Sifter Fund - Global PA EUR", "Activo", "Global", "GLOBAL CALIDAD"),
+    ("LU1194076995", "Sifter Fund - Global PI EUR", "Activo", "Global", "GLOBAL CALIDAD"),
     # Activo / Value
     ("LU1935059029", "Palm Harbour Global Value F EUR Acc", "Activo", "Value", "VALUE SMALL CAPS"),
     # Activo / Market Neutral
