@@ -1,7 +1,7 @@
 {
- "asOf": "2026-07-16",
- "encontrados": 129,
- "total": 130,
+ "asOf": "2026-08-18",
+ "encontrados": 143,
+ "total": 144,
  "faltan": [
   {
    "isin": "ES0141116030",
@@ -637,7 +637,7 @@
   "IE00BNG2T811": {
    "msid": "F000017L4O",
    "nombre": "Neuberger Short Duration",
-   "nombre_ms": "Neuberger Berman Short Dur Er Bd EURAAcc"
+   "nombre_ms": "Neuberger Short Dur Er Bd EURAAcc"
   },
   "IE000Z9YV312": {
    "msid": "F00001LHAK",
@@ -653,6 +653,76 @@
    "msid": "F00000ZY7L",
    "nombre": "DNCA Invest Alpha bonds A",
    "nombre_ms": "DNCA Invest Alpha Bonds A EUR"
+  },
+  "LU1328852493": {
+   "msid": "F00000X3NS",
+   "nombre": "Amundi Index FTSE EPRA NAREIT Global AE-D",
+   "nombre_ms": "Amundi IS FTSE EPRA NAREIT Global AE-D"
+  },
+  "IE000ZYRH0Q7": {
+   "msid": "F00001SELX",
+   "nombre": "iShares Developed World Index clase S",
+   "nombre_ms": "iShares Dev Wld Idx (IE) S Acc EUR"
+  },
+  "IE00BYX5MD61": {
+   "msid": "F00000ZZMQ",
+   "nombre": "Fidelity MSCI Europe Index Fund EUR P Acc",
+   "nombre_ms": "Fidelity MSCI Europe Indx EUR P Acc"
+  },
+  "LU1194076995": {
+   "msid": "F00000X4IC",
+   "nombre": "Sifter Fund - Global PI EUR",
+   "nombre_ms": "Sifter Fund - Global PI"
+  },
+  "LU1935059029": {
+   "msid": "F000013GVI",
+   "nombre": "Palm Harbour Global Value F EUR Acc",
+   "nombre_ms": "Palm Harbour Global Value F EUR Acc"
+  },
+  "LU1433232854": {
+   "msid": "F00000Y840",
+   "nombre": "Pictet TR - Atlas P EUR",
+   "nombre_ms": "Pictet TR - Atlas P EUR"
+  },
+  "IE00BLP5S460": {
+   "msid": "F00000TG3D",
+   "nombre": "Jupiter Merian Global Equity Absolute Return",
+   "nombre_ms": "Jupiter Merian Glb Eq Abs Rt L € H Acc"
+  },
+  "LU1103258783": {
+   "msid": "F00000U5SZ",
+   "nombre": "AQR Style Premia UCITS B EUR Hedged Acc",
+   "nombre_ms": "AQR Style Premia UCITS B EUR"
+  },
+  "IE0006TUI4G7": {
+   "msid": "0P0001O7J5",
+   "nombre": "Polar Capital Smart Energy R Acc",
+   "nombre_ms": "Polar Capital Smart Energy R Acc EUR"
+  },
+  "LU0084617165": {
+   "msid": "F0GBR04AVQ",
+   "nombre": "Robeco Asia Pacific Equities D EUR Acc",
+   "nombre_ms": "Robeco Asia-Pacific Equities D €"
+  },
+  "ES0146296001": {
+   "msid": "F00001SWA4",
+   "nombre": "Horos Patrimonio A FI",
+   "nombre_ms": "Horos Patrimonio A FI"
+  },
+  "ES0173319031": {
+   "msid": "F0GBR04DK2",
+   "nombre": "Renta 4 Renta Fija Euro I FI",
+   "nombre_ms": "Renta 4 Renta Fija Euro I FI"
+  },
+  "IE00B18GC888": {
+   "msid": "F00000T1HT",
+   "nombre": "Vanguard Global Bond Index Fund EUR Hedged Acc",
+   "nombre_ms": "Vanguard Global Bd Idx EUR H Acc"
+  },
+  "FR0013439148": {
+   "msid": "F0000153YZ",
+   "nombre": "La Française Carbon Impact Floating Rates R",
+   "nombre_ms": "La Française Carbon Impct Flt Rt R"
   }
  }
 }
