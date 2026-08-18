@@ -1,8 +1,10 @@
 name: buscar-msid
 
-# Workflow de UN SOLO USO: busca los SecId de Morningstar de todos los
-# fondos de FUNDS (build_history_fondos.py) y hace commit de msid.json.
-# Solo se lanza a mano desde la pestaña Actions (Run workflow).
+# HERRAMIENTA DE UN SOLO USO (recreada agosto 2026).
+# Ejecuta buscar_msid.py, que lee los ISINs de FUNDS en build_history_fondos.py
+# y busca el SecId de Morningstar de cada fondo. Sube el resultado en msid.json.
+# Lanzar a mano DESPUES de subir el build_history_fondos.py con los 14 fondos nuevos.
+# Cuando el mapa este integrado en fondos.html, borrar este workflow y msid.json.
 
 on:
   workflow_dispatch:
@@ -17,19 +19,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Buscar SecIds en Morningstar
-        run: python3 buscar_msid.py
+      - name: Buscar SecIds de Morningstar
+        run: python buscar_msid.py
 
-      - name: Commit msid.json
+      - name: Commit
         run: |
-          git config user.name "PANEL-BOT"
-          git config user.email "actions@users.noreply.github.com"
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
           git add msid.json
-          git diff --cached --quiet && echo "Sin cambios" && exit 0
-          git commit -m "msid.json: mapa ISIN -> SecId Morningstar (X-Ray)"
+          git diff --staged --quiet || git commit -m "msid.json con los SecIds de Morningstar"
           git push
