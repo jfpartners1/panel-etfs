@@ -160,6 +160,29 @@ FUNDS = [
     ("IE000Z9YV312", "Montlake Alpha", "Renta Fija", "Medio Plazo", "CRÉDITO GLOBAL FLEXIBLE"),
     ("LU0113257694", "Schroder Euro Corporate Bond", "Renta Fija", "Medio Plazo", "CRÉDITO GLOBAL INVESTMENT GRADE"),
     ("LU1694789451", "DNCA Invest Alpha bonds A", "Renta Fija", "Medio Plazo", "BONOS FLEXIBLES RETORNO ABSOLUTO"),
+    # --- Ampliación agosto 2026 (14 fondos) ---
+    # Indexado
+    ("LU1328852493", "Amundi Index FTSE EPRA NAREIT Global AE-D", "Indexado", "", "REITS (REAL ESTATE)"),
+    ("IE000ZYRH0Q7", "iShares Developed World Index clase S", "Indexado", "", "MSCI WORLD"),
+    ("IE00BYX5MD61", "Fidelity MSCI Europe Index Fund EUR P Acc", "Indexado", "", "EUROPA"),
+    # Activo / Global
+    ("LU0168577939", "Sifter Fund - Global R EUR", "Activo", "Global", "GLOBAL CALIDAD"),
+    # Activo / Value
+    ("LU1935059029", "Palm Harbour Global Value F EUR Acc", "Activo", "Value", "VALUE SMALL CAPS"),
+    # Activo / Market Neutral
+    ("LU1433232854", "Pictet TR - Atlas P EUR", "Activo", "Market Neutral", "LONG/SHORT GLOBAL"),
+    ("IE00BLP5S460", "Jupiter Merian Global Equity Absolute Return", "Activo", "Market Neutral", "LONG/SHORT GLOBAL"),
+    ("LU1662506093", "AQR Style Premia UCITS RAE EUR Acc", "Activo", "Market Neutral", "LONG/SHORT MULTIASSET FACTOR"),
+    # Activo / Energia
+    ("IE0006TUI4G7", "Polar Capital Smart Energy R Acc", "Activo", "Energia", "RENTA VARIABLE ENERGÍA"),
+    # Activo / Asia
+    ("LU0084617165", "Robeco Asia Pacific Equities D EUR Acc", "Activo", "Asia", "RENTA VARIABLE ASIA"),
+    # Mixto
+    ("ES0146296001", "Horos Patrimonio A FI", "Mixto", "Renta Fija y Value", "RENTA FIJA Y VALUE"),
+    # Renta Fija
+    ("ES0173319031", "Renta 4 Renta Fija Euro I FI", "Renta Fija", "Corto Plazo", "RENTA FIJA CORTO PLAZO"),
+    ("IE00B18GC888", "Vanguard Global Bond Index Fund EUR Hedged Acc", "Renta Fija", "Medio Plazo", "RENTA FIJA INDEXADA GLOBAL"),
+    ("FR0013439148", "La Française Carbon Impact Floating Rates R", "Renta Fija", "Medio Plazo", "MEDIO PLAZO BONOS FLOTANTES"),
 ]
 
 
